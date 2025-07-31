@@ -1,0 +1,132 @@
+/* Custom styles for the Inventory Management App */
+
+.App {
+  min-height: 100vh;
+}
+
+/* Custom Bootstrap overrides */
+.btn {
+  border-radius: 6px;
+}
+
+.card {
+  border-radius: 8px;
+  border: 1px solid #e3e6f0;
+}
+
+.card-header {
+  border-radius: 8px 8px 0 0 !important;
+}
+
+/* Loading spinner styles */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+/* Form styles */
+.form-control:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* Navigation styles */
+.navbar-brand {
+  font-weight: 600;
+}
+
+/* Card hover effects */
+.card:hover {
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+  transition: all 0.3s;
+}
+
+/* Alert styles */
+.alert {
+  border-radius: 6px;
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: #4e73df;
+  border-color: #4e73df;
+}
+
+.btn-primary:hover {
+  background-color: #2e59d9;
+  border-color: #2653d4;
+}
+
+.btn-success {
+  background-color: #1cc88a;
+  border-color: #1cc88a;
+}
+
+.btn-success:hover {
+  background-color: #17a673;
+  border-color: #169b6b;
+}
+
+/* Footer styles */
+footer {
+  background-color: #343a40 !important;
+}
+
+/* Project card styles */
+.project-card {
+  transition: all 0.3s ease;
+  border-left: 4px solid #4e73df;
+}
+
+.project-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Stats card styles */
+.stats-card {
+  background: linear-gradient(45deg, #4e73df, #224abe);
+  color: white;
+}
+
+.stats-card .card-body {
+  padding: 1.5rem;
+}
+
+/* Image upload area */
+.upload-area {
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+  border-color: #4e73df;
+  background-color: #f8f9fc;
+}
+
+.upload-area.dragover {
+  border-color: #4e73df;
+  background-color: #f8f9fc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+/* Dark mode support (if needed in future) */
+@media (prefers-color-scheme: dark) {
+  /* Add dark mode styles here if needed */
+}

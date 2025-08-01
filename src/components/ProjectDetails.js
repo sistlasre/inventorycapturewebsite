@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCogs, faBox, faCalendarAlt, faCubes, faPlus, faMapMarkerAlt, faEdit, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
+import CreateBoxModal from './CreateBoxModal';
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
@@ -16,6 +17,7 @@ const ProjectDetails = () => {
   const [showToast, setShowToast] = React.useState(false);
   const [toastMessage, setToastMessage] = React.useState('');
   const [originalBoxName, setOriginalBoxName] = React.useState('');
+  const [showCreateBoxModal, setShowCreateBoxModal] = React.useState(false);
 
   // Helper function to format date
   const formatDate = (dateString) => {
@@ -90,6 +92,15 @@ const ProjectDetails = () => {
     } finally {
       setUpdateLoading(false);
     }
+  };
+
+  // Function to handle box creation
+  const handleBoxCreated = (newBox) => {
+    setProject(prevProject => ({
+      ...prevProject,
+      boxes: [newBox, ...(prevProject.boxes || [])],
+      boxCount: (prevProject.boxCount || 0) + 1
+    }));
   };
 
   React.useEffect(() => {
@@ -181,7 +192,11 @@ const ProjectDetails = () => {
         <Col>
           <div className="d-flex justify-content-between align-items-center">
             <h4>Boxes</h4>
-            <Button variant="primary" size="sm">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowCreateBoxModal(true)}
+            >
               <FontAwesomeIcon icon={faPlus} className="me-2" />
               Add Box
             </Button>
@@ -288,7 +303,10 @@ const ProjectDetails = () => {
                 <FontAwesomeIcon icon={faBox} size="3x" className="text-muted mb-3" />
                 <h5 className="text-muted">No boxes found</h5>
                 <p className="text-muted">Add your first box to get started!</p>
-                <Button variant="primary">
+                <Button
+                  variant="primary"
+                  onClick={() => setShowCreateBoxModal(true)}
+                >
                   <FontAwesomeIcon icon={faPlus} className="me-2" />
                   Add Box
                 </Button>
@@ -297,6 +315,14 @@ const ProjectDetails = () => {
           </Col>
         )}
       </Row>
+      
+      {/* Create Box Modal */}
+      <CreateBoxModal
+        show={showCreateBoxModal}
+        onHide={() => setShowCreateBoxModal(false)}
+        onBoxCreated={handleBoxCreated}
+        projectId={projectId}
+      />
       
       {/* Toast for error notifications */}
       <ToastContainer className="p-3" position="top-end">

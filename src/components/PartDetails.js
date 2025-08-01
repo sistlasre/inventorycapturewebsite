@@ -366,6 +366,33 @@ const PartDetails = () => {
       {/* Content Sections - Side by Side or Stacked */}
       {(part.manualContent || (part.generatedContent && Object.keys(part.generatedContent).length > 0)) && (
         <Row className="mb-4">
+          {/* Generated Content Section */}
+          {part.generatedContent && Object.keys(part.generatedContent).length > 0 && (
+            <Col md={part.manualContent ? 6 : 12}>
+              <Card className="shadow-sm h-100">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h4>
+                      <FontAwesomeIcon icon={faBarcode} className="me-2" />
+                      Generated Content
+                    </h4>
+                    {!part.manualContent && !isEditing && (
+                      <Button
+                        variant="outline-info"
+                        size="sm"
+                        onClick={startEditing}
+                      >
+                        <FontAwesomeIcon icon={faEdit} className="me-1" />
+                        Create Manual Content
+                      </Button>
+                    )}
+                  </div>
+                  {renderGeneratedContent(part.generatedContent)}
+                </Card.Body>
+              </Card>
+            </Col>
+          )}
+
           {/* Manual Content Section */}
           {(part.manualContent || isEditing) && (
             <Col md={part.generatedContent && Object.keys(part.generatedContent).length > 0 ? 6 : 12}>
@@ -419,33 +446,6 @@ const PartDetails = () => {
                   ) : (
                     renderManualContent(part.manualContent)
                   )}
-                </Card.Body>
-              </Card>
-            </Col>
-          )}
-
-          {/* Generated Content Section */}
-          {part.generatedContent && Object.keys(part.generatedContent).length > 0 && (
-            <Col md={part.manualContent ? 6 : 12}>
-              <Card className="shadow-sm h-100">
-                <Card.Body>
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h4>
-                      <FontAwesomeIcon icon={faBarcode} className="me-2" />
-                      Generated Content
-                    </h4>
-                    {!part.manualContent && !isEditing && (
-                      <Button
-                        variant="outline-info"
-                        size="sm"
-                        onClick={startEditing}
-                      >
-                        <FontAwesomeIcon icon={faEdit} className="me-1" />
-                        Create Manual Content
-                      </Button>
-                    )}
-                  </div>
-                  {renderGeneratedContent(part.generatedContent)}
                 </Card.Body>
               </Card>
             </Col>

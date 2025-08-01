@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCogs, faBox, faCalendarAlt, faCubes, faPlus, faMapMarkerAlt, faImage, faEdit, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
+import CreateBoxModal from './CreateBoxModal';
 
 const BoxDetails = () => {
   const { boxId } = useParams();
@@ -16,6 +17,7 @@ const BoxDetails = () => {
   const [showToast, setShowToast] = React.useState(false);
   const [toastMessage, setToastMessage] = React.useState('');
   const [originalSubLocationName, setOriginalSubLocationName] = React.useState('');
+  const [showCreateSubLocationModal, setShowCreateSubLocationModal] = React.useState(false);
 
   // Helper function to format date
   const formatDate = (dateString) => {
@@ -91,6 +93,16 @@ const BoxDetails = () => {
     } finally {
       setUpdateLoading(false);
     }
+  };
+
+  // Function to handle sub-location creation
+  const handleSubLocationCreated = (newSubLocation) => {
+    setBox(prevBox => ({
+      ...prevBox,
+      childBoxes: [newSubLocation, ...(prevBox.childBoxes || [])],
+      childBoxCount: (prevBox.childBoxCount || 0) + 1,
+      subBoxCount: (prevBox.subBoxCount || 0) + 1
+    }));
   };
 
   React.useEffect(() => {
@@ -204,7 +216,11 @@ const BoxDetails = () => {
         <Col>
           <div className="d-flex justify-content-between align-items-center">
             <h4>Sub-locations ({box.childBoxCount || 0})</h4>
-            <Button variant="primary" size="sm">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowCreateSubLocationModal(true)}
+            >
               <FontAwesomeIcon icon={faPlus} className="me-2" />
               Add Sub-location
             </Button>
@@ -373,6 +389,15 @@ const BoxDetails = () => {
           </Col>
         )}
       </Row>
+      
+      {/* Create Sub-location Modal */}
+      <CreateBoxModal
+        show={showCreateSubLocationModal}
+        onHide={() => setShowCreateSubLocationModal(false)}
+        onBoxCreated={handleSubLocationCreated}
+        projectId={box?.projectId}
+        parentBoxId={boxId}
+      />
       
       {/* Toast for error notifications */}
       <ToastContainer className="p-3" position="top-end">

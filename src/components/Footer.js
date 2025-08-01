@@ -7,7 +7,7 @@ const Footer = () => {
       <Container>
         <div className="text-center">
           <p className="mb-0">
-            &copy; 2024 Inventory Manager. All rights reserved.
+            &copy; 2025 Inventory Capture. All rights reserved.
           </p>
         </div>
       </Container>

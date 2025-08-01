@@ -71,7 +71,7 @@ class ApiService {
   }
 
   async createProject(projectData) {
-    return this.api.post('/project', projectData);
+    return this.api.post('/project/create', projectData);
   }
 
   async updateProject(projectId, projectData) {
@@ -88,7 +88,7 @@ class ApiService {
   }
 
   async createBox(boxData) {
-    return this.api.post('/box', boxData);
+    return this.api.post('/box/create', boxData);
   }
 
   async updateBox(boxId, boxData) {

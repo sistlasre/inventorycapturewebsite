@@ -19,7 +19,7 @@ const Header = () => {
       <Container>
         <Navbar.Brand as={Link} to="/" className="fw-bold">
           <FontAwesomeIcon icon={faBoxOpen} className="me-2" />
-          Inventory Manager
+          Inventory Capture
         </Navbar.Brand>
         
         <Navbar.Toggle aria-controls="basic-navbar-nav" />

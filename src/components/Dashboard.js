@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBox, faPlus, faCog, faCalendarAlt, faCubes, faEdit, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/apiService';
+import CreateProjectModal from './CreateProjectModal';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ const Dashboard = () => {
   const [showToast, setShowToast] = React.useState(false);
   const [toastMessage, setToastMessage] = React.useState('');
   const [originalName, setOriginalName] = React.useState('');
+  const [showCreateProjectModal, setShowCreateProjectModal] = React.useState(false);
 
   // Helper function to format date
   const formatDate = (dateString) => {
@@ -88,6 +90,11 @@ const Dashboard = () => {
     }
   };
 
+  // Function to handle project creation
+  const handleProjectCreated = (newProject) => {
+    setProjects([newProject, ...projects]);
+  };
+
   React.useEffect(() => {
     const fetchProjects = async () => {
       if (!user) return;
@@ -136,9 +143,12 @@ const Dashboard = () => {
           <Card className="mb-3 shadow-sm">
             <Card.Body className="d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Projects</h5>
-              <Link to="/create-project" className="btn btn-primary">
+              <Button
+                variant="primary"
+                onClick={() => setShowCreateProjectModal(true)}
+              >
                 <FontAwesomeIcon icon={faPlus} className="me-2" /> Create Project
-              </Link>
+              </Button>
             </Card.Body>
           </Card>
           
@@ -252,6 +262,13 @@ const Dashboard = () => {
           )}
         </Col>
       </Row>
+      
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        show={showCreateProjectModal}
+        onHide={() => setShowCreateProjectModal(false)}
+        onProjectCreated={handleProjectCreated}
+      />
       
       {/* Toast for error notifications */}
       <ToastContainer className="p-3" position="top-end">

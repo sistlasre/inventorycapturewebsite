@@ -1,0 +1,140 @@
+import axios from 'axios';
+
+// Base API URL - update this with your actual API Gateway URL
+const API_BASE_URL = 'https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev';
+
+class ApiService {
+  constructor() {
+    this.api = axios.create({
+      baseURL: API_BASE_URL,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Request interceptor to add auth token
+    this.api.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Response interceptor to handle token expiration
+    this.api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+    );
+  }
+
+  setAuthToken(token) {
+    if (token) {
+      this.api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete this.api.defaults.headers.common['Authorization'];
+    }
+  }
+
+  // Authentication endpoints
+  async login(username, password) {
+    return this.api.post('/user/signin', { username, password });
+  }
+
+  async register(username, password, email) {
+    return this.api.post('/user', { 
+      username, 
+      password, 
+      email,
+      user_metadata: { email }
+    });
+  }
+
+  // Project endpoints
+  async getUserProjects() {
+    return this.api.get('/user/projects');
+  }
+
+  async getProjectDetails(projectId) {
+    return this.api.get(`/project/${projectId}`);
+  }
+
+  async createProject(projectData) {
+    return this.api.post('/project/create', projectData);
+  }
+
+  async updateProject(projectId, projectData) {
+    return this.api.put(`/project/${projectId}`, projectData);
+  }
+
+  async deleteProject(projectId) {
+    return this.api.delete(`/project/${projectId}`);
+  }
+
+  // Box endpoints
+  async getBoxDetails(boxId) {
+    return this.api.get(`/box/${boxId}`);
+  }
+
+  async createBox(boxData) {
+    return this.api.post('/box/create', boxData);
+  }
+
+  async updateBox(boxId, boxData) {
+    return this.api.put(`/box/${boxId}`, boxData);
+  }
+
+  async deleteBox(boxId) {
+    return this.api.delete(`/box/${boxId}`);
+  }
+
+  // Part endpoints
+  async getPartDetails(partId) {
+    return this.api.get(`/part/${partId}`);
+  }
+
+  async createPart(partData) {
+    return this.api.post('/part', partData);
+  }
+
+  async updatePart(partId, partData) {
+    return this.api.put(`/part/${partId}`, partData);
+  }
+
+  async deletePart(partId) {
+    return this.api.delete(`/part/${partId}`);
+  }
+
+  // Image upload endpoints
+  async getPresignedUploadUrl(fileName, fileType) {
+    return this.api.post('/presigned-upload', {
+      fileName,
+      fileType
+    });
+  }
+
+  async uploadImage(presignedUrl, file) {
+    return axios.put(presignedUrl, file, {
+      headers: {
+        'Content-Type': file.type
+      }
+    });
+  }
+
+  async getImageUrl(imageId) {
+    return this.api.get(`/image/${imageId}`);
+  }
+}
+
+export const apiService = new ApiService();

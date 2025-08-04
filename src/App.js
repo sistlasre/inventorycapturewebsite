@@ -1,0 +1,69 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
+
+// Components
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Login from './components/Login';
+import Register from './components/Register';
+import Dashboard from './components/Dashboard';
+import ProjectDetails from './components/ProjectDetails';
+import BoxDetails from './components/BoxDetails';
+import PartDetails from './components/PartDetails';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './contexts/AuthContext';
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <div className="App d-flex flex-column min-vh-100">
+          <Header />
+          <main className="flex-grow-1">
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route 
+                path="/" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/project/:projectId" 
+                element={
+                  <ProtectedRoute>
+                    <ProjectDetails />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/box/:boxId" 
+                element={
+                  <ProtectedRoute>
+                    <BoxDetails />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/part/:partId" 
+                element={
+                  <ProtectedRoute>
+                    <PartDetails />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+    </AuthProvider>
+  );
+}
+
+export default App;

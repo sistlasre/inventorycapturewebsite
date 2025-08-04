@@ -1,0 +1,295 @@
+import React from 'react';
+import { Container, Row, Col, Card, Spinner, Alert, Badge, Form, Button, Toast, ToastContainer } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBox, faPlus, faCog, faCalendarAlt, faCubes, faEdit, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/apiService';
+import CreateProjectModal from './CreateProjectModal';
+
+const Dashboard = () => {
+  const { user } = useAuth();
+  const [projects, setProjects] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState('');
+  const [editingProject, setEditingProject] = React.useState(null);
+  const [editingName, setEditingName] = React.useState('');
+  const [updateLoading, setUpdateLoading] = React.useState(false);
+  const [showToast, setShowToast] = React.useState(false);
+  const [toastMessage, setToastMessage] = React.useState('');
+  const [originalName, setOriginalName] = React.useState('');
+  const [showCreateProjectModal, setShowCreateProjectModal] = React.useState(false);
+
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Never updated';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid date';
+    }
+  };
+
+  // Function to start editing a project name
+  const startEditing = (project) => {
+    setEditingProject(project.projectId);
+    setEditingName(project.projectName);
+    setOriginalName(project.projectName); // Store original name for reset on error
+  };
+
+  // Function to cancel editing
+  const cancelEditing = () => {
+    setEditingProject(null);
+    setEditingName('');
+    setOriginalName('');
+  };
+
+  // Function to save the updated project name
+  const saveProjectName = async (projectId) => {
+    if (!editingName.trim()) {
+      cancelEditing();
+      return;
+    }
+
+    try {
+      setUpdateLoading(true);
+      
+      // Call the API to update the project name
+      await apiService.updateProject(projectId, {
+        project_name: editingName.trim(),
+        user_id: user.userId || user.user_id || user.id
+      });
+
+      // Update the local state with the new name
+      setProjects(projects.map(project => 
+        project.projectId === projectId 
+          ? { ...project, projectName: editingName.trim() }
+          : project
+      ));
+
+      cancelEditing();
+    } catch (error) {
+      console.error('Failed to update project name:', error);
+      
+      // Reset the name back to original and show toast
+      setEditingName(originalName);
+      setToastMessage('Failed to update project name. Please try again.');
+      setShowToast(true);
+      
+      // Cancel editing after a brief delay to show the reset
+      setTimeout(() => {
+        cancelEditing();
+      }, 100);
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  // Function to handle project creation
+  const handleProjectCreated = (newProject) => {
+    setProjects([newProject, ...projects]);
+  };
+
+  React.useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        setError('');
+        console.log('Fetching projects for user:', user);
+        
+        const response = await apiService.getUserProjects();
+        console.log('Projects response:', response);
+        
+        // Handle different response formats
+        const projectsData = response.data?.projects || response.data?.items || response.data || [];
+        
+        // Transform projects to ensure proper structure
+        const transformedProjects = projectsData.map(project => ({
+          ...project,
+          projectId: project.projectId || project.project_id || project.id,
+          projectName: project.projectName || project.project_name || project.name || 'Unnamed Project',
+          dateUpdated: project.date_updated || project.dateUpdated || project.updated_at,
+          boxCount: project.extra_info?.boxCount || project.boxCount || 0
+        }));
+        
+        setProjects(transformedProjects);
+      } catch (error) {
+        console.error('Failed to fetch user projects:', error);
+        setError('Failed to load projects. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [user]);
+
+  return (
+    <Container className="py-5">
+      <Row className="mb-4">
+        <Col>
+          <h1 className="text-center">Dashboard</h1>
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          <Card className="mb-3 shadow-sm">
+            <Card.Body className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">Projects</h5>
+              <Button
+                variant="primary"
+                onClick={() => setShowCreateProjectModal(true)}
+              >
+                <FontAwesomeIcon icon={faPlus} className="me-2" /> Create Project
+              </Button>
+            </Card.Body>
+          </Card>
+          
+          {error && (
+            <Alert variant="danger" className="mb-3">
+              {error}
+            </Alert>
+          )}
+          
+          {loading ? (
+            <div className="text-center py-5">
+              <Spinner animation="border" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </Spinner>
+              <p className="mt-3">Loading projects...</p>
+            </div>
+          ) : projects.length === 0 ? (
+            <Card className="mb-2">
+              <Card.Body className="text-center py-5">
+                <FontAwesomeIcon icon={faBox} size="3x" className="text-muted mb-3" />
+                <h6 className="text-muted">No projects found</h6>
+                <p className="text-muted">Create your first project to get started!</p>
+              </Card.Body>
+            </Card>
+          ) : (
+            projects.map((project) => (
+              <Card key={project.projectId} className="mb-3 project-card">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <div className="flex-grow-1">
+                      {editingProject === project.projectId ? (
+                        <div className="d-flex align-items-center mb-1">
+                          <Form.Control
+                            type="text"
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            className="me-2"
+                            size="sm"
+                            disabled={updateLoading}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                saveProjectName(project.projectId);
+                              } else if (e.key === 'Escape') {
+                                cancelEditing();
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <div className="d-flex gap-1">
+                            <Button
+                              variant="success"
+                              size="sm"
+                              onClick={() => saveProjectName(project.projectId)}
+                              disabled={updateLoading || !editingName.trim()}
+                            >
+                              {updateLoading ? (
+                                <Spinner
+                                  as="span"
+                                  animation="border"
+                                  size="sm"
+                                  role="status"
+                                  aria-hidden="true"
+                                />
+                              ) : (
+                                <FontAwesomeIcon icon={faCheck} />
+                              )}
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={cancelEditing}
+                              disabled={updateLoading}
+                            >
+                              <FontAwesomeIcon icon={faTimes} />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="d-flex align-items-center mb-1">
+                          <h5 className="mb-0 me-2">{project.projectName}</h5>
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={() => startEditing(project)}
+                            className="ms-auto"
+                            title="Edit project name"
+                          >
+                            <FontAwesomeIcon icon={faEdit} />
+                          </Button>
+                        </div>
+                      )}
+                      <div className="d-flex flex-wrap gap-3 text-muted small">
+                        <div className="d-flex align-items-center">
+                          <FontAwesomeIcon icon={faCalendarAlt} className="me-1" />
+                          Last updated: {formatDate(project.dateUpdated)}
+                        </div>
+                        <div className="d-flex align-items-center">
+                          <FontAwesomeIcon icon={faCubes} className="me-1" />
+                          <Badge bg="secondary" className="me-1">{project.boxCount}</Badge>
+                          {project.boxCount === 1 ? 'box' : 'boxes'}
+                        </div>
+                      </div>
+                    </div>
+                    <Link to={`/project/${project.projectId}`} className="btn btn-outline-primary btn-sm ms-3">
+                      <FontAwesomeIcon icon={faBox} className="me-2" /> View Details
+                    </Link>
+                  </div>
+                </Card.Body>
+              </Card>
+            ))
+          )}
+        </Col>
+      </Row>
+      
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        show={showCreateProjectModal}
+        onHide={() => setShowCreateProjectModal(false)}
+        onProjectCreated={handleProjectCreated}
+      />
+      
+      {/* Toast for error notifications */}
+      <ToastContainer className="p-3" position="top-end">
+        <Toast 
+          show={showToast} 
+          onClose={() => setShowToast(false)} 
+          delay={4000} 
+          autohide
+          bg="danger"
+        >
+          <Toast.Header>
+            <strong className="me-auto">Error</strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">
+            {toastMessage}
+          </Toast.Body>
+        </Toast>
+      </ToastContainer>
+    </Container>
+  );
+};
+
+export default Dashboard;
+

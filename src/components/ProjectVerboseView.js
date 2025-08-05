@@ -6,6 +6,7 @@ import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { apiService } from '../services/apiService';
+import PartModal from './PartModal';
 
 const ProjectVerboseView = () => {
   const { projectId } = useParams();
@@ -16,6 +17,8 @@ const ProjectVerboseView = () => {
   const [expandedItems, setExpandedItems] = useState(new Set());
   const [loadingBoxes, setLoadingBoxes] = useState(new Set());
   const [fetchedBoxes, setFetchedBoxes] = useState(new Set());
+  const [selectedPart, setSelectedPart] = useState(null);
+  const [showPartModal, setShowPartModal] = useState(false);
 
   // Define the columns as specified
   const columns = [
@@ -36,10 +39,10 @@ const ProjectVerboseView = () => {
         setLoading(true);
         setError('');
         console.log('Fetching project details for ID:', projectId);
-        
+
         const response = await apiService.getProjectDetails(projectId);
         console.log('Project details response:', response);
-        
+
         setProject(response.data);
       } catch (error) {
         console.error('Failed to fetch project details:', error);
@@ -62,7 +65,7 @@ const fetchBoxDetails = async (boxId) => {
 
     try {
       setLoadingBoxes(prev => new Set(prev).add(boxId));
-      
+
       const response = await apiService.getBoxDetails(boxId, true); // Use verbose endpoint
       console.log('Box details response:', response);
 
@@ -88,7 +91,7 @@ const fetchBoxDetails = async (boxId) => {
           boxes: updateBoxInTree(prevProject.boxes)
         };
       });
-      
+
       // Mark as fetched
       setFetchedBoxes(prev => new Set(prev).add(boxId));
     } catch (error) {
@@ -104,7 +107,7 @@ const fetchBoxDetails = async (boxId) => {
 
 const handleBoxClick = (boxId, event) => {
     event.preventDefault();
-    
+
     // Check if we're in the ProjectVerboseView context
     const currentPath = window.location.pathname;
     if (currentPath.includes('/verbose')) {
@@ -129,7 +132,7 @@ const handleBoxClick = (boxId, event) => {
     if (item.generatedContent || item.manualContent) {
       const generatedValue = item.generatedContent?.[field];
       const manualValue = item.manualContent?.[field];
-      
+
       switch (field) {
         case 'coo':
           return generatedValue || manualValue || item.generatedContent?.COO || item.manualContent?.COO || 'N/A';
@@ -157,14 +160,14 @@ const handleBoxClick = (boxId, event) => {
   const renderTableRows = (boxes, level = 0, startingRowIndex = 0) => {
     const rows = [];
     let currentRowIndex = startingRowIndex;
-    
+
     boxes.forEach(box => {
       // Box row
       const paddingLeft = `${level * 1.5}rem`;
       const subBoxCount = (box.childBoxes || []).length;
       const partCount = (box.parts || []).length;
       const isEvenRow = currentRowIndex % 2 === 0;
-      
+
       rows.push(
         <tr 
           key={`box-${box.boxId}`} 
@@ -235,9 +238,13 @@ const handleBoxClick = (boxId, event) => {
                     }}
                   >
                     {column.key === 'name' && (
-                      <span style={{ color: '#333' }}>
-                        {part.partName || part.name}
-                      </span>
+                      <Link 
+                        to={`/part/${part.partId}`}
+                        onClick={(e) => { e.preventDefault(); setSelectedPart(part); setShowPartModal(true); }}
+                        style={{ textDecoration: 'none', color: '#333', cursor: 'pointer' }}
+                      >
+                        🔧 {part.partName || part.name}
+                      </Link>
                     )}
                     {column.key !== 'name' && getFieldValue(part, column.key)}
                   </td>
@@ -291,10 +298,10 @@ return (
     <Container className="py-5">
       <Row className="mb-4">
         <Col>
-          <h1 className="text-center">{project.projectName} - Verbose View</h1>
+          <h1 className="text-center">📁 {project.projectName}</h1>
         </Col>
       </Row>
-      
+
       <Row>
         <Col>
           <Card className="shadow-sm">
@@ -343,6 +350,13 @@ return (
           </Card>
         </Col>
       </Row>
+
+      {/* Part Details Modal */}
+      <PartModal 
+        show={showPartModal} 
+        onHide={() => setShowPartModal(false)} 
+        part={selectedPart} 
+      />
     </Container>
   );
 };

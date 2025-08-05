@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Card, Row, Col, Badge, Form, Spinner, Alert } from 'react-bootstrap';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBarcode, faEdit, faCheck, faTimes, faPlus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
-import ReactImageZoom from 'react-image-zoom'
+import ReactImageMagnify from 'react-image-magnify';
 import './PartModal.css';
 
 const PartModal = ({ show, onHide, part: initialPart }) => {
@@ -157,9 +155,7 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
                   variant="outline-danger"
                   size="sm"
                   onClick={() => removeField(key)}
-                >
-                  <FontAwesomeIcon icon={faTimes} />
-                </Button>
+                />
               </div>
             </div>
           </div>
@@ -170,7 +166,6 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
           onClick={addNewField}
           className="mb-3"
         >
-          <FontAwesomeIcon icon={faPlus} className="me-1" />
           Add Field
         </Button>
       </div>
@@ -201,9 +196,8 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
     fetchPartDetails();
   }, [initialPart, show]);
 
-  // Image zoom reference and state
-  const imgRef = useRef(null);
-  const zoomInstanceRef = useRef(null);
+  // Simple state for image zoom
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
 
   // Get primary image
   const getPrimaryImage = () => {
@@ -249,17 +243,42 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
               <Card.Body>
                 {getPrimaryImage() ? (
                   <div>
-                  <ReactImageZoom width="300" height="200" zoomWidth="300" img={getPrimaryImage().uri} />
-                  {getPrimaryImage().isPrimary && (
-                    <Badge bg="primary" className="part-image-badge">
-                      Primary
-                    </Badge>
-                  )}
+                    <h6>Primary Image </h6>
+                    <p className="text-muted small">Hover over the image to zoom in</p>
+                    <div className="text-center position-relative">
+                      <ReactImageMagnify
+                        {...{
+                          smallImage: {
+                            alt: part?.partName || part?.name || 'Part Image',
+                            width: 400,
+                            height: 300,
+                            src: getPrimaryImage().uri
+                          },
+                          largeImage: {
+                            src: getPrimaryImage().uri,
+                            width: 1200,
+                            height: 1800
+                          },
+                          enlargedImageContainerDimensions: {
+                            width: 400,
+                            height: 300
+                          },
+                          enlargedImageContainerStyle: {
+                            zIndex: 1500
+                          },
+                          shouldHideHintAfterFirstActivation: false
+                        }}
+                      />
+                      {getPrimaryImage().isPrimary && (
+                        <Badge bg="primary" className="part-image-badge">
+                          Primary
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-4">
                     <div className="text-muted">
-                      <FontAwesomeIcon icon={faSearchPlus} size="3x" className="mb-3" />
                       <p>No images available for this part</p>
                     </div>
                   </div>
@@ -272,17 +291,15 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
               <Card className="mb-3">
                 <Card.Body>
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h6>
-                      <FontAwesomeIcon icon={faBarcode} className="me-2" />
-                      Generated Content
-                    </h6>
+                      <h6>
+                        Generated Content
+                      </h6>
                     {!part.manualContent && !isEditing && (
                       <Button
                         variant="outline-info"
                         size="sm"
                         onClick={startEditing}
                       >
-                        <FontAwesomeIcon icon={faEdit} className="me-1" />
                         Create Manual Content
                       </Button>
                     )}
@@ -297,17 +314,15 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
               <Card className="mb-3">
                 <Card.Body>
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h6>
-                      <FontAwesomeIcon icon={faEdit} className="me-2" />
-                      {part.manualContent ? 'Manual Content' : 'Create Manual Content'}
-                    </h6>
+                      <h6>
+                        {part.manualContent ? 'Manual Content' : 'Create Manual Content'}
+                      </h6>
                     {!isEditing && part.manualContent && (
                       <Button
                         variant="outline-info"
                         size="sm"
                         onClick={startEditing}
                       >
-                        <FontAwesomeIcon icon={faEdit} className="me-1" />
                         Edit
                       </Button>
                     )}
@@ -324,11 +339,6 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
                           onClick={saveManualContent}
                           disabled={updateLoading}
                         >
-                          {updateLoading ? (
-                            <Spinner animation="border" size="sm" className="me-1" />
-                          ) : (
-                            <FontAwesomeIcon icon={faCheck} className="me-1" />
-                          )}
                           {part.manualContent ? 'Save' : 'Save Manual Content'}
                         </Button>
                         <Button
@@ -337,7 +347,6 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
                           onClick={cancelEditing}
                           disabled={updateLoading}
                         >
-                          <FontAwesomeIcon icon={faTimes} className="me-1" />
                           Cancel
                         </Button>
                       </div>
@@ -354,7 +363,6 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
               <Card className="mb-3 border-info">
                 <Card.Body>
                   <h6 className="text-info">
-                    <FontAwesomeIcon icon={faEdit} className="me-2" />
                     Create Manual Content
                   </h6>
                   {renderEditingForm()}
@@ -366,11 +374,6 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
                       onClick={saveManualContent}
                       disabled={updateLoading}
                     >
-                      {updateLoading ? (
-                        <Spinner animation="border" size="sm" className="me-1" />
-                      ) : (
-                        <FontAwesomeIcon icon={faCheck} className="me-1" />
-                      )}
                       Save Manual Content
                     </Button>
                     <Button
@@ -379,7 +382,6 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
                       onClick={cancelEditing}
                       disabled={updateLoading}
                     >
-                      <FontAwesomeIcon icon={faTimes} className="me-1" />
                       Cancel
                     </Button>
                   </div>

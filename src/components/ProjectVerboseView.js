@@ -163,7 +163,7 @@ const handleBoxClick = (boxId, event) => {
 
     boxes.forEach(box => {
       // Box row
-      const paddingLeft = `${level * 1.5}rem`;
+      const paddingLeft = `${level * 1.5 + 1}rem`;
       const subBoxCount = (box.childBoxes || []).length;
       const partCount = (box.parts || []).length;
       const isEvenRow = currentRowIndex % 2 === 0;

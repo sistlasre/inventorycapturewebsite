@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Button, Card, Row, Col, Image, Badge, Form, Spinner, Alert } from 'react-bootstrap';
+import React, { useState, useEffect, useRef } from 'react';
+import { Modal, Button, Card, Row, Col, Badge, Form, Spinner, Alert } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBarcode, faEdit, faCheck, faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faBarcode, faEdit, faCheck, faTimes, faPlus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
+import ImageZoom from 'js-image-zoom';
+import './PartModal.css';
 
 const PartModal = ({ show, onHide, part: initialPart }) => {
   const [part, setPart] = useState(null);
@@ -199,14 +201,107 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
     fetchPartDetails();
   }, [initialPart, show]);
 
+  // Image zoom reference and state
+  const imgRef = useRef(null);
+  const zoomInstanceRef = useRef(null);
+
   // Get primary image
   const getPrimaryImage = () => {
-    if (!part?.images || part.images.length === 0) return null;
-    return part.images.find(img => img.isPrimary) || part.images[0];
+    console.log('Part data:', part);
+    console.log('Part images:', part?.images);
+    
+    if (!part?.images || part.images.length === 0) {
+      console.log('No images found for part');
+      return null;
+    }
+    
+    const primaryImage = part.images.find(img => img.isPrimary) || part.images[0];
+    console.log('Primary image:', primaryImage);
+    return primaryImage;
   };
 
+// Initialize Image Zoom
+  useEffect(() => {
+    const primaryImage = getPrimaryImage();
+
+    // Always cleanup first
+    if (zoomInstanceRef.current) {
+      try {
+        zoomInstanceRef.current.kill();
+      } catch (error) {
+        console.error('Error cleaning up zoom instance:', error);
+      }
+      zoomInstanceRef.current = null;
+    }
+
+    // Clear the container
+    if (imgRef.current) {
+      imgRef.current.innerHTML = '';
+    }
+
+    if (imgRef.current && primaryImage && show && !loading) {
+      // Create the image element first
+      const img = document.createElement('img');
+      img.src = primaryImage.uri;
+      img.alt = part?.partName || part?.name || 'Part Image';
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '300px';
+      img.style.objectFit = 'contain';
+      img.className = 'border rounded';
+      
+      // Add the image to the container first
+      imgRef.current.appendChild(img);
+      
+      // Wait for image to load, then initialize zoom
+      img.onload = () => {
+        setTimeout(() => {
+          if (imgRef.current && show && img.offsetWidth > 0 && img.offsetHeight > 0) {
+            const options = {
+              width: img.offsetWidth,
+              height: img.offsetHeight,
+              zoomWidth: 600,
+              zoomType: 'lens',
+              img: primaryImage.uri,
+              offset: { vertical: 0, horizontal: 15 }
+            };
+
+            try {
+              // Initialize zoom on the container that now has the image
+              zoomInstanceRef.current = new ImageZoom(imgRef.current, options);
+              console.log('Image zoom initialized successfully for:', primaryImage.uri);
+            } catch (error) {
+              console.error('Failed to initialize image zoom:', error);
+              console.error('Error details:', error.message);
+            }
+          }
+        }, 500);
+      };
+      
+      img.onerror = () => {
+        console.error('Failed to load image:', primaryImage.uri);
+      };
+      
+      // If image is already cached and loaded
+      if (img.complete && img.naturalHeight !== 0) {
+        img.onload();
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      if (zoomInstanceRef.current) {
+        try {
+          zoomInstanceRef.current.kill();
+        } catch (error) {
+          console.error('Error cleaning up zoom instance:', error);
+        }
+        zoomInstanceRef.current = null;
+      }
+    };
+  }, [part?.partId, show, loading]); // Use partId to ensure cleanup when switching parts
+
   return (
-    <Modal show={show} onHide={onHide} size="lg" scrollable>
+    <Modal show={show} onHide={onHide} size="lg" scrollable dialogClassName="custom-modal-width">
       <Modal.Header closeButton>
         <Modal.Title>
           {part?.partName || part?.name || 'Part Details'}
@@ -230,26 +325,33 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
         {part && !loading && (
           <>
             {/* Primary Image */}
-            {getPrimaryImage() && (
-              <Card className="mb-3">
-                <Card.Body>
-                  <h6>Primary Image</h6>
-                  <div className="text-center">
-                    <Image 
-                      src={getPrimaryImage().uri} 
-                      alt={part.partName || part.name}
-                      style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain' }}
-                      className="border rounded"
-                    />
-                    {getPrimaryImage().isPrimary && (
-                      <Badge bg="primary" className="position-absolute top-0 start-0 m-2">
-                        Primary
-                      </Badge>
-                    )}
+            <Card className="mb-3">
+              <Card.Body>
+                <h6>Primary Image <FontAwesomeIcon icon={faSearchPlus} className="text-muted" /></h6>
+                {getPrimaryImage() ? (
+                  <>
+                    <p className="text-muted small">Hover over the image to zoom in</p>
+                    <div className="text-center position-relative">
+                      <div ref={imgRef} className="zoomable-image-container d-inline-block">
+                        {/* Image will be dynamically added by js-image-zoom */}
+                      </div>
+                      {getPrimaryImage().isPrimary && (
+                        <Badge bg="primary" className="part-image-badge">
+                          Primary
+                        </Badge>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="text-muted">
+                      <FontAwesomeIcon icon={faSearchPlus} size="3x" className="mb-3" />
+                      <p>No images available for this part</p>
+                    </div>
                   </div>
-                </Card.Body>
-              </Card>
-            )}
+                )}
+              </Card.Body>
+            </Card>
 
             {/* Generated Content */}
             {part.generatedContent && Object.keys(part.generatedContent).length > 0 && (

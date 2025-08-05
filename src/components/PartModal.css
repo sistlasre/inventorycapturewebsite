@@ -1,0 +1,70 @@
+/* Image zoom container styling */
+.image-zoom-container {
+  position: relative;
+  display: inline-block;
+  cursor: crosshair;
+}
+
+.image-zoom-container:hover {
+  cursor: zoom-in;
+}
+
+/* Zoom lens styling */
+.image-zoom-lens {
+  position: absolute;
+  border: 2px solid #007bff;
+  cursor: crosshair;
+  background-color: rgba(0, 123, 255, 0.1);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* Zoom result styling */
+.image-zoom-result {
+  border: 1px solid #ccc;
+  position: absolute;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Primary image badge positioning */
+.part-image-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+}
+
+/* Image container with hover effects */
+.zoomable-image-container {
+  position: relative;
+  display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.zoomable-image-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading state for images */
+.image-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+}
+
+.custom-modal-width {
+  max-width: 90%; /* Or any specific pixel value */
+  width: 90%; /* Ensure it takes the desired width */
+}

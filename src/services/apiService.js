@@ -83,8 +83,9 @@ class ApiService {
   }
 
   // Box endpoints
-  async getBoxDetails(boxId) {
-    return this.api.get(`/box/${boxId}`);
+  async getBoxDetails(boxId, verbose = false) {
+    const params = verbose ? { verbose: 'true' } : {};
+    return this.api.get(`/box/${boxId}`, { params });
   }
 
   async createBox(boxData) {

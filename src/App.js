@@ -10,6 +10,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import ProjectDetails from './components/ProjectDetails';
+import ProjectVerboseView from './components/ProjectVerboseView';
 import BoxDetails from './components/BoxDetails';
 import PartDetails from './components/PartDetails';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -38,6 +39,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ProjectDetails />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/project/:projectId/verbose" 
+                element={
+                  <ProtectedRoute>
+                    <ProjectVerboseView />
                   </ProtectedRoute>
                 } 
               />

@@ -286,108 +286,84 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
               </Card.Body>
             </Card>
 
-            {/* Generated Content */}
-            {part.generatedContent && Object.keys(part.generatedContent).length > 0 && (
-              <Card className="mb-3">
-                <Card.Body>
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h6>
-                        Generated Content
-                      </h6>
-                    {!part.manualContent && !isEditing && (
-                      <Button
-                        variant="outline-info"
-                        size="sm"
-                        onClick={startEditing}
-                      >
-                        Create Manual Content
-                      </Button>
-                    )}
-                  </div>
-                  {renderGeneratedContent(part.generatedContent)}
-                </Card.Body>
-              </Card>
-            )}
+            {/* Generated and Manual Content Side by Side */}
+            {(part.generatedContent && Object.keys(part.generatedContent).length > 0) || part.manualContent || isEditing ? (
+              <Row className="mb-3">
+                {/* Generated Content - Left Column */}
+                {part.generatedContent && Object.keys(part.generatedContent).length > 0 && (
+                  <Col md={6}>
+                    <Card className="h-100">
+                      <Card.Body>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <h6>Generated Content</h6>
+                          {!part.manualContent && !isEditing && (
+                            <Button
+                              variant="outline-info"
+                              size="sm"
+                              onClick={startEditing}
+                            >
+                              Create Manual Content
+                            </Button>
+                          )}
+                        </div>
+                        {renderGeneratedContent(part.generatedContent)}
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                )}
 
-            {/* Manual Content */}
-            {(part.manualContent || isEditing) && (
-              <Card className="mb-3">
-                <Card.Body>
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h6>
-                        {part.manualContent ? 'Manual Content' : 'Create Manual Content'}
-                      </h6>
-                    {!isEditing && part.manualContent && (
-                      <Button
-                        variant="outline-info"
-                        size="sm"
-                        onClick={startEditing}
-                      >
-                        Edit
-                      </Button>
-                    )}
-                  </div>
-                  
-                  {isEditing ? (
-                    <>
-                      {renderEditingForm()}
-                      <div className="mt-3">
-                        <Button
-                          variant="success"
-                          size="sm"
-                          className="me-2"
-                          onClick={saveManualContent}
-                          disabled={updateLoading}
-                        >
-                          {part.manualContent ? 'Save' : 'Save Manual Content'}
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={cancelEditing}
-                          disabled={updateLoading}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    renderManualContent(part.manualContent)
-                  )}
-                </Card.Body>
-              </Card>
-            )}
-
-            {/* No Manual Content Section */}
-            {!part.manualContent && isEditing && (
-              <Card className="mb-3 border-info">
-                <Card.Body>
-                  <h6 className="text-info">
-                    Create Manual Content
-                  </h6>
-                  {renderEditingForm()}
-                  <div className="mt-3">
-                    <Button
-                      variant="success"
-                      size="sm"
-                      className="me-2"
-                      onClick={saveManualContent}
-                      disabled={updateLoading}
-                    >
-                      Save Manual Content
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={cancelEditing}
-                      disabled={updateLoading}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </Card.Body>
-              </Card>
-            )}
+                {/* Manual Content - Right Column */}
+                {(part.manualContent || isEditing) && (
+                  <Col md={part.generatedContent && Object.keys(part.generatedContent).length > 0 ? 6 : 12}>
+                    <Card className="h-100">
+                      <Card.Body>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <h6>
+                            {part.manualContent ? 'Manual Content' : 'Create Manual Content'}
+                          </h6>
+                          {!isEditing && part.manualContent && (
+                            <Button
+                              variant="outline-info"
+                              size="sm"
+                              onClick={startEditing}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {isEditing ? (
+                          <>
+                            {renderEditingForm()}
+                            <div className="mt-3">
+                              <Button
+                                variant="success"
+                                size="sm"
+                                className="me-2"
+                                onClick={saveManualContent}
+                                disabled={updateLoading}
+                              >
+                                {part.manualContent ? 'Save' : 'Save Manual Content'}
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={cancelEditing}
+                                disabled={updateLoading}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          renderManualContent(part.manualContent)
+                        )}
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                )}
+              </Row>
+            ) : null}
           </>
         )}
       </Modal.Body>

@@ -85,6 +85,26 @@ footer {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
+/* Clickable project card styles */
+.project-card-clickable {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.project-card-clickable:hover {
+  background-color: #f8f9fc;
+}
+
+/* Remove text decoration from card links */
+.project-card a.text-decoration-none {
+  color: inherit;
+}
+
+.project-card a.text-decoration-none:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
 /* Stats card styles */
 .stats-card {
   background: linear-gradient(45deg, #4e73df, #224abe);

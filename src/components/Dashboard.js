@@ -176,87 +176,115 @@ const Dashboard = () => {
           ) : (
             projects.map((project) => (
               <Card key={project.projectId} className="mb-3 project-card">
-                <Card.Body>
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div className="flex-grow-1">
-                      {editingProject === project.projectId ? (
-                        <div className="d-flex align-items-center mb-1">
-                          <Form.Control
-                            type="text"
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            className="me-2"
-                            size="sm"
-                            disabled={updateLoading}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                saveProjectName(project.projectId);
-                              } else if (e.key === 'Escape') {
-                                cancelEditing();
-                              }
-                            }}
-                            autoFocus
-                          />
-                          <div className="d-flex gap-1">
-                            <Button
-                              variant="success"
+                <Link 
+                  to={`/project/${project.projectId}/verbose`} 
+                  className="text-decoration-none"
+                  onClick={(e) => {
+                    // Prevent navigation if clicking on interactive elements
+                    if (editingProject === project.projectId) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  <Card.Body className="project-card-clickable">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <div className="flex-grow-1">
+                        {editingProject === project.projectId ? (
+                          <div className="d-flex align-items-center mb-1">
+                            <Form.Control
+                              type="text"
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              className="me-2"
                               size="sm"
-                              onClick={() => saveProjectName(project.projectId)}
-                              disabled={updateLoading || !editingName.trim()}
-                            >
-                              {updateLoading ? (
-                                <Spinner
-                                  as="span"
-                                  animation="border"
-                                  size="sm"
-                                  role="status"
-                                  aria-hidden="true"
-                                />
-                              ) : (
-                                <FontAwesomeIcon icon={faCheck} />
-                              )}
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={cancelEditing}
                               disabled={updateLoading}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveProjectName(project.projectId);
+                                } else if (e.key === 'Escape') {
+                                  cancelEditing();
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                            />
+                            <div className="d-flex gap-1">
+                              <Button
+                                variant="success"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  saveProjectName(project.projectId);
+                                }}
+                                disabled={updateLoading || !editingName.trim()}
+                              >
+                                {updateLoading ? (
+                                  <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  <FontAwesomeIcon icon={faCheck} />
+                                )}
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  cancelEditing();
+                                }}
+                                disabled={updateLoading}
+                              >
+                                <FontAwesomeIcon icon={faTimes} />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="d-flex align-items-center mb-1">
+                            <h5 className="mb-0 me-2">{project.projectName}</h5>
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                startEditing(project);
+                              }}
+                              className="ms-auto"
+                              title="Edit project name"
                             >
-                              <FontAwesomeIcon icon={faTimes} />
+                              <FontAwesomeIcon icon={faEdit} />
                             </Button>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="d-flex align-items-center mb-1">
-                          <h5 className="mb-0 me-2">{project.projectName}</h5>
-                          <Button
-                            variant="outline-secondary"
-                            size="sm"
-                            onClick={() => startEditing(project)}
-                            className="ms-auto"
-                            title="Edit project name"
-                          >
-                            <FontAwesomeIcon icon={faEdit} />
-                          </Button>
-                        </div>
-                      )}
-                      <div className="d-flex flex-wrap gap-3 text-muted small">
-                        <div className="d-flex align-items-center">
-                          <FontAwesomeIcon icon={faCalendarAlt} className="me-1" />
-                          Last updated: {formatDate(project.dateUpdated)}
-                        </div>
-                        <div className="d-flex align-items-center">
-                          <FontAwesomeIcon icon={faCubes} className="me-1" />
-                          <Badge bg="secondary" className="me-1">{project.boxCount}</Badge>
-                          {project.boxCount === 1 ? 'box' : 'boxes'}
+                        )}
+                        <div className="d-flex flex-wrap gap-3 text-muted small">
+                          <div className="d-flex align-items-center">
+                            <FontAwesomeIcon icon={faCalendarAlt} className="me-1" />
+                            Last updated: {formatDate(project.dateUpdated)}
+                          </div>
+                          <div className="d-flex align-items-center">
+                            <FontAwesomeIcon icon={faCubes} className="me-1" />
+                            <Badge bg="secondary" className="me-1">{project.boxCount}</Badge>
+                            {project.boxCount === 1 ? 'box' : 'boxes'}
+                          </div>
                         </div>
                       </div>
+                      <Link 
+                        to={`/project/${project.projectId}`} 
+                        className="btn btn-outline-primary btn-sm ms-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FontAwesomeIcon icon={faBox} className="me-2" /> Simple View
+                      </Link>
                     </div>
-                    <Link to={`/project/${project.projectId}`} className="btn btn-outline-primary btn-sm ms-3">
-                      <FontAwesomeIcon icon={faBox} className="me-2" /> View Details
-                    </Link>
-                  </div>
-                </Card.Body>
+                  </Card.Body>
+                </Link>
               </Card>
             ))
           )}

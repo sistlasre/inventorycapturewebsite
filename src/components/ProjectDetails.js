@@ -1,13 +1,15 @@
 import React from 'react';
 import { Container, Row, Col, Card, Spinner, Alert, Badge, Button, Form, Toast, ToastContainer } from 'react-bootstrap';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCogs, faBox, faCalendarAlt, faCubes, faPlus, faMapMarkerAlt, faEdit, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faBox, faCalendarAlt, faCubes, faPlus, faMapMarkerAlt, faEdit, faCheck, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import CreateBoxModal from './CreateBoxModal';
+import ConfirmationModal from './ConfirmationModal';
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
+  const navigate = useNavigate();
   const [project, setProject] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
@@ -18,6 +20,8 @@ const ProjectDetails = () => {
   const [toastMessage, setToastMessage] = React.useState('');
   const [originalBoxName, setOriginalBoxName] = React.useState('');
   const [showCreateBoxModal, setShowCreateBoxModal] = React.useState(false);
+  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [deleteLoading, setDeleteLoading] = React.useState(false);
 
   // Helper function to format date
   const formatDate = (dateString) => {
@@ -103,6 +107,31 @@ const ProjectDetails = () => {
     }));
   };
 
+  // Function to handle project deletion
+  const handleDeleteProject = () => {
+    setShowDeleteModal(true);
+  };
+
+  // Function to confirm project deletion
+  const confirmDeleteProject = async () => {
+    if (!project) return;
+
+    try {
+      setDeleteLoading(true);
+      await apiService.deleteProject(project.projectId);
+      
+      // Navigate back to dashboard on successful deletion
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      setToastMessage(`Failed to delete project "${project.projectName}". Please try again.`);
+      setShowToast(true);
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   React.useEffect(() => {
     const fetchProjectDetails = async () => {
       try {
@@ -164,7 +193,18 @@ const ProjectDetails = () => {
     <Container className="py-5">
       <Row className="mb-4">
         <Col>
-          <h1 className="text-center">{project.projectName}</h1>
+          <div className="d-flex justify-content-between align-items-center">
+            <h1 className="text-center flex-grow-1">{project.projectName}</h1>
+            <Button
+              variant="outline-danger"
+              size="sm"
+              onClick={handleDeleteProject}
+              title="Delete project"
+            >
+              <FontAwesomeIcon icon={faTrash} className="me-1" />
+              Delete
+            </Button>
+          </div>
         </Col>
       </Row>
       
@@ -322,6 +362,17 @@ const ProjectDetails = () => {
         onHide={() => setShowCreateBoxModal(false)}
         onBoxCreated={handleBoxCreated}
         projectId={projectId}
+      />
+      
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteProject}
+        title="Delete Project"
+        message={`Are you sure you want to delete "${project?.projectName}"? This action cannot be undone.`}
+        confirmText="Delete Project"
+        loading={deleteLoading}
       />
       
       {/* Toast for error notifications */}

@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container, Row, Col, Button } from 'react-bootstrap';
 import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import PartModal from './PartModal';
+import ConfirmationModal from './ConfirmationModal';
 
 const ProjectVerboseView = () => {
   const { projectId } = useParams();
@@ -19,6 +22,8 @@ const ProjectVerboseView = () => {
   const [fetchedBoxes, setFetchedBoxes] = useState(new Set());
   const [selectedPart, setSelectedPart] = useState(null);
   const [showPartModal, setShowPartModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Define the columns as specified
   const columns = [
@@ -261,6 +266,30 @@ const handleBoxClick = (boxId, event) => {
     return { rows, nextRowIndex: currentRowIndex };
   };
 
+  // Function to handle project deletion
+  const handleDeleteProject = () => {
+    setShowDeleteModal(true);
+  };
+
+  // Function to confirm project deletion
+  const confirmDeleteProject = async () => {
+    if (!project) return;
+
+    try {
+      setDeleteLoading(true);
+      await apiService.deleteProject(project.projectId);
+      
+      // Navigate back to dashboard on successful deletion
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      setError(`Failed to delete project "${project.projectName}". Please try again.`);
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   if (loading) {
     return (
       <Container className="py-5">
@@ -298,7 +327,18 @@ return (
     <Container className="py-5">
       <Row className="mb-4">
         <Col>
-          <h1 className="text-center">📁 {project.projectName}</h1>
+          <div className="d-flex justify-content-between align-items-center">
+            <h1 className="text-center flex-grow-1">📁 {project.projectName}</h1>
+            <Button
+              variant="outline-danger"
+              size="sm"
+              onClick={handleDeleteProject}
+              title="Delete project"
+            >
+              <FontAwesomeIcon icon={faTrash} className="me-1" />
+              Delete
+            </Button>
+          </div>
         </Col>
       </Row>
 
@@ -356,6 +396,17 @@ return (
         show={showPartModal} 
         onHide={() => setShowPartModal(false)} 
         part={selectedPart} 
+      />
+      
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteProject}
+        title="Delete Project"
+        message={`Are you sure you want to delete "${project?.projectName}"? This action cannot be undone.`}
+        confirmText="Delete Project"
+        loading={deleteLoading}
       />
     </Container>
   );

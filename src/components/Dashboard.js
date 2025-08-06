@@ -2,10 +2,11 @@ import React from 'react';
 import { Container, Row, Col, Card, Spinner, Alert, Badge, Form, Button, Toast, ToastContainer } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBox, faPlus, faCog, faCalendarAlt, faCubes, faEdit, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBox, faPlus, faCog, faCalendarAlt, faCubes, faEdit, faCheck, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/apiService';
 import CreateProjectModal from './CreateProjectModal';
+import ConfirmationModal from './ConfirmationModal';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -19,6 +20,9 @@ const Dashboard = () => {
   const [toastMessage, setToastMessage] = React.useState('');
   const [originalName, setOriginalName] = React.useState('');
   const [showCreateProjectModal, setShowCreateProjectModal] = React.useState(false);
+  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [projectToDelete, setProjectToDelete] = React.useState(null);
+  const [deleteLoading, setDeleteLoading] = React.useState(false);
 
   // Helper function to format date
   const formatDate = (dateString) => {
@@ -93,6 +97,36 @@ const Dashboard = () => {
   // Function to handle project creation
   const handleProjectCreated = (newProject) => {
     setProjects([newProject, ...projects]);
+  };
+
+  // Function to handle delete project
+  const handleDeleteProject = (project) => {
+    setProjectToDelete(project);
+    setShowDeleteModal(true);
+  };
+
+  // Function to confirm project deletion
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
+
+    try {
+      setDeleteLoading(true);
+      await apiService.deleteProject(projectToDelete.projectId);
+      
+      // Remove the project from the local state
+      setProjects(projects.filter(p => p.projectId !== projectToDelete.projectId));
+      
+      setToastMessage(`Project "${projectToDelete.projectName}" deleted successfully.`);
+      setShowToast(true);
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      setToastMessage(`Failed to delete project "${projectToDelete.projectName}". Please try again.`);
+      setShowToast(true);
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+      setProjectToDelete(null);
+    }
   };
 
   React.useEffect(() => {
@@ -248,19 +282,32 @@ const Dashboard = () => {
                         ) : (
                           <div className="d-flex align-items-center mb-1">
                             <h5 className="mb-0 me-2">{project.projectName}</h5>
-                            <Button
-                              variant="outline-secondary"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                startEditing(project);
-                              }}
-                              className="ms-auto"
-                              title="Edit project name"
-                            >
-                              <FontAwesomeIcon icon={faEdit} />
-                            </Button>
+                            <div className="ms-auto d-flex gap-1">
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  startEditing(project);
+                                }}
+                                title="Edit project name"
+                              >
+                                <FontAwesomeIcon icon={faEdit} />
+                              </Button>
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  handleDeleteProject(project);
+                                }}
+                                title="Delete project"
+                              >
+                                <FontAwesomeIcon icon={faTrash} />
+                              </Button>
+                            </div>
                           </div>
                         )}
                         <div className="d-flex flex-wrap gap-3 text-muted small">
@@ -298,6 +345,20 @@ const Dashboard = () => {
         onProjectCreated={handleProjectCreated}
       />
       
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        show={showDeleteModal}
+        onHide={() => {
+          setShowDeleteModal(false);
+          setProjectToDelete(null);
+        }}
+        onConfirm={confirmDeleteProject}
+        title="Delete Project"
+        message={`Are you sure you want to delete "${projectToDelete?.projectName}"? This action cannot be undone.`}
+        confirmText="Delete Project"
+        loading={deleteLoading}
+      />
+      
       {/* Toast for error notifications */}
       <ToastContainer className="p-3" position="top-end">
         <Toast 
@@ -305,10 +366,10 @@ const Dashboard = () => {
           onClose={() => setShowToast(false)} 
           delay={4000} 
           autohide
-          bg="danger"
+          bg={toastMessage?.includes('successfully') ? "success" : "danger"}
         >
           <Toast.Header>
-            <strong className="me-auto">Error</strong>
+            <strong className="me-auto">{toastMessage?.includes('successfully') ? 'Success' : 'Error'}</strong>
           </Toast.Header>
           <Toast.Body className="text-white">
             {toastMessage}

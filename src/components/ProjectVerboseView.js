@@ -22,7 +22,7 @@ const ProjectVerboseView = () => {
 
   // Define the columns as specified
   const columns = [
-    { key: 'name', label: 'Box' },
+    { key: 'name', label: 'Location' },
     { key: 'coo', label: 'COO' },
     { key: 'rohsStatus', label: 'RoHSStatus' },
     { key: 'secondaryPartNumber', label: 'SecondaryPartNumber' },
@@ -67,7 +67,7 @@ const fetchBoxDetails = async (boxId) => {
       setLoadingBoxes(prev => new Set(prev).add(boxId));
 
       const response = await apiService.getBoxDetails(boxId, true); // Use verbose endpoint
-      console.log('Box details response:', response);
+      console.log('Location details response:', response);
 
       // Update the project state with box details
       setProject(prevProject => {
@@ -95,7 +95,7 @@ const fetchBoxDetails = async (boxId) => {
       // Mark as fetched
       setFetchedBoxes(prev => new Set(prev).add(boxId));
     } catch (error) {
-      console.error('Failed to fetch box details:', error);
+      console.error('Failed to fetch location details:', error);
     } finally {
       setLoadingBoxes(prev => {
         const newSet = new Set(prev);
@@ -197,7 +197,7 @@ const handleBoxClick = (boxId, event) => {
               )}
               {column.key === 'name' && (
                 <span style={{ color: '#666', fontSize: '0.9em', marginLeft: '0.5rem' }}>
-                  ({box.subBoxCount} sub-boxes, {box.partCount} parts)
+                  ({box.subBoxCount} sub-locations, {box.partCount} parts)
                 </span>
               )}
               {column.key !== 'name' && (
@@ -339,7 +339,7 @@ return (
                     ) : (
                       <tr>
                         <td colSpan={columns.length} className="text-center text-muted py-4">
-                          No boxes found in this project.
+                          No locations found in this project.
                         </td>
                       </tr>
                     )}

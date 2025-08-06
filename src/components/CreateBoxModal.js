@@ -19,7 +19,7 @@ const CreateBoxModal = ({ show, onHide, onBoxCreated, projectId, parentBoxId = n
     e.preventDefault();
     
     if (!boxName.trim()) {
-      setError('Box name is required');
+      setError('Location name is required');
       return;
     }
 
@@ -33,9 +33,9 @@ const CreateBoxModal = ({ show, onHide, onBoxCreated, projectId, parentBoxId = n
         ...(parentBoxId && { parentBoxId: parentBoxId })
       };
 
-      console.log('Creating box with data:', boxData);
+      console.log('Creating location with data:', boxData);
       const response = await apiService.createBox(boxData);
-      console.log('Box created:', response);
+      console.log('Location created:', response);
       debugger;
 
       // Transform the response to match the expected format
@@ -63,10 +63,10 @@ const CreateBoxModal = ({ show, onHide, onBoxCreated, projectId, parentBoxId = n
     }
   };
 
-  const modalTitle = parentBoxId ? 'Create New Sub-location' : 'Create New Box';
-  const inputLabel = parentBoxId ? 'Sub-location Name' : 'Box Name';
-  const inputPlaceholder = parentBoxId ? 'Enter sub-location name' : 'Enter box name';
-  const buttonText = parentBoxId ? 'Create Sub-location' : 'Create Box';
+  const modalTitle = parentBoxId ? 'Create New Sub-location' : 'Create New Location';
+  const inputLabel = parentBoxId ? 'Sub-location Name' : 'Location Name';
+  const inputPlaceholder = parentBoxId ? 'Enter sub-location name' : 'Enter location name';
+  const buttonText = parentBoxId ? 'Create Sub-location' : 'Create Location';
 
   return (
     <Modal show={show} onHide={handleClose} centered>

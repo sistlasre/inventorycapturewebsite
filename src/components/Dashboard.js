@@ -271,7 +271,7 @@ const Dashboard = () => {
                           <div className="d-flex align-items-center">
                             <FontAwesomeIcon icon={faCubes} className="me-1" />
                             <Badge bg="secondary" className="me-1">{project.boxCount}</Badge>
-                            {project.boxCount === 1 ? 'box' : 'boxes'}
+                            {project.boxCount === 1 ? 'location' : 'locations'}
                           </div>
                         </div>
                       </div>

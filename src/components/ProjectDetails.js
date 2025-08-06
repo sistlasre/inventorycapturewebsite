@@ -191,14 +191,14 @@ const ProjectDetails = () => {
       <Row className="mb-3">
         <Col>
           <div className="d-flex justify-content-between align-items-center">
-            <h4>Boxes</h4>
+            <h4>Locations</h4>
             <Button
               variant="primary"
               size="sm"
               onClick={() => setShowCreateBoxModal(true)}
             >
               <FontAwesomeIcon icon={faPlus} className="me-2" />
-              Add Box
+              Add Location
             </Button>
           </div>
         </Col>
@@ -289,7 +289,7 @@ const ProjectDetails = () => {
                   <div className="mt-auto">
                     <Link to={`/box/${box.boxId}`} className="btn btn-outline-primary btn-sm">
                       <FontAwesomeIcon icon={faBox} className="me-2" />
-                      View Box
+                      View Location
                     </Link>
                   </div>
                 </Card.Body>
@@ -308,7 +308,7 @@ const ProjectDetails = () => {
                   onClick={() => setShowCreateBoxModal(true)}
                 >
                   <FontAwesomeIcon icon={faPlus} className="me-2" />
-                  Add Box
+                  Add Location
                 </Button>
               </Card.Body>
             </Card>

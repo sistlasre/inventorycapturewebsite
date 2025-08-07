@@ -188,17 +188,16 @@ const handleBoxClick = (boxId, event) => {
               : (isEvenRow ? '#f5f5f5' : '#fafafa')
           }}
         >
-          {columns.map(column => (
             <td 
-              key={column.key} 
+              key='name'
+              colspan='100'
               style={{ 
-                paddingLeft: column.key === 'name' ? paddingLeft : '0.75rem',
+                paddingLeft: paddingLeft,
                 borderRight: '1px solid #e9ecef',
                 whiteSpace: 'nowrap'
               }}
             >
-              {column.key === 'name' && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
                   <div>
                     <Link 
                       to={`/box/${box.boxId}`}
@@ -234,12 +233,7 @@ const handleBoxClick = (boxId, event) => {
                     <FontAwesomeIcon icon={faTrash} />
                   </button>
                 </div>
-              )}
-              {column.key !== 'name' && (
-                <span style={{ color: '#999' }}>—</span>
-              )}
             </td>
-          ))}
         </tr>
       );
       currentRowIndex++;
@@ -273,7 +267,7 @@ const handleBoxClick = (boxId, event) => {
                     }}
                   >
                     {column.key === 'name' && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
                         <Link 
                           to={`/part/${part.partId}`}
                           onClick={(e) => { e.preventDefault(); setSelectedPart(part); setShowPartModal(true); }}

@@ -33,18 +33,6 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
     const generatedContent = part.generatedContent || {};
     const manualContent = part.manualContent || {};
 
-    // Combine all keys from both contents
-    const allKeys = new Set([...Object.keys(generatedContent), ...Object.keys(manualContent)]);
-    const keysToShow = COLUMNS.map(col => col.key).filter(key => allKeys.has(key));
-
-    // Add any additional keys not in COLUMNS
-    const additionalKeys = [...allKeys].filter(key => !COLUMNS.some(col => col.key === key));
-    const finalKeys = [...keysToShow, ...additionalKeys];
-
-    if (finalKeys.length === 0) {
-      return <p className="text-muted">No content available</p>;
-    }
-
     return (
       <div className="table-responsive">
         <table className="table table-striped">
@@ -56,8 +44,8 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
             </tr>
           </thead>
           <tbody>
-            {finalKeys.map(key => {
-              const label = COLUMNS.find(col => col.key === key)?.label || key;
+            {COLUMNS.map(column => {
+              const {key, label} = column;
               const generatedValue = Array.isArray(generatedContent[key]) 
                 ? generatedContent[key].join(', ') 
                 : String(generatedContent[key] || '');

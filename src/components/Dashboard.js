@@ -166,7 +166,7 @@ const Dashboard = () => {
   }, [user]);
 
   return (
-    <Container className="py-5">
+    <Container fluid className="py-5">
       <Row className="mb-4">
         <Col>
           <h1 className="text-center">Dashboard</h1>

@@ -36,7 +36,6 @@ const CreateBoxModal = ({ show, onHide, onBoxCreated, projectId, parentBoxId = n
       console.log('Creating location with data:', boxData);
       const response = await apiService.createBox(boxData);
       console.log('Location created:', response);
-      debugger;
 
       // Transform the response to match the expected format
       const newBox = {

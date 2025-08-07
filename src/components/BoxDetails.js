@@ -1,13 +1,15 @@
 import React from 'react';
 import { Container, Row, Col, Card, Spinner, Alert, Badge, Button, Form, Toast, ToastContainer } from 'react-bootstrap';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCogs, faBox, faCalendarAlt, faCubes, faPlus, faMapMarkerAlt, faImage, faEdit, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faBox, faCalendarAlt, faCubes, faPlus, faMapMarkerAlt, faImage, faEdit, faCheck, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import CreateBoxModal from './CreateBoxModal';
+import ConfirmationModal from './ConfirmationModal';
 
 const BoxDetails = () => {
   const { boxId } = useParams();
+  const navigate = useNavigate();
   const [box, setBox] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
@@ -18,6 +20,8 @@ const BoxDetails = () => {
   const [toastMessage, setToastMessage] = React.useState('');
   const [originalSubLocationName, setOriginalSubLocationName] = React.useState('');
   const [showCreateSubLocationModal, setShowCreateSubLocationModal] = React.useState(false);
+  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [deleteLoading, setDeleteLoading] = React.useState(false);
 
   // Helper function to format date
   const formatDate = (dateString) => {
@@ -105,6 +109,38 @@ const BoxDetails = () => {
     }));
   };
 
+  // Function to handle location deletion
+  const handleDeleteLocation = () => {
+    setShowDeleteModal(true);
+  };
+
+  // Function to confirm location deletion
+  const confirmDeleteLocation = async () => {
+    if (!box) return;
+
+    try {
+      setDeleteLoading(true);
+      await apiService.deleteBox(box.boxId);
+      
+      // Navigate back to project details on successful deletion
+      if (box.parentBoxId) {
+          navigate(`/box/${box.parentBoxId}`);
+      } else if (box.projectId) {
+        navigate(`/project/${box.projectId}`);
+      } else {
+        // Fallback to dashboard if no project ID
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Failed to delete location:', error);
+      setToastMessage(`Failed to delete location "${box.boxName}". Please try again.`);
+      setShowToast(true);
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   React.useEffect(() => {
     const fetchBoxDetails = async () => {
       try {
@@ -166,7 +202,18 @@ const BoxDetails = () => {
     <Container className="py-5">
       <Row className="mb-4">
         <Col>
-          <h1 className="text-center">{box.boxName}</h1>
+          <div className="d-flex justify-content-between align-items-center">
+            <h1 className="text-center flex-grow-1">{box.boxName}</h1>
+            <Button
+              variant="outline-danger"
+              size="sm"
+              onClick={handleDeleteLocation}
+              title="Delete location"
+            >
+              <FontAwesomeIcon icon={faTrash} className="me-1" />
+              Delete
+            </Button>
+          </div>
         </Col>
       </Row>
       
@@ -395,6 +442,17 @@ const BoxDetails = () => {
         parentBoxId={boxId}
       />
       
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteLocation}
+        title="Delete Location"
+        message={`Are you sure you want to delete location "${box?.boxName}"? This will also delete all its sub-locations and parts. This action cannot be undone.`}
+        confirmText="Delete Location"
+        loading={deleteLoading}
+      />
+      
       {/* Toast for error notifications */}
       <ToastContainer className="p-3" position="top-end">
         <Toast 
@@ -402,10 +460,10 @@ const BoxDetails = () => {
           onClose={() => setShowToast(false)} 
           delay={4000} 
           autohide
-          bg="danger"
+          bg={toastMessage?.includes('successfully') ? "success" : "danger"}
         >
           <Toast.Header>
-            <strong className="me-auto">Error</strong>
+            <strong className="me-auto">{toastMessage?.includes('successfully') ? 'Success' : 'Error'}</strong>
           </Toast.Header>
           <Toast.Body className="text-white">
             {toastMessage}

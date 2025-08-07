@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button } from 'react-bootstrap';
+import { Container, Row, Col, Button, Toast, ToastContainer } from 'react-bootstrap';
 import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import PartModal from './PartModal';
 import ConfirmationModal from './ConfirmationModal';
+import CreateBoxModal from './CreateBoxModal';
 
 const ProjectVerboseView = () => {
   const { projectId } = useParams();
@@ -24,10 +25,15 @@ const ProjectVerboseView = () => {
   const [showPartModal, setShowPartModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [deleteType, setDeleteType] = useState(null); // 'project', 'box', or 'part'
+  const [showCreateBoxModal, setShowCreateBoxModal] = useState(false);
 
   // Define the columns as specified
   const columns = [
-    { key: 'name', label: 'Location' },
+    { key: 'name', label: 'Name' },
     { key: 'coo', label: 'COO' },
     { key: 'rohsStatus', label: 'RoHSStatus' },
     { key: 'secondaryPartNumber', label: 'SecondaryPartNumber' },
@@ -192,18 +198,42 @@ const handleBoxClick = (boxId, event) => {
               }}
             >
               {column.key === 'name' && (
-                <Link 
-                  to={`/box/${box.boxId}`}
-                  onClick={(e) => handleBoxClick(box.boxId, e)}
-                  style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
-                >
-                  📦 {box.boxName}
-                </Link>
-              )}
-              {column.key === 'name' && (
-                <span style={{ color: '#666', fontSize: '0.9em', marginLeft: '0.5rem' }}>
-                  ({box.subBoxCount} sub-locations, {box.partCount} parts)
-                </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <Link 
+                      to={`/box/${box.boxId}`}
+                      onClick={(e) => handleBoxClick(box.boxId, e)}
+                      style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
+                    >
+                      📦 {box.boxName}
+                    </Link>
+                    <span style={{ color: '#666', fontSize: '0.9em', marginLeft: '0.5rem' }}>
+                      ({box.subBoxCount} sub-locations, {box.partCount} parts)
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDeleteBox(box);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#dc3545',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      marginLeft: '8px',
+                      borderRadius: '3px',
+                      fontSize: '14px'
+                    }}
+                    title={`Delete location "${box.boxName}"`}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                </div>
               )}
               {column.key !== 'name' && (
                 <span style={{ color: '#999' }}>—</span>
@@ -243,13 +273,37 @@ const handleBoxClick = (boxId, event) => {
                     }}
                   >
                     {column.key === 'name' && (
-                      <Link 
-                        to={`/part/${part.partId}`}
-                        onClick={(e) => { e.preventDefault(); setSelectedPart(part); setShowPartModal(true); }}
-                        style={{ textDecoration: 'none', color: '#333', cursor: 'pointer' }}
-                      >
-                        🔧 {part.partName || part.name}
-                      </Link>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Link 
+                          to={`/part/${part.partId}`}
+                          onClick={(e) => { e.preventDefault(); setSelectedPart(part); setShowPartModal(true); }}
+                          style={{ textDecoration: 'none', color: '#333', cursor: 'pointer' }}
+                        >
+                          🔧 {part.partName || part.name}
+                        </Link>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeletePart(part);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#dc3545',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            marginLeft: '8px',
+                            borderRadius: '3px',
+                            fontSize: '12px'
+                          }}
+                          title={`Delete part "${part.partName || part.name}"`}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </div>
                     )}
                     {column.key !== 'name' && getFieldValue(part, column.key)}
                   </td>
@@ -268,26 +322,118 @@ const handleBoxClick = (boxId, event) => {
 
   // Function to handle project deletion
   const handleDeleteProject = () => {
+    setItemToDelete(project);
+    setDeleteType('project');
     setShowDeleteModal(true);
   };
 
-  // Function to confirm project deletion
-  const confirmDeleteProject = async () => {
-    if (!project) return;
+  // Function to handle box deletion
+  const handleDeleteBox = (box) => {
+    setItemToDelete(box);
+    setDeleteType('box');
+    setShowDeleteModal(true);
+  };
+
+  // Function to handle part deletion  
+  const handleDeletePart = (part) => {
+    setItemToDelete(part);
+    setDeleteType('part');
+    setShowDeleteModal(true);
+  };
+
+  // Function to confirm deletion based on type
+  const confirmDelete = async () => {
+    if (!itemToDelete || !deleteType) return;
 
     try {
       setDeleteLoading(true);
-      await apiService.deleteProject(project.projectId);
       
-      // Navigate back to dashboard on successful deletion
-      navigate('/');
+      if (deleteType === 'project') {
+        await apiService.deleteProject(itemToDelete.projectId);
+        // Navigate back to dashboard on successful deletion
+        navigate('/');
+        
+      } else if (deleteType === 'box') {
+        await apiService.deleteBox(itemToDelete.boxId);
+        
+        // Remove the box and its children from the project state
+        setProject(prevProject => {
+          const removeBoxFromTree = (boxes) => {
+            return boxes.filter(box => {
+              if (box.boxId === itemToDelete.boxId) {
+                return false; // Remove this box
+              }
+              // Recursively remove from child boxes
+              if (box.childBoxes && box.childBoxes.length > 0) {
+                box.childBoxes = removeBoxFromTree(box.childBoxes);
+              }
+              return true;
+            });
+          };
+          
+          return {
+            ...prevProject,
+            boxes: removeBoxFromTree(prevProject.boxes)
+          };
+        });
+        
+        setToastMessage(`Location "${itemToDelete.boxName}" deleted successfully.`);
+        setShowToast(true);
+        
+      } else if (deleteType === 'part') {
+        await apiService.deletePart(itemToDelete.partId);
+        
+        // Remove the part from the project state
+        setProject(prevProject => {
+          const removePartFromBoxes = (boxes) => {
+            return boxes.map(box => {
+              if (box.parts && box.parts.length > 0) {
+                box.parts = box.parts.filter(part => part.partId !== itemToDelete.partId);
+              }
+              // Recursively check child boxes
+              if (box.childBoxes && box.childBoxes.length > 0) {
+                box.childBoxes = removePartFromBoxes(box.childBoxes);
+              }
+              return box;
+            });
+          };
+          
+          return {
+            ...prevProject,
+            boxes: removePartFromBoxes(prevProject.boxes)
+          };
+        });
+        
+        setToastMessage(`Part "${itemToDelete.partName || itemToDelete.name}" deleted successfully.`);
+        setShowToast(true);
+      }
+      
     } catch (error) {
-      console.error('Failed to delete project:', error);
-      setError(`Failed to delete project "${project.projectName}". Please try again.`);
+      console.error(`Failed to delete ${deleteType}:`, error);
+      if (deleteType === 'project') {
+        setError(`Failed to delete project "${itemToDelete.projectName}". Please try again.`);
+      } else {
+        setToastMessage(`Failed to delete ${deleteType}. Please try again.`);
+        setShowToast(true);
+      }
     } finally {
       setDeleteLoading(false);
       setShowDeleteModal(false);
+      setItemToDelete(null);
+      setDeleteType(null);
     }
+  };
+
+  // Function to handle box/location creation
+  const handleBoxCreated = (newBox) => {
+    setProject(prevProject => ({
+      ...prevProject,
+      boxes: [newBox, ...(prevProject.boxes || [])], // Add new box at the top
+      boxCount: (prevProject.boxCount || 0) + 1
+    }));
+    
+    setToastMessage(`Location "${newBox.boxName || newBox.name}" created successfully.`);
+    setShowToast(true);
   };
 
   if (loading) {
@@ -329,15 +475,26 @@ return (
         <Col>
           <div className="d-flex justify-content-between align-items-center">
             <h1 className="text-center flex-grow-1">📁 {project.projectName}</h1>
-            <Button
-              variant="outline-danger"
-              size="sm"
-              onClick={handleDeleteProject}
-              title="Delete project"
-            >
-              <FontAwesomeIcon icon={faTrash} className="me-1" />
-              Delete
-            </Button>
+            <div className="d-flex gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowCreateBoxModal(true)}
+                title="Add new location"
+              >
+                <FontAwesomeIcon icon={faPlus} className="me-1" />
+                Add Location
+              </Button>
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={handleDeleteProject}
+                title="Delete project"
+              >
+                <FontAwesomeIcon icon={faTrash} className="me-1" />
+                Delete
+              </Button>
+            </div>
           </div>
         </Col>
       </Row>
@@ -398,16 +555,62 @@ return (
         part={selectedPart} 
       />
       
+      {/* Create Box Modal */}
+      <CreateBoxModal
+        show={showCreateBoxModal}
+        onHide={() => setShowCreateBoxModal(false)}
+        onBoxCreated={handleBoxCreated}
+        projectId={projectId}
+      />
+      
       {/* Delete Confirmation Modal */}
       <ConfirmationModal
         show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
-        onConfirm={confirmDeleteProject}
-        title="Delete Project"
-        message={`Are you sure you want to delete "${project?.projectName}"? This action cannot be undone.`}
-        confirmText="Delete Project"
+        onHide={() => {
+          setShowDeleteModal(false);
+          setItemToDelete(null);
+          setDeleteType(null);
+        }}
+        onConfirm={confirmDelete}
+        title={
+          deleteType === 'project' ? 'Delete Project' :
+          deleteType === 'box' ? 'Delete Location' :
+          deleteType === 'part' ? 'Delete Part' : 'Delete'
+        }
+        message={
+          deleteType === 'project' 
+            ? `Are you sure you want to delete "${itemToDelete?.projectName}"? This action cannot be undone.`
+            : deleteType === 'box'
+            ? `Are you sure you want to delete location "${itemToDelete?.boxName}"? This will also delete all its sub-locations and parts. This action cannot be undone.`
+            : deleteType === 'part'
+            ? `Are you sure you want to delete part "${itemToDelete?.partName || itemToDelete?.name}"? This action cannot be undone.`
+            : 'Are you sure you want to delete this item?'
+        }
+        confirmText={
+          deleteType === 'project' ? 'Delete Project' :
+          deleteType === 'box' ? 'Delete Location' :
+          deleteType === 'part' ? 'Delete Part' : 'Delete'
+        }
         loading={deleteLoading}
       />
+      
+      {/* Toast for notifications */}
+      <ToastContainer className="p-3" position="top-end">
+        <Toast 
+          show={showToast} 
+          onClose={() => setShowToast(false)} 
+          delay={4000} 
+          autohide
+          bg={toastMessage?.includes('successfully') ? "success" : "danger"}
+        >
+          <Toast.Header>
+            <strong className="me-auto">{toastMessage?.includes('successfully') ? 'Success' : 'Error'}</strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">
+            {toastMessage}
+          </Toast.Body>
+        </Toast>
+      </ToastContainer>
     </Container>
   );
 };

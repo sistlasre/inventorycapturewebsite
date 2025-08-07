@@ -16,7 +16,7 @@ const Header = () => {
 
   return (
     <Navbar bg="dark" variant="dark" expand="lg" className="shadow-sm">
-      <Container>
+      <Container fluid>
         <Navbar.Brand as={Link} to="/" className="fw-bold">
           <FontAwesomeIcon icon={faBoxOpen} className="me-2" />
           Inventory Capture

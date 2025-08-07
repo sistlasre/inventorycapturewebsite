@@ -33,15 +33,16 @@ const ProjectVerboseView = () => {
 
   // Define the columns as specified
   const columns = [
-    { key: 'name', label: 'Name' },
-    { key: 'coo', label: 'COO' },
-    { key: 'rohsStatus', label: 'RoHSStatus' },
-    { key: 'secondaryPartNumber', label: 'SecondaryPartNumber' },
-    { key: 'datecode', label: 'Datecode' },
+    { key: 'name', label: 'Name'},
+    { key: 'mpn', label: 'MPN'},
+    { key: 'secondaryPartNumber', label: 'Secondary PN'},
+    { key: 'quantity', label: 'QTY'},
+    { key: 'manufacturer', label: 'MFR'},
+    { key: 'datecode', label: 'Datecode'},
+    { key: 'coo', label: 'COO'},
+    { key: 'rohsStatus', label: 'RoHS'},
     { key: 'msl', label: 'MSL' },
-    { key: 'manufacturer', label: 'Manufacturer' },
-    { key: 'quantity', label: 'Quantity' },
-    { key: 'mpn', label: 'MPN' }
+    { key: 'notes', label: 'Notes'}
   ];
 
   useEffect(() => {
@@ -146,26 +147,26 @@ const handleBoxClick = (boxId, event) => {
 
       switch (field) {
         case 'coo':
-          return generatedValue || manualValue || item.generatedContent?.COO || item.manualContent?.COO || 'N/A';
+          return generatedValue || manualValue || item.generatedContent?.COO || item.manualContent?.COO;
         case 'rohsStatus':
-          return generatedValue || manualValue || item.generatedContent?.RoHS || item.manualContent?.RoHS || 'N/A';
+          return generatedValue || manualValue || item.generatedContent?.RoHS || item.manualContent?.RoHS;
         case 'secondaryPartNumber':
-          return generatedValue || manualValue || item.generatedContent?.['Secondary Part Number'] || item.manualContent?.['Secondary Part Number'] || 'N/A';
+          return generatedValue || manualValue || item.generatedContent?.['Secondary Part Number'] || item.manualContent?.['Secondary Part Number'];
         case 'datecode':
-          return generatedValue || manualValue || item.generatedContent?.Datecode || item.manualContent?.Datecode || 'N/A';
+          return generatedValue || manualValue || item.generatedContent?.Datecode || item.manualContent?.Datecode;
         case 'msl':
-          return generatedValue || manualValue || item.generatedContent?.MSL || item.manualContent?.MSL || 'N/A';
+          return generatedValue || manualValue || item.generatedContent?.MSL || item.manualContent?.MSL;
         case 'manufacturer':
-          return generatedValue || manualValue || item.generatedContent?.Manufacturer || item.manualContent?.Manufacturer || 'N/A';
+          return generatedValue || manualValue || item.generatedContent?.Manufacturer || item.manualContent?.Manufacturer;
         case 'quantity':
-          return generatedValue || manualValue || item.generatedContent?.Quantity || item.manualContent?.Quantity || 'N/A';
+          return generatedValue || manualValue || item.generatedContent?.Quantity || item.manualContent?.Quantity;
         case 'mpn':
-          return generatedValue || manualValue || item.generatedContent?.MPN || item.manualContent?.MPN || 'N/A';
+          return generatedValue || manualValue || item.generatedContent?.MPN || item.manualContent?.MPN;
         default:
-          return 'N/A';
+          return '';
       }
     }
-    return 'N/A';
+    return '';
   };
 
   const renderTableRows = (boxes, level = 0, startingRowIndex = 0) => {
@@ -432,7 +433,7 @@ const handleBoxClick = (boxId, event) => {
 
   if (loading) {
     return (
-      <Container className="py-5">
+      <Container fluid className="py-5">
         <div className="text-center py-5">
           <Spinner animation="border" role="status">
             <span className="visually-hidden">Loading...</span>
@@ -464,11 +465,11 @@ const handleBoxClick = (boxId, event) => {
   }
 
 return (
-    <Container className="py-5">
+    <Container fluid className="py-5">
       <Row className="mb-4">
         <Col>
           <div className="d-flex justify-content-between align-items-center">
-            <h1 className="text-center flex-grow-1">📁 {project.projectName}</h1>
+            <h1 className="text-center flex-grow-1">{project.projectName}</h1>
             <div className="d-flex gap-2">
               <Button
                 variant="primary"

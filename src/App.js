@@ -20,7 +20,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="App d-flex flex-column min-vh-100">
+        <div className="App d-flex flex-column min-vh-100" style={{maxWidth: '90%', margin: 'auto'}}>
           <Header />
           <main className="flex-grow-1">
             <Routes>

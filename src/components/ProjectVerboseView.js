@@ -50,11 +50,8 @@ const ProjectVerboseView = () => {
       try {
         setLoading(true);
         setError('');
-        console.log('Fetching project details for ID:', projectId);
 
         const response = await apiService.getProjectDetails(projectId);
-        console.log('Project details response:', response);
-
         setProject(response.data);
       } catch (error) {
         console.error('Failed to fetch project details:', error);
@@ -79,7 +76,6 @@ const fetchBoxDetails = async (boxId) => {
       setLoadingBoxes(prev => new Set(prev).add(boxId));
 
       const response = await apiService.getBoxDetails(boxId, true); // Use verbose endpoint
-      console.log('Location details response:', response);
 
       // Update the project state with box details
       setProject(prevProject => {

@@ -201,16 +201,12 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
 
   // Get primary image
   const getPrimaryImage = () => {
-    console.log('Part data:', part);
-    console.log('Part images:', part?.images);
-    
     if (!part?.images || part.images.length === 0) {
       console.log('No images found for part');
       return null;
     }
     
     const primaryImage = part.images.find(img => img.isPrimary) || part.images[0];
-    console.log('Primary image:', primaryImage);
     return primaryImage;
   };
 

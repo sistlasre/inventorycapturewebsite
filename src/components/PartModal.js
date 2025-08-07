@@ -15,18 +15,32 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [originalContent, setOriginalContent] = useState({});
 
+  // Define the columns as specified
+  const COLUMNS = [
+    { key: 'mpn', label: 'MPN'},
+    { key: 'secondarypartnumber', label: 'Secondary PN'},
+    { key: 'quantity', label: 'QTY'},
+    { key: 'manufacturer', label: 'MFR'},
+    { key: 'datecode', label: 'Datecode'},
+    { key: 'coo', label: 'COO'},
+    { key: 'rohsstatus', label: 'RoHS'},
+    { key: 'msl', label: 'MSL'}
+  ];
+
   // Helper function to render generated content
   const renderGeneratedContent = (content) => {
     if (!content || Object.keys(content).length === 0) {
       return <p className="text-muted">No generated content available</p>;
     }
 
+    console.log(content);
+
     return (
       <div className="row">
-        {Object.entries(content).map(([key, value]) => (
+        {COLUMNS.map(({key, label}) => (
           <div className="col-md-6 mb-2" key={key}>
-            <strong>{key}:</strong> {
-              Array.isArray(value) ? value.join(', ') : String(value)
+            <strong>{label}:</strong> {
+              Array.isArray(content[key]) ? content[key].join(', ') : String(content[key] || '')
             }
           </div>
         ))}

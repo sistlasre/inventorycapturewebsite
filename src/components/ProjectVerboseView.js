@@ -35,12 +35,12 @@ const ProjectVerboseView = () => {
   const columns = [
     { key: 'name', label: 'Name'},
     { key: 'mpn', label: 'MPN'},
-    { key: 'secondaryPartNumber', label: 'Secondary PN'},
+    { key: 'secondarypartnumber', label: 'Secondary PN'},
     { key: 'quantity', label: 'QTY'},
     { key: 'manufacturer', label: 'MFR'},
     { key: 'datecode', label: 'Datecode'},
     { key: 'coo', label: 'COO'},
-    { key: 'rohsStatus', label: 'RoHS'},
+    { key: 'rohsstatus', label: 'RoHS'},
     { key: 'msl', label: 'MSL' },
     { key: 'notes', label: 'Notes'}
   ];
@@ -137,32 +137,7 @@ const handleBoxClick = (boxId, event) => {
 
   const getFieldValue = (item, field) => {
     // For parts, try to get values from generated or manual content
-    if (item.generatedContent || item.manualContent) {
-      const generatedValue = item.generatedContent?.[field];
-      const manualValue = item.manualContent?.[field];
-
-      switch (field) {
-        case 'coo':
-          return generatedValue || manualValue || item.generatedContent?.COO || item.manualContent?.COO;
-        case 'rohsStatus':
-          return generatedValue || manualValue || item.generatedContent?.RoHS || item.manualContent?.RoHS;
-        case 'secondaryPartNumber':
-          return generatedValue || manualValue || item.generatedContent?.['Secondary Part Number'] || item.manualContent?.['Secondary Part Number'];
-        case 'datecode':
-          return generatedValue || manualValue || item.generatedContent?.Datecode || item.manualContent?.Datecode;
-        case 'msl':
-          return generatedValue || manualValue || item.generatedContent?.MSL || item.manualContent?.MSL;
-        case 'manufacturer':
-          return generatedValue || manualValue || item.generatedContent?.Manufacturer || item.manualContent?.Manufacturer;
-        case 'quantity':
-          return generatedValue || manualValue || item.generatedContent?.Quantity || item.manualContent?.Quantity;
-        case 'mpn':
-          return generatedValue || manualValue || item.generatedContent?.MPN || item.manualContent?.MPN;
-        default:
-          return '';
-      }
-    }
-    return '';
+    return item[field] || item.manualContent?.[field] || item.generatedContent?.[field] || '';
   };
 
   const renderTableRows = (boxes, level = 0, startingRowIndex = 0) => {
@@ -187,7 +162,7 @@ const handleBoxClick = (boxId, event) => {
         >
             <td 
               key='name'
-              colspan='100'
+              colSpan='100'
               style={{ 
                 paddingLeft: paddingLeft,
                 borderRight: '1px solid #e9ecef',

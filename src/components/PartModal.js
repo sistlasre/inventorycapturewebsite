@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Modal, Button, Card, Row, Col, Badge, Form, Spinner, Alert } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert } from 'react-bootstrap';
 import { apiService } from '../services/apiService';
 import ReactImageMagnify from 'react-image-magnify';
 import './PartModal.css';
@@ -8,7 +8,7 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
   const [part, setPart] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   // State for editing manual content
   const [isEditing, setIsEditing] = useState(false);
   const [editingContent, setEditingContent] = useState({});
@@ -24,55 +24,71 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
     { key: 'datecode', label: 'Datecode'},
     { key: 'coo', label: 'COO'},
     { key: 'rohsstatus', label: 'RoHS'},
-    { key: 'msl', label: 'MSL'}
+    { key: 'msl', label: 'MSL'},
+    { key: 'serialorlotnumber', label: 'Serial/Lot Number'}
   ];
 
-  // Helper function to render generated content
-  const renderGeneratedContent = (content) => {
-    if (!content || Object.keys(content).length === 0) {
-      return <p className="text-muted">No generated content available</p>;
-    }
+  // Helper function to render content grid
+  const renderContentGrid = () => {
+    const generatedContent = part.generatedContent || {};
+    const manualContent = part.manualContent || {};
 
-    console.log(content);
+    // Combine all keys from both contents
+    const allKeys = new Set([...Object.keys(generatedContent), ...Object.keys(manualContent)]);
+    const keysToShow = COLUMNS.map(col => col.key).filter(key => allKeys.has(key));
+
+    // Add any additional keys not in COLUMNS
+    const additionalKeys = [...allKeys].filter(key => !COLUMNS.some(col => col.key === key));
+    const finalKeys = [...keysToShow, ...additionalKeys];
+
+    if (finalKeys.length === 0) {
+      return <p className="text-muted">No content available</p>;
+    }
 
     return (
-      <div className="row">
-        {COLUMNS.map(({key, label}) => (
-          <div className="col-md-6 mb-2" key={key}>
-            <strong>{label}:</strong> {
-              Array.isArray(content[key]) ? content[key].join(', ') : String(content[key] || '')
-            }
-          </div>
-        ))}
+      <div className="table-responsive">
+        <table className="table table-striped">
+          <thead>
+            <tr>
+              <th style={{width: '150px'}}>Field</th>
+              <th style={{width: '200px'}}>Generated</th>
+              <th style={{width: '200px'}}>Manual</th>
+            </tr>
+          </thead>
+          <tbody>
+            {finalKeys.map(key => {
+              const label = COLUMNS.find(col => col.key === key)?.label || key;
+              const generatedValue = Array.isArray(generatedContent[key]) 
+                ? generatedContent[key].join(', ') 
+                : String(generatedContent[key] || '');
+              const manualValue = Array.isArray(manualContent[key]) 
+                ? manualContent[key].join(', ') 
+                : String(manualContent[key] || '');
+
+              return (
+                <tr key={key}>
+                  <td><strong>{label}</strong></td>
+                  <td className="text-muted">{generatedValue}</td>
+                  <td>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="form-control form-control-sm"
+                        value={editingContent[key] || ''}
+                        onChange={(e) => handleFieldChange(key, e.target.value)}
+                        placeholder={generatedValue}
+                      />
+                    ) : (
+                      <span>{manualValue || <span className="text-muted">—</span>}</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     );
-  };
-
-  // Helper function to render manual content
-  const renderManualContent = (content) => {
-    if (!content) {
-      return <p className="text-muted">No manual content available</p>;
-    }
-
-    if (typeof content === 'string') {
-      return <div style={{ whiteSpace: 'pre-wrap' }}>{content}</div>;
-    }
-
-    if (typeof content === 'object') {
-      return (
-        <div className="row">
-          {Object.entries(content).map(([key, value]) => (
-            <div className="col-md-6 mb-2" key={key}>
-              <strong>{key}:</strong> {
-                Array.isArray(value) ? value.join(', ') : String(value)
-              }
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    return <div>{String(content)}</div>;
   };
 
   // Functions for editing manual content
@@ -80,11 +96,11 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
     const isManualContentEmpty = !part.manualContent || 
       (typeof part.manualContent === 'object' && Object.keys(part.manualContent).length === 0) ||
       (typeof part.manualContent === 'string' && part.manualContent.trim() === '');
-    
+
     const contentToEdit = isManualContentEmpty 
       ? { ...part.generatedContent } 
       : { ...part.manualContent };
-    
+
     setOriginalContent({ ...contentToEdit });
     setEditingContent({ ...contentToEdit });
     setIsEditing(true);
@@ -102,29 +118,34 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
     }));
   };
 
-  const addNewField = () => {
-    const newKey = `new_field_${Date.now()}`;
-    setEditingContent(prev => ({
-      ...prev,
-      [newKey]: ''
-    }));
-  };
-
-  const removeField = (keyToRemove) => {
-    setEditingContent(prev => {
-      const newContent = { ...prev };
-      delete newContent[keyToRemove];
-      return newContent;
-    });
-  };
 
   const saveManualContent = async () => {
     setUpdateLoading(true);
     try {
+      // Only send fields that differ from generated content
+      const generatedContent = part.generatedContent || {};
+      const changedFields = {};
+
+      Object.keys(editingContent).forEach(key => {
+        const editedValue = editingContent[key];
+        const generatedValue = Array.isArray(generatedContent[key]) 
+          ? generatedContent[key].join(', ') 
+          : String(generatedContent[key] || '');
+        const editedValueStr = String(editedValue || '');
+
+        // Include field if it's different from generated content or if it's a new field
+        if (editedValueStr !== generatedValue || !(key in generatedContent)) {
+          changedFields[key] = editedValue;
+        }
+      });
+
+      console.log('Sending only changed fields:', changedFields);
+
       await apiService.updatePart(part.partId, {
-        manualContent: editingContent,
+        manualContent: changedFields,
         part_id: part.partId
       });
+
       setPart({ ...part, manualContent: editingContent });
       setIsEditing(false);
     } catch (error) {
@@ -135,65 +156,15 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
     }
   };
 
-  // Render key-value editing form
-  const renderEditingForm = () => {
-    return (
-      <div>
-        {Object.entries(editingContent).map(([key, value]) => (
-          <div key={key} className="mb-3">
-            <div className="row">
-              <div className="col-md-4">
-                <Form.Control
-                  type="text"
-                  value={key}
-                  onChange={(e) => {
-                    const newKey = e.target.value;
-                    const newContent = { ...editingContent };
-                    delete newContent[key];
-                    newContent[newKey] = value;
-                    setEditingContent(newContent);
-                  }}
-                  placeholder="Field name"
-                />
-              </div>
-              <div className="col-md-7">
-                <Form.Control
-                  type="text"
-                  value={Array.isArray(value) ? value.join(', ') : String(value)}
-                  onChange={(e) => handleFieldChange(key, e.target.value)}
-                  placeholder="Field value"
-                />
-              </div>
-              <div className="col-md-1">
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  onClick={() => removeField(key)}
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-        <Button
-          variant="outline-secondary"
-          size="sm"
-          onClick={addNewField}
-          className="mb-3"
-        >
-          Add Field
-        </Button>
-      </div>
-    );
-  };
 
   // Fetch detailed part information when modal opens
   useEffect(() => {
     const fetchPartDetails = async () => {
       if (!initialPart || !show) return;
-      
+
       setLoading(true);
       setError('');
-      
+
       try {
         const response = await apiService.getPartDetails(initialPart.partId);
         setPart(response.data);
@@ -210,8 +181,6 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
     fetchPartDetails();
   }, [initialPart, show]);
 
-  // Simple state for image zoom
-  const [isImageZoomed, setIsImageZoomed] = useState(false);
 
   // Get primary image
   const getPrimaryImage = () => {
@@ -219,7 +188,7 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
       console.log('No images found for part');
       return null;
     }
-    
+
     const primaryImage = part.images.find(img => img.isPrimary) || part.images[0];
     return primaryImage;
   };
@@ -231,7 +200,7 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
           {part?.partName || part?.name || 'Part Details'}
         </Modal.Title>
       </Modal.Header>
-      
+
       <Modal.Body>
         {loading && (
           <div className="text-center py-4">
@@ -247,137 +216,123 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
         )}
 
         {part && !loading && (
-          <>
-            {/* Primary Image */}
-            <Card className="mb-3">
-              <Card.Body>
-                {getPrimaryImage() ? (
-                  <div>
-                    <h6>Primary Image </h6>
-                    <p className="text-muted small">Hover over the image to zoom in</p>
-                    <div className="text-center position-relative">
-                      <ReactImageMagnify
-                        {...{
-                          smallImage: {
-                            alt: part?.partName || part?.name || 'Part Image',
-                            width: 400,
-                            height: 300,
-                            src: getPrimaryImage().uri
-                          },
-                          largeImage: {
-                            src: getPrimaryImage().uri,
-                            width: 1200,
-                            height: 1800
-                          },
-                          enlargedImageContainerDimensions: {
-                            width: 400,
-                            height: 300
-                          },
-                          enlargedImageContainerStyle: {
-                            zIndex: 1500
-                          },
-                          shouldHideHintAfterFirstActivation: false
-                        }}
-                      />
-                      {getPrimaryImage().isPrimary && (
-                        <Badge bg="primary" className="part-image-badge">
-                          Primary
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <div className="text-muted">
-                      <p>No images available for this part</p>
-                    </div>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-
-            {/* Generated and Manual Content Side by Side */}
-            {(part.generatedContent && Object.keys(part.generatedContent).length > 0) || part.manualContent || isEditing ? (
-              <Row className="mb-3">
-                {/* Generated Content - Left Column */}
-                {part.generatedContent && Object.keys(part.generatedContent).length > 0 && (
-                  <Col md={6}>
-                    <Card className="h-100">
-                      <Card.Body>
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h6>Generated Content</h6>
-                          {!part.manualContent && !isEditing && (
-                            <Button
-                              variant="outline-info"
-                              size="sm"
-                              onClick={startEditing}
-                            >
-                              Create Manual Content
-                            </Button>
-                          )}
-                        </div>
-                        {renderGeneratedContent(part.generatedContent)}
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                )}
-
-                {/* Manual Content - Right Column */}
-                {(part.manualContent || isEditing) && (
-                  <Col md={part.generatedContent && Object.keys(part.generatedContent).length > 0 ? 6 : 12}>
-                    <Card className="h-100">
-                      <Card.Body>
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h6>
-                            {part.manualContent ? 'Manual Content' : 'Create Manual Content'}
-                          </h6>
-                          {!isEditing && part.manualContent && (
-                            <Button
-                              variant="outline-info"
-                              size="sm"
-                              onClick={startEditing}
-                            >
-                              Edit
-                            </Button>
-                          )}
-                        </div>
-                        
-                        {isEditing ? (
-                          <>
-                            {renderEditingForm()}
-                            <div className="mt-3">
-                              <Button
-                                variant="success"
-                                size="sm"
-                                className="me-2"
-                                onClick={saveManualContent}
-                                disabled={updateLoading}
-                              >
-                                {part.manualContent ? 'Save' : 'Save Manual Content'}
-                              </Button>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={cancelEditing}
-                                disabled={updateLoading}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          renderManualContent(part.manualContent)
+          <Row>
+            {/* Left Column - Images */}
+            <Col md={5}>
+              {/* Primary Image */}
+              <Card className="mb-3">
+                <Card.Body>
+                  {getPrimaryImage() ? (
+                    <div>
+                      <h6>Primary Image</h6>
+                      <p className="text-muted small">Hover over the image to zoom in</p>
+                      <div className="text-center position-relative">
+                        <ReactImageMagnify
+                          {...{
+                            smallImage: {
+                              alt: part?.partName || part?.name || 'Part Image',
+                              width: 300,
+                              height: 225,
+                              src: getPrimaryImage().uri
+                            },
+                            largeImage: {
+                              src: getPrimaryImage().uri,
+                              width: 900,
+                              height: 1350
+                            },
+                            enlargedImageContainerDimensions: {
+                              width: 300,
+                              height: 225
+                            },
+                            enlargedImageContainerStyle: {
+                              zIndex: 1500
+                            },
+                            shouldHideHintAfterFirstActivation: false
+                          }}
+                        />
+                        {getPrimaryImage().isPrimary && (
+                          <Badge bg="primary" className="part-image-badge">
+                            Primary
+                          </Badge>
                         )}
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                )}
-              </Row>
-            ) : null}
-          </>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <div className="text-muted">
+                        <p>No images available for this part</p>
+                      </div>
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
+
+            {/* Right Column - Content Grid */}
+            <Col md={7}>
+              {((part.generatedContent && Object.keys(part.generatedContent).length > 0) || part.manualContent || isEditing) ? (
+                <Card>
+                  <Card.Body>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h6>Part Information</h6>
+                      <div>
+                        {!isEditing && (
+                          <Button
+                            variant="outline-info"
+                            size="sm"
+                            onClick={startEditing}
+                            className="me-2"
+                          >
+                            {part.manualContent ? 'Edit Manual Content' : 'Create Manual Content'}
+                          </Button>
+                        )}
+                        {isEditing && (
+                          <>
+                            <Button
+                              variant="success"
+                              size="sm"
+                              className="me-2"
+                              onClick={saveManualContent}
+                              disabled={updateLoading}
+                            >
+                              {updateLoading ? 'Saving...' : 'Save'}
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={cancelEditing}
+                              disabled={updateLoading}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {renderContentGrid()}
+                  </Card.Body>
+                </Card>
+              ) : (
+                <Card>
+                  <Card.Body>
+                    <div className="text-center py-4">
+                      <p className="text-muted">No part information available</p>
+                      <Button
+                        variant="outline-info"
+                        size="sm"
+                        onClick={startEditing}
+                      >
+                        Create Manual Content
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              )}
+            </Col>
+          </Row>
         )}
       </Modal.Body>
-      
+
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>
           Close

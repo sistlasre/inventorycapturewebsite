@@ -206,7 +206,7 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
         {part && !loading && (
           <Row>
             {/* Left Column - Images */}
-            <Col md={4}>
+            <Col md={5}>
               {/* Primary Image */}
               <Card className="mb-3" style={{height: '100%'}}>
                 <Card.Body>
@@ -261,7 +261,7 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
             </Col>
 
             {/* Right Column - Content Grid */}
-            <Col md={8}>
+            <Col md={7}>
               {((part.generatedContent && Object.keys(part.generatedContent).length > 0) || part.manualContent || isEditing) ? (
                 <Card>
                   <Card.Body>

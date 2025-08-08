@@ -206,14 +206,13 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
         {part && !loading && (
           <Row>
             {/* Left Column - Images */}
-            <Col md={5}>
+            <Col md={4}>
               {/* Primary Image */}
-              <Card className="mb-3">
+              <Card className="mb-3" style={{height: '100%'}}>
                 <Card.Body>
                   {getPrimaryImage() ? (
                     <div>
                       <h6>Primary Image</h6>
-                      <p className="text-muted small">Hover over the image to zoom in</p>
                       <div className="text-center position-relative">
                         <ReactImageMagnify
                           {...{
@@ -233,9 +232,14 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
                               height: 225
                             },
                             enlargedImageContainerStyle: {
-                              zIndex: 1500
+                              zIndex: 1500,
+                              marginTop: "10px",
+                              position: "absolute",
+                              left: 0,
+                              top: "100%"
                             },
-                            shouldHideHintAfterFirstActivation: false
+                            shouldHideHintAfterFirstActivation: false,
+                            enlargedImagePosition: "beside"
                           }}
                         />
                         {getPrimaryImage().isPrimary && (
@@ -257,7 +261,7 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
             </Col>
 
             {/* Right Column - Content Grid */}
-            <Col md={7}>
+            <Col md={8}>
               {((part.generatedContent && Object.keys(part.generatedContent).length > 0) || part.manualContent || isEditing) ? (
                 <Card>
                   <Card.Body>

@@ -6,7 +6,7 @@ import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faPlus, faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import PartModal from './PartModal';
 import ConfirmationModal from './ConfirmationModal';
@@ -235,7 +235,32 @@ const handleBoxClick = (boxId, event) => {
               }}
             >
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <button
+                      onClick={(e) => handleBoxClick(box.boxId, e)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#666',
+                        cursor: 'pointer',
+                        padding: '2px',
+                        marginRight: '8px',
+                        borderRadius: '3px',
+                        fontSize: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '20px',
+                        height: '20px'
+                      }}
+                      title={expandedItems.has(box.boxId) ? 'Collapse location' : 'Expand location'}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    >
+                      <FontAwesomeIcon 
+                        icon={expandedItems.has(box.boxId) ? faChevronDown : faChevronRight} 
+                      />
+                    </button>
                     <Link 
                       to={`/box/${box.boxId}`}
                       onClick={(e) => handleBoxClick(box.boxId, e)}

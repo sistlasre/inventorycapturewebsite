@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import ReactImageMagnify from 'react-image-magnify';
 import './PartModal.css';
 
-const PartModal = ({ show, onHide, part: initialPart }) => {
+const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPartIndex = -1, onPartChange }) => {
   const [part, setPart] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // State for editing manual content
   const [isEditing, setIsEditing] = useState(false);
@@ -170,22 +173,104 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
   }, [initialPart, show]);
 
 
-  // Get primary image
-  const getPrimaryImage = () => {
+  // Reset image index when part changes
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [part?.partId]);
+
+  // Image navigation functions
+  const goToNextImage = () => {
+    if (part?.images && part.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % part.images.length);
+    }
+  };
+
+  const goToPreviousImage = () => {
+    if (part?.images && part.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev - 1 + part.images.length) % part.images.length);
+    }
+  };
+
+  // Part navigation functions
+  const goToNextPart = () => {
+    if (allParts.length > 1 && currentPartIndex < allParts.length - 1 && onPartChange) {
+      onPartChange(currentPartIndex + 1);
+    }
+  };
+
+  const goToPreviousPart = () => {
+    if (allParts.length > 1 && currentPartIndex > 0 && onPartChange) {
+      onPartChange(currentPartIndex - 1);
+    }
+  };
+
+  // Get current image
+  const getCurrentImage = () => {
     if (!part?.images || part.images.length === 0) {
-      console.log('No images found for part');
       return null;
     }
+    return part.images[currentImageIndex] || part.images[0];
+  };
 
-    const primaryImage = part.images.find(img => img.isPrimary) || part.images[0];
-    return primaryImage;
+  // Get image type badge variant and text
+  const getImageTypeBadge = (image) => {
+    if (!image) {
+        return null;
+    }
+
+    let variant = 'secondary';
+    let text = 'Unknown';
+
+    if (image.type === 'primary') {
+      variant = 'primary';
+      text = 'Primary';
+    } else if (image.type === 'supplemental') {
+      variant = 'success';
+      text = 'Supplemental';
+    } else if (image.type === 'ipn') {
+      variant = 'warning';
+      text = 'IPN';
+    } else if (image.imageType) {
+      text = image.type.charAt(0).toUpperCase() + image.type.slice(1);
+    }
+
+    return { variant, text };
   };
 
   return (
     <Modal show={show} onHide={onHide} size="lg" scrollable dialogClassName="custom-modal-width">
       <Modal.Header closeButton>
-        <Modal.Title>
-          {part?.partName || part?.name || 'Part Details'}
+        <Modal.Title className="d-flex align-items-center justify-content-between w-100 me-4">
+          <div className="d-flex align-items-center">
+            {allParts.length > 1 && currentPartIndex > 0 && (
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={goToPreviousPart}
+                className="me-2"
+                title="Previous Part"
+              >
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </Button>
+            )}
+            <span>{part?.partName || part?.name || 'Part Details'}</span>
+            {allParts.length > 1 && currentPartIndex < allParts.length - 1 && (
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={goToNextPart}
+                className="ms-2"
+                title="Next Part"
+              >
+                <FontAwesomeIcon icon={faArrowRight} />
+              </Button>
+            )}
+          </div>
+          {allParts.length > 1 && (
+            <small className="text-muted">
+              Part {currentPartIndex + 1} of {allParts.length}
+            </small>
+          )}
         </Modal.Title>
       </Modal.Header>
 
@@ -207,12 +292,39 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
           <Row>
             {/* Left Column - Images */}
             <Col md={5}>
-              {/* Primary Image */}
+              {/* Image Gallery */}
               <Card className="mb-3" style={{height: '100%'}}>
                 <Card.Body>
-                  {getPrimaryImage() ? (
+                  {getCurrentImage() ? (
                     <div>
-                      <h6>Primary Image</h6>
+                      {/* Image Header with Navigation */}
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <h6 className="mb-0">Images ({part.images.length})</h6>
+                        {part.images.length > 1 && (
+                          <div>
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={goToPreviousImage}
+                              className="me-1"
+                            >
+                              <FontAwesomeIcon icon={faChevronLeft} />
+                            </Button>
+                            <span className="small text-muted mx-2">
+                              {currentImageIndex + 1} / {part.images.length}
+                            </span>
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={goToNextImage}
+                            >
+                              <FontAwesomeIcon icon={faChevronRight} />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Image Display */}
                       <div className="text-center position-relative">
                         <ReactImageMagnify
                           {...{
@@ -220,10 +332,10 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
                               alt: part?.partName || part?.name || 'Part Image',
                               width: 300,
                               height: 225,
-                              src: getPrimaryImage().uri
+                              src: getCurrentImage().uri
                             },
                             largeImage: {
-                              src: getPrimaryImage().uri,
+                              src: getCurrentImage().uri,
                               width: 900,
                               height: 1350
                             },
@@ -242,12 +354,18 @@ const PartModal = ({ show, onHide, part: initialPart }) => {
                             enlargedImagePosition: "beside"
                           }}
                         />
-                        {getPrimaryImage().isPrimary && (
-                          <Badge bg="primary" className="part-image-badge">
-                            Primary
-                          </Badge>
-                        )}
+
+                        {/* Image Type Badge */}
+                        {(() => {
+                          const badge = getImageTypeBadge(getCurrentImage());
+                          return badge ? (
+                            <Badge bg={badge.variant} className="part-image-badge">
+                              {badge.text}
+                            </Badge>
+                          ) : null;
+                        })()}
                       </div>
+
                     </div>
                   ) : (
                     <div className="text-center py-4">

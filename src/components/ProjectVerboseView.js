@@ -23,6 +23,8 @@ const ProjectVerboseView = () => {
   const [fetchedBoxes, setFetchedBoxes] = useState(new Set());
   const [selectedPart, setSelectedPart] = useState(null);
   const [showPartModal, setShowPartModal] = useState(false);
+  const [currentBoxParts, setCurrentBoxParts] = useState([]);
+  const [currentPartIndex, setCurrentPartIndex] = useState(-1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -140,6 +142,69 @@ const handleBoxClick = (boxId, event) => {
     return item[field] || item.manualContent?.[field] || item.generatedContent?.[field] || '';
   };
 
+  // Function to get all parts from a specific box (including child boxes)
+  const getAllPartsFromBox = (box) => {
+    let allParts = [...(box.parts || [])];
+
+    // Recursively get parts from child boxes
+    if (box.childBoxes && box.childBoxes.length > 0) {
+      box.childBoxes.forEach(childBox => {
+        allParts = [...allParts, ...getAllPartsFromBox(childBox)];
+      });
+    }
+
+    return allParts;
+  };
+
+  // Function to find the box that contains a specific part
+  const findBoxContainingPart = (boxes, partId) => {
+    for (const box of boxes) {
+      // Check if the part is directly in this box
+      if (box.parts && box.parts.some(part => part.partId === partId)) {
+        return box;
+      }
+      // Recursively check child boxes
+      if (box.childBoxes && box.childBoxes.length > 0) {
+        const foundBox = findBoxContainingPart(box.childBoxes, partId);
+        if (foundBox) return foundBox;
+      }
+    }
+    return null;
+  };
+
+  // Function to handle part modal opening with navigation context
+  const handlePartClick = (part, e) => {
+    e.preventDefault();
+
+    // Find the box that contains this part
+    const containingBox = findBoxContainingPart(project.boxes, part.partId);
+
+    if (containingBox) {
+      // Get all parts from this box (including child boxes)
+      const boxParts = getAllPartsFromBox(containingBox);
+      const partIndex = boxParts.findIndex(p => p.partId === part.partId);
+
+      setCurrentBoxParts(boxParts);
+      setCurrentPartIndex(partIndex);
+    } else {
+      // Fallback: just show the single part
+      setCurrentBoxParts([part]);
+      setCurrentPartIndex(0);
+    }
+
+    setSelectedPart(part);
+    setShowPartModal(true);
+  };
+
+  // Function to handle part navigation within the modal
+  const handlePartChange = (newIndex) => {
+    if (newIndex >= 0 && newIndex < currentBoxParts.length) {
+      const newPart = currentBoxParts[newIndex];
+      setSelectedPart(newPart);
+      setCurrentPartIndex(newIndex);
+    }
+  };
+
   const renderTableRows = (boxes, level = 0, startingRowIndex = 0) => {
     const rows = [];
     let currentRowIndex = startingRowIndex;
@@ -242,7 +307,7 @@ const handleBoxClick = (boxId, event) => {
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         <Link 
                           to={`/part/${part.partId}`}
-                          onClick={(e) => { e.preventDefault(); setSelectedPart(part); setShowPartModal(true); }}
+                          onClick={(e) => handlePartClick(part, e)}
                           style={{ textDecoration: 'none', color: '#333', cursor: 'pointer' }}
                         >
                           🔧 {part.partName || part.name}
@@ -313,15 +378,15 @@ const handleBoxClick = (boxId, event) => {
 
     try {
       setDeleteLoading(true);
-      
+
       if (deleteType === 'project') {
         await apiService.deleteProject(itemToDelete.projectId);
         // Navigate back to dashboard on successful deletion
         navigate('/');
-        
+
       } else if (deleteType === 'box') {
         await apiService.deleteBox(itemToDelete.boxId);
-        
+
         // Remove the box and its children from the project state
         setProject(prevProject => {
           const removeBoxFromTree = (boxes) => {
@@ -336,19 +401,19 @@ const handleBoxClick = (boxId, event) => {
               return true;
             });
           };
-          
+
           return {
             ...prevProject,
             boxes: removeBoxFromTree(prevProject.boxes)
           };
         });
-        
+
         setToastMessage(`Location "${itemToDelete.boxName}" deleted successfully.`);
         setShowToast(true);
-        
+
       } else if (deleteType === 'part') {
         await apiService.deletePart(itemToDelete.partId);
-        
+
         // Remove the part from the project state
         setProject(prevProject => {
           const removePartFromBoxes = (boxes) => {
@@ -363,17 +428,17 @@ const handleBoxClick = (boxId, event) => {
               return box;
             });
           };
-          
+
           return {
             ...prevProject,
             boxes: removePartFromBoxes(prevProject.boxes)
           };
         });
-        
+
         setToastMessage(`Part "${itemToDelete.partName || itemToDelete.name}" deleted successfully.`);
         setShowToast(true);
       }
-      
+
     } catch (error) {
       console.error(`Failed to delete ${deleteType}:`, error);
       if (deleteType === 'project') {
@@ -397,7 +462,7 @@ const handleBoxClick = (boxId, event) => {
       boxes: [newBox, ...(prevProject.boxes || [])], // Add new box at the top
       boxCount: (prevProject.boxCount || 0) + 1
     }));
-    
+
     setToastMessage(`Location "${newBox.boxName || newBox.name}" created successfully.`);
     setShowToast(true);
   };
@@ -518,9 +583,12 @@ return (
       <PartModal 
         show={showPartModal} 
         onHide={() => setShowPartModal(false)} 
-        part={selectedPart} 
+        part={selectedPart}
+        allParts={currentBoxParts}
+        currentPartIndex={currentPartIndex}
+        onPartChange={handlePartChange}
       />
-      
+
       {/* Create Box Modal */}
       <CreateBoxModal
         show={showCreateBoxModal}
@@ -528,7 +596,7 @@ return (
         onBoxCreated={handleBoxCreated}
         projectId={projectId}
       />
-      
+
       {/* Delete Confirmation Modal */}
       <ConfirmationModal
         show={showDeleteModal}
@@ -559,7 +627,7 @@ return (
         }
         loading={deleteLoading}
       />
-      
+
       {/* Toast for notifications */}
       <ToastContainer className="p-3" position="top-end">
         <Toast 

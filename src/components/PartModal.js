@@ -240,37 +240,39 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   return (
     <Modal show={show} onHide={onHide} size="lg" scrollable dialogClassName="custom-modal-width">
       <Modal.Header closeButton>
-        <Modal.Title className="d-flex align-items-center justify-content-between w-100 me-4">
-          <div className="d-flex align-items-center">
-            {allParts.length > 1 && currentPartIndex > 0 && (
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={goToPreviousPart}
-                className="me-2"
-                title="Previous Part"
-              >
-                <FontAwesomeIcon icon={faArrowLeft} />
-              </Button>
-            )}
-            <span>{part?.partName || part?.name || 'Part Details'}</span>
-            {allParts.length > 1 && currentPartIndex < allParts.length - 1 && (
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={goToNextPart}
-                className="ms-2"
-                title="Next Part"
-              >
-                <FontAwesomeIcon icon={faArrowRight} />
-              </Button>
+        <Modal.Title className="d-flex align-items-center justify-content-center w-100 me-4">
+          <div className="d-flex align-items-center flex-column">
+            <div className="d-flex align-items-center">
+              {allParts.length > 1 && currentPartIndex > 0 && (
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={goToPreviousPart}
+                  className="me-2"
+                  title="Previous Part"
+                >
+                  <FontAwesomeIcon icon={faArrowLeft} />
+                </Button>
+              )}
+              <span className="fw-bold">{part?.partName || part?.name || 'Part Details'}</span>
+              {allParts.length > 1 && currentPartIndex < allParts.length - 1 && (
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={goToNextPart}
+                  className="ms-2"
+                  title="Next Part"
+                >
+                  <FontAwesomeIcon icon={faArrowRight} />
+                </Button>
+              )}
+            </div>
+            {allParts.length > 1 && (
+              <small className="text-muted mt-1">
+                Part {currentPartIndex + 1} of {allParts.length}
+              </small>
             )}
           </div>
-          {allParts.length > 1 && (
-            <small className="text-muted">
-              Part {currentPartIndex + 1} of {allParts.length}
-            </small>
-          )}
         </Modal.Title>
       </Modal.Header>
 
@@ -289,9 +291,9 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
         )}
 
         {part && !loading && (
-          <Row>
+          <Row style={{height: '100%'}}>
             {/* Left Column - Images */}
-            <Col md={5}>
+            <Col md={4}>
               {/* Image Gallery */}
               <Card className="mb-3" style={{height: '100%'}}>
                 <Card.Body>
@@ -300,28 +302,39 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                       {/* Image Header with Navigation */}
                       <div className="d-flex justify-content-between align-items-center mb-2">
                         <h6 className="mb-0">Images ({part.images.length})</h6>
-                        {part.images.length > 1 && (
-                          <div>
-                            <Button
-                              variant="outline-secondary"
-                              size="sm"
-                              onClick={goToPreviousImage}
-                              className="me-1"
-                            >
-                              <FontAwesomeIcon icon={faChevronLeft} />
-                            </Button>
-                            <span className="small text-muted mx-2">
-                              {currentImageIndex + 1} / {part.images.length}
-                            </span>
-                            <Button
-                              variant="outline-secondary"
-                              size="sm"
-                              onClick={goToNextImage}
-                            >
-                              <FontAwesomeIcon icon={faChevronRight} />
-                            </Button>
-                          </div>
-                        )}
+                        <div className="d-flex align-items-center gap-2">
+                          {part.images.length > 1 && (
+                            <div>
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                onClick={goToPreviousImage}
+                                className="me-1"
+                              >
+                                <FontAwesomeIcon icon={faChevronLeft} />
+                              </Button>
+                              <span className="small text-muted mx-2">
+                                {currentImageIndex + 1} / {part.images.length}
+                              </span>
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                onClick={goToNextImage}
+                              >
+                                <FontAwesomeIcon icon={faChevronRight} />
+                              </Button>
+                            </div>
+                          )}
+                          <a 
+                            href={getCurrentImage().uri} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="btn btn-outline-primary btn-sm"
+                            title="View Full Image"
+                          >
+                            View Full Image
+                          </a>
+                        </div>
                       </div>
 
                       {/* Image Display */}
@@ -379,7 +392,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
             </Col>
 
             {/* Right Column - Content Grid */}
-            <Col md={7}>
+            <Col md={8}>
               {((part.generatedContent && Object.keys(part.generatedContent).length > 0) || part.manualContent || isEditing) ? (
                 <Card>
                   <Card.Body>
@@ -442,20 +455,6 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
           </Row>
         )}
       </Modal.Body>
-
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>
-          Close
-        </Button>
-        <Button 
-          variant="primary" 
-          href={`/part/${part?.partId}`} 
-          target="_blank"
-          disabled={!part}
-        >
-          View Full Page
-        </Button>
-      </Modal.Footer>
     </Modal>
   );
 };

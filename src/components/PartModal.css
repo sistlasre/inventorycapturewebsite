@@ -72,3 +72,19 @@
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+/* Clickable manual content fields */
+.manual-content-field {
+  display: inline-block;
+  min-width: 100%;
+  min-height: 20px;
+}
+
+.manual-content-field:hover {
+  background-color: #f8f9fa !important;
+  border: 1px dashed #007bff;
+}
+
+.manual-content-field:active {
+  background-color: #e9ecef !important;
+}

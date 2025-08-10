@@ -70,7 +70,21 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                         placeholder={generatedValue}
                       />
                     ) : (
-                      <span>{manualValue || <span className="text-muted">—</span>}</span>
+                      <span 
+                        className="manual-content-field"
+                        onClick={startEditing}
+                        style={{
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                        title="Click to edit"
+                      >
+                        {manualValue || <span className="text-muted">—</span>}
+                      </span>
                     )}
                   </td>
                 </tr>

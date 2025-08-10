@@ -241,7 +241,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     } else if (image.type === 'supplemental') {
       variant = 'success';
       text = 'Supplemental';
-    } else if (image.type === 'ipn') {
+    } else if (image.type === 'ipn_label') {
       variant = 'warning';
       text = 'IPN';
     } else if (image.imageType) {

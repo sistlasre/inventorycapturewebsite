@@ -206,6 +206,34 @@ const handleBoxClick = (boxId, event) => {
     }
   };
 
+  // Function to handle location change from the modal
+  const handleLocationChange = (newLocation, partIndex = 0) => {
+    // Find the actual box object containing this location
+    const findBox = (boxes, boxId) => {
+      for (const box of boxes) {
+        if (box.boxId === boxId) {
+          return box;
+        }
+        if (box.childBoxes && box.childBoxes.length > 0) {
+          const found = findBox(box.childBoxes, boxId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const newBox = findBox(project.boxes, newLocation.boxId);
+    if (newBox && newBox.parts && newBox.parts.length > partIndex) {
+      // Get all parts from this new location
+      const newBoxParts = getAllPartsFromBox(newBox);
+      const newPart = newBoxParts[partIndex];
+
+      setCurrentBoxParts(newBoxParts);
+      setCurrentPartIndex(partIndex);
+      setSelectedPart(newPart);
+    }
+  };
+
   const renderTableRows = (boxes, level = 0, startingRowIndex = 0) => {
     const rows = [];
     let currentRowIndex = startingRowIndex;
@@ -267,7 +295,7 @@ const handleBoxClick = (boxId, event) => {
                       onClick={(e) => handleBoxClick(box.boxId, e)}
                       style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
                     >
-                      📦 {box.boxName}
+                      {box.boxName}
                     </Link>
                     <span style={{ color: '#666', fontSize: '0.9em', marginLeft: '0.5rem' }}>
                       ({box.subBoxCount} sub-locations, {box.partCount} parts)
@@ -613,6 +641,9 @@ return (
         allParts={currentBoxParts}
         currentPartIndex={currentPartIndex}
         onPartChange={handlePartChange}
+        projectData={project}
+        currentLocation={selectedPart ? findBoxContainingPart(project?.boxes || [], selectedPart.partId) : null}
+        onLocationChange={handleLocationChange}
       />
 
       {/* Create Box Modal */}

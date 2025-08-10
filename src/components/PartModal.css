@@ -88,3 +88,24 @@
 .manual-content-field:active {
   background-color: #e9ecef !important;
 }
+
+/* Position close button closer to top right corner */
+.custom-modal-width .modal-header .btn-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 1055;
+  padding: 8px;
+  margin: 0;
+}
+
+/* Adjust modal header to account for repositioned close button */
+.custom-modal-width .modal-header {
+  position: relative;
+  padding-right: 3rem; /* Make room for close button */
+}
+
+/* Ensure modal title doesn't overlap with close button */
+.custom-modal-width .modal-title {
+  padding-right: 1rem;
+}

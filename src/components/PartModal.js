@@ -7,7 +7,7 @@ import ReactImageMagnify from 'react-image-magnify';
 import './PartModal.css';
 import { getHeaderForPart } from './sharedFunctions';
 
-const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPartIndex = -1, onPartChange }) => {
+const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPartIndex = -1, onPartChange, projectData = null, currentLocation = null, onLocationChange }) => {
   const [part, setPart] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,6 +18,10 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const [editingContent, setEditingContent] = useState({});
   const [updateLoading, setUpdateLoading] = useState(false);
   const [originalContent, setOriginalContent] = useState({});
+
+  // State for location navigation
+  const [allLocations, setAllLocations] = useState([]);
+  const [currentLocationIndex, setCurrentLocationIndex] = useState(-1);
 
   // Define the columns as specified
   const COLUMNS = [
@@ -145,8 +149,6 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
         }
       });
 
-      console.log('Sending only changed fields:', changedFields);
-
       await apiService.updatePart(part.partId, {
         manualContent: changedFields,
         part_id: part.partId
@@ -193,6 +195,50 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     setCurrentImageIndex(0);
   }, [part?.partId]);
 
+  // Initialize location navigation when project data is available
+  useEffect(() => {
+    if (projectData && show) {
+      const locations = getAllLocationsWithParts(projectData.boxes || []);
+      setAllLocations(locations);
+
+      // Find current location index
+      if (currentLocation) {
+        const locationIndex = locations.findIndex(loc => loc.boxId === currentLocation.boxId);
+        setCurrentLocationIndex(locationIndex);
+      }
+    }
+  }, [projectData, currentLocation, show]);
+
+  // Helper function to recursively get all locations with parts
+  const getAllLocationsWithParts = (boxes) => {
+    let locations = [];
+
+    const processBox = (box) => {
+      // If this box has parts, add it to locations
+      if (box.parts && box.parts.length > 0) {
+        locations.push({
+          boxId: box.boxId,
+          boxName: box.boxName,
+          parts: box.parts,
+          partCount: box.parts.length
+        });
+      }
+
+      // Recursively process child boxes
+      if (box.childBoxes && box.childBoxes.length > 0) {
+        box.childBoxes.forEach(childBox => {
+          processBox(childBox);
+        });
+      }
+    };
+
+    boxes.forEach(box => {
+      processBox(box);
+    });
+
+    return locations;
+  };
+
   // Image navigation functions
   const goToNextImage = () => {
     if (part?.images && part.images.length > 1) {
@@ -216,6 +262,21 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const goToPreviousPart = () => {
     if (allParts.length > 1 && currentPartIndex > 0 && onPartChange) {
       onPartChange(currentPartIndex - 1);
+    }
+  };
+
+  // Location navigation functions
+  const goToNextLocation = () => {
+    if (allLocations.length > 1 && currentLocationIndex < allLocations.length - 1 && onLocationChange) {
+      const nextLocation = allLocations[currentLocationIndex + 1];
+      onLocationChange(nextLocation, 0); // Go to first part in next location
+    }
+  };
+
+  const goToPreviousLocation = () => {
+    if (allLocations.length > 1 && currentLocationIndex > 0 && onLocationChange) {
+      const prevLocation = allLocations[currentLocationIndex - 1];
+      onLocationChange(prevLocation, 0); // Go to first part in previous location
     }
   };
 
@@ -257,7 +318,42 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
       <Modal.Header closeButton>
         <Modal.Title className="d-flex align-items-center justify-content-center w-100 me-4">
           <div className="d-flex align-items-center flex-column">
+            {/* Location Navigation */}
+            {allLocations.length > 1 && currentLocation && (
+              <div className="d-flex align-items-center mb-2">
+                {currentLocationIndex > 0 && (
+                  <Button
+                    variant="outline-info"
+                    size="sm"
+                    onClick={goToPreviousLocation}
+                    className="me-2"
+                    title="Previous Location"
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                  </Button>
+                )}
+                <span className="text-primary fw-semibold">{currentLocation.boxName}</span>
+                {currentLocationIndex < allLocations.length - 1 && (
+                  <Button
+                    variant="outline-info"
+                    size="sm"
+                    onClick={goToNextLocation}
+                    className="ms-2"
+                    title="Next Location"
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Part Navigation */}
             <div className="d-flex align-items-center">
+              <span className="fw-bold">{getHeaderForPart(part)}</span>
+            </div>
+
+            {/* Navigation Info */}
+            <div className="d-flex align-items-center gap-3 mt-1">
               {allParts.length > 1 && currentPartIndex > 0 && (
                 <Button
                   variant="outline-secondary"
@@ -269,7 +365,11 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                   <FontAwesomeIcon icon={faArrowLeft} />
                 </Button>
               )}
-              <span className="fw-bold">{getHeaderForPart(part)}</span>
+              {allParts.length > 1 && (
+                <small className="text-muted">
+                  Part {currentPartIndex + 1} of {allParts.length}
+                </small>
+              )}
               {allParts.length > 1 && currentPartIndex < allParts.length - 1 && (
                 <Button
                   variant="outline-secondary"
@@ -282,11 +382,6 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                 </Button>
               )}
             </div>
-            {allParts.length > 1 && (
-              <small className="text-muted mt-1">
-                Part {currentPartIndex + 1} of {allParts.length}
-              </small>
-            )}
           </div>
         </Modal.Title>
       </Modal.Header>

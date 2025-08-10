@@ -11,6 +11,7 @@ import { apiService } from '../services/apiService';
 import PartModal from './PartModal';
 import ConfirmationModal from './ConfirmationModal';
 import CreateBoxModal from './CreateBoxModal';
+import { getHeaderForPart } from './sharedFunctions';
 
 const ProjectVerboseView = () => {
   const { projectId } = useParams();
@@ -335,7 +336,7 @@ const handleBoxClick = (boxId, event) => {
                           onClick={(e) => handlePartClick(part, e)}
                           style={{ textDecoration: 'none', color: '#333', cursor: 'pointer' }}
                         >
-                          🔧 {part.partName || part.name}
+                          🔧 {getHeaderForPart(part)}
                         </Link>
                         <button
                           onClick={(e) => {

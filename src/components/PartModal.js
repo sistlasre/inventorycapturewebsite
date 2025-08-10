@@ -5,6 +5,7 @@ import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight } from '@forta
 import { apiService } from '../services/apiService';
 import ReactImageMagnify from 'react-image-magnify';
 import './PartModal.css';
+import { getHeaderForPart } from './sharedFunctions';
 
 const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPartIndex = -1, onPartChange }) => {
   const [part, setPart] = useState(null);
@@ -268,7 +269,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                   <FontAwesomeIcon icon={faArrowLeft} />
                 </Button>
               )}
-              <span className="fw-bold">{part?.partName || part?.name || 'Part Details'}</span>
+              <span className="fw-bold">{getHeaderForPart(part)}</span>
               {allParts.length > 1 && currentPartIndex < allParts.length - 1 && (
                 <Button
                   variant="outline-secondary"

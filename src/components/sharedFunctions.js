@@ -3,9 +3,9 @@ export const getHeaderForPart = (localPart) => {
         return 'Part Details';
     }
 
-    let partHeader = '';
+    let partHeader = localPart.name;
     if (localPart.mpn) {
-        partHeader = localPart.mpn;
+        partHeader += `: ${localPart.mpn}`;
         if (localPart.quantity) {
             partHeader += ` (${localPart.quantity})`
         }

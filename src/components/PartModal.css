@@ -1,6 +1,7 @@
 /* Modal width for image zoom */
 .custom-modal-width {
-  max-width: 70vw;
+  width: 90vw;
+  max-width: 90vw;
 }
 
 /* Primary image badge positioning */
@@ -34,8 +35,7 @@
 .modal-body {
   overflow: visible;
   position: relative;
-  height: calc(70vh - 100px); /* Adjust based on header height */
-  max-height: 70vh;
+  height: 90vh; /* Adjust based on header height */
 }
 
 /* Ensure the row takes full height */

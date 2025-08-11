@@ -350,7 +350,7 @@ const handleBoxClick = (boxId, event) => {
                       onClick={(e) => handleBoxClick(box.boxId, e)}
                       style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
                     >
-                      {box.boxName}
+                      📦 {box.boxName}
                     </Link>
                     <span style={{ color: '#666', fontSize: '0.9em', marginLeft: '0.5rem' }}>
                       ({box.subBoxCount} sub-locations, {box.partCount} parts)

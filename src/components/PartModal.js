@@ -55,9 +55,10 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
           <tbody>
             {COLUMNS.map(column => {
               const {key, label} = column;
-              const generatedValue = Array.isArray(generatedContent[key]) 
+              let generatedValue = Array.isArray(generatedContent[key]) 
                 ? generatedContent[key].join(', ') 
                 : String(generatedContent[key] || '');
+              generatedValue = key === 'notes' ? 'N/A' : generatedValue;
               const manualValue = Array.isArray(manualContent[key]) 
                 ? manualContent[key].join(', ') 
                 : String(manualContent[key] || '');
@@ -375,7 +376,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                     <FontAwesomeIcon icon={faChevronLeft} />
                   </Button>
                 )}
-                <span className="text-primary fw-semibold">{currentLocation.boxName}</span>
+                <span className="text-primary fw-semibold">📦 {currentLocation.boxName}</span>
                 {currentLocationIndex < allLocations.length - 1 && (
                   <Button
                     variant="outline-info"
@@ -496,8 +497,8 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                           {...{
                             smallImage: {
                               alt: part?.partName || part?.name || 'Part Image',
-                              width: 300,
-                              height: 225,
+                              width: 480,
+                              height: 360,
                               src: getCurrentImage().uri
                             },
                             largeImage: {
@@ -506,8 +507,8 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                               height: 1350
                             },
                             enlargedImageContainerDimensions: {
-                              width: 300,
-                              height: 225
+                              width: 480,
+                              height: 360
                             },
                             enlargedImageContainerStyle: {
                               zIndex: 1500,

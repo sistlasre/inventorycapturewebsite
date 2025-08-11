@@ -6,7 +6,7 @@ import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faPlus, faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faPlus, faChevronDown, faChevronRight, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import PartModal from './PartModal';
 import ConfirmationModal from './ConfirmationModal';
@@ -143,6 +143,25 @@ const handleBoxClick = (boxId, event) => {
     return item[field] || item.manualContent?.[field] || item.generatedContent?.[field] || '';
   };
 
+  // Function to get status indicator for parts
+  const getStatusIndicator = (part) => {
+    const status = part.status || 'never_reviewed';
+    const color = status === 'reviewed' ? '#28a745' : '#6c757d'; // Green for reviewed, gray for never_reviewed
+    const title = status === 'reviewed' ? 'Reviewed' : 'Not reviewed';
+
+    return (
+      <FontAwesomeIcon 
+        icon={faThumbsUp} 
+        style={{ 
+          color: color, 
+          fontSize: '14px', 
+          marginLeft: '6px' 
+        }}
+        title={title}
+      />
+    );
+  };
+
   // Function to get all parts from a specific box (including child boxes)
   const getAllPartsFromBox = (box) => {
     let allParts = [...(box.parts || [])];
@@ -197,12 +216,48 @@ const handleBoxClick = (boxId, event) => {
     setShowPartModal(true);
   };
 
-  // Function to handle part navigation within the modal
-  const handlePartChange = (newIndex) => {
-    if (newIndex >= 0 && newIndex < currentBoxParts.length) {
+  // Function to handle part navigation and status updates from the modal
+  const handlePartChange = (newIndex = null, updatedPart = null) => {
+    // Handle navigation case
+    if (newIndex !== null && newIndex >= 0 && newIndex < currentBoxParts.length) {
       const newPart = currentBoxParts[newIndex];
       setSelectedPart(newPart);
       setCurrentPartIndex(newIndex);
+    }
+
+    // Handle status update case
+    if (updatedPart && updatedPart.partId) {
+      // Update the part in currentBoxParts array
+      const updatedBoxParts = currentBoxParts.map(part => 
+        part.partId === updatedPart.partId ? updatedPart : part
+      );
+      setCurrentBoxParts(updatedBoxParts);
+
+      // Update the project state to reflect status changes in the table
+      setProject(prevProject => {
+        const updatePartInBoxes = (boxes) => {
+          return boxes.map(box => {
+            if (box.parts && box.parts.length > 0) {
+              box.parts = box.parts.map(part => 
+                part.partId === updatedPart.partId ? { ...part, status: updatedPart.status } : part
+              );
+            }
+            // Recursively update child boxes
+            if (box.childBoxes && box.childBoxes.length > 0) {
+              box.childBoxes = updatePartInBoxes(box.childBoxes);
+            }
+            return box;
+          });
+        };
+
+        return {
+          ...prevProject,
+          boxes: updatePartInBoxes(prevProject.boxes)
+        };
+      });
+
+      // Update the selected part if it's the one that was updated
+      setSelectedPart(updatedPart);
     }
   };
 
@@ -359,10 +414,11 @@ const handleBoxClick = (boxId, event) => {
                   >
                     {column.key === 'name' && (
                       <div style={{ display: 'flex', alignItems: 'center' }}>
+                        {getStatusIndicator(part)}
                         <Link 
                           to={`/part/${part.partId}`}
                           onClick={(e) => handlePartClick(part, e)}
-                          style={{ textDecoration: 'none', color: '#333', cursor: 'pointer' }}
+                          style={{ textDecoration: 'none', color: '#333', cursor: 'pointer', marginLeft: '6px' }}
                         >
                           🔧 {getHeaderForPart(part)}
                         </Link>

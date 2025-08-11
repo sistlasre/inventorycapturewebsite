@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import ReactImageMagnify from 'react-image-magnify';
 import './PartModal.css';
@@ -136,8 +136,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
       if (manualFields && Object.keys(manualFields).length) {
         await apiService.updatePart(part.partId, {
-            manualContent: manualFields,
-            part_id: part.partId
+            manualContent: manualFields
         });
       } else {
         console.log("Manual content didn't change. No need to make a request to the backend");
@@ -153,11 +152,64 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     }
   };
 
+  // Function to get status indicator for parts
+  const getStatusIndicator = (part) => {
+    const status = part?.status || 'never_reviewed';
+    const color = status === 'reviewed' ? '#28a745' : '#6c757d'; // Green for reviewed, gray for never_reviewed
+    const title = status === 'reviewed' ? 'Reviewed' : 'Not reviewed';
+
+    return (
+      <FontAwesomeIcon 
+        icon={faThumbsUp} 
+        style={{ 
+          color: color, 
+          fontSize: '48px',
+          cursor: 'pointer'
+        }}
+        title={`${title} - Click to toggle`}
+        onClick={toggleStatus}
+      />
+    );
+  };
+
+  // Function to toggle part status
+  const toggleStatus = async () => {
+    if (!part) return;
+
+    const currentStatus = part.status || 'never_reviewed';
+    const newStatus = currentStatus === 'reviewed' ? 'never_reviewed' : 'reviewed';
+
+    try {
+      setUpdateLoading(true);
+      await apiService.updatePart(part.partId, {
+        reviewStatus: newStatus
+      });
+      // Create updated part object
+      const updatedPart = { ...part, status: newStatus };
+
+      // Update local part state
+      setPart(updatedPart);
+
+      // Notify parent component of the status change with the updated part
+      if (onPartChange) {
+        onPartChange(null, updatedPart);
+      }
+    } catch (error) {
+      console.error('Failed to update part status:', error);
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
 
   // Fetch detailed part information when modal opens
   useEffect(() => {
     const fetchPartDetails = async () => {
       if (!initialPart || !show) return;
+
+      // If we already have a part loaded with the same ID, don't refetch
+      if (part && part.partId === initialPart.partId) {
+        return;
+      }
 
       setLoading(true);
       setError('');
@@ -305,6 +357,9 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   return (
     <Modal show={show} onHide={onHide} size="lg" scrollable dialogClassName="custom-modal-width">
       <Modal.Header closeButton>
+        <div className="position-absolute" style={{ left: '16px', top: '16px', zIndex: 1060 }}>
+          {part && getStatusIndicator(part)}
+        </div>
         <Modal.Title className="d-flex align-items-center justify-content-center w-100 me-4">
           <div className="d-flex align-items-center flex-column">
             {/* Location Navigation */}

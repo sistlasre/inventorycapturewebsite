@@ -33,7 +33,8 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     { key: 'coo', label: 'COO'},
     { key: 'rohsstatus', label: 'RoHS'},
     { key: 'msl', label: 'MSL'},
-    { key: 'serialorlotnumber', label: 'Serial/Lot Number'}
+    { key: 'serialorlotnumber', label: 'Serial/Lot Number'},
+    { key: 'notes', label: 'Notes'}
   ];
 
   // Helper function to render content grid
@@ -129,9 +130,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
       Object.keys(editingContent).forEach(key => {
         const editedValue = String(editingContent[key] || '');
         const originalValue = String(originalContent[key] || '');
-        if (editedValue != originalValue) {
-            manualFields[key] = editedValue || '';
-        }
+        manualFields[key] = editedValue || '';
       });
 
       if (manualFields && Object.keys(manualFields).length) {

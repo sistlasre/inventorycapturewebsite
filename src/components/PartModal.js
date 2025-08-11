@@ -72,7 +72,6 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                         className="form-control form-control-sm"
                         value={editingContent[key] || ''}
                         onChange={(e) => handleFieldChange(key, e.target.value)}
-                        placeholder={generatedValue}
                       />
                     ) : (
                       <span 
@@ -103,14 +102,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
   // Functions for editing manual content
   const startEditing = () => {
-    const isManualContentEmpty = !part.manualContent || 
-      (typeof part.manualContent === 'object' && Object.keys(part.manualContent).length === 0) ||
-      (typeof part.manualContent === 'string' && part.manualContent.trim() === '');
-
-    const contentToEdit = isManualContentEmpty 
-      ? { ...part.generatedContent } 
-      : { ...part.manualContent };
-
+    const contentToEdit = part.manualContent;
     setOriginalContent({ ...contentToEdit });
     setEditingContent({ ...contentToEdit });
     setIsEditing(true);
@@ -132,27 +124,24 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const saveManualContent = async () => {
     setUpdateLoading(true);
     try {
-      // Only send fields that differ from generated content
-      const generatedContent = part.generatedContent || {};
-      const changedFields = {};
+      const manualFields = {};
 
       Object.keys(editingContent).forEach(key => {
-        const editedValue = editingContent[key];
-        const generatedValue = Array.isArray(generatedContent[key]) 
-          ? generatedContent[key].join(', ') 
-          : String(generatedContent[key] || '');
-        const editedValueStr = String(editedValue || '');
-
-        // Include field if it's different from generated content or if it's a new field
-        if (editedValueStr !== generatedValue || !(key in generatedContent)) {
-          changedFields[key] = editedValue;
+        const editedValue = String(editingContent[key] || '');
+        const originalValue = String(originalContent[key] || '');
+        if (editedValue != originalValue) {
+            manualFields[key] = editedValue || '';
         }
       });
 
-      await apiService.updatePart(part.partId, {
-        manualContent: changedFields,
-        part_id: part.partId
-      });
+      if (manualFields && Object.keys(manualFields).length) {
+        await apiService.updatePart(part.partId, {
+            manualContent: manualFields,
+            part_id: part.partId
+        });
+      } else {
+        console.log("Manual content didn't change. No need to make a request to the backend");
+      }
 
       setPart({ ...part, manualContent: editingContent });
       setIsEditing(false);

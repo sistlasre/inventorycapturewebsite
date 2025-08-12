@@ -126,23 +126,25 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const saveManualContent = async () => {
     setUpdateLoading(true);
     try {
-      const manualFields = {};
-
-      Object.keys(editingContent).forEach(key => {
-        const editedValue = String(editingContent[key] || '');
-        const originalValue = String(originalContent[key] || '');
-        manualFields[key] = editedValue || '';
-      });
-
-      if (manualFields && Object.keys(manualFields).length) {
+      const currentStatus = part.status || 'never_reviewed';
+      if (Object.keys(editingContent).length || currentStatus != 'reviewed') {
         await apiService.updatePart(part.partId, {
-            manualContent: manualFields
+            manualContent: editingContent,
+            reviewStatus: 'reviewed',
+            ...editingContent
         });
       } else {
         console.log("Manual content didn't change. No need to make a request to the backend");
       }
 
-      setPart({ ...part, manualContent: editingContent });
+      // Create updated part object
+      const updatedPart = { ...part, manualContent: editingContent, status: 'reviewed', reviewStatus: 'reviewed', ...editingContent};
+      // Update local part state
+      setPart(updatedPart);
+      // Notify parent component of the status change with the updated part
+      if (onPartChange) {
+        onPartChange(null, updatedPart);
+      }
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update manual content:', error);
@@ -166,39 +168,8 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
           fontSize: '48px',
           cursor: 'pointer'
         }}
-        title={`${title} - Click to toggle`}
-        onClick={toggleStatus}
       />
     );
-  };
-
-  // Function to toggle part status
-  const toggleStatus = async () => {
-    if (!part) return;
-
-    const currentStatus = part.status || 'never_reviewed';
-    const newStatus = currentStatus === 'reviewed' ? 'never_reviewed' : 'reviewed';
-
-    try {
-      setUpdateLoading(true);
-      await apiService.updatePart(part.partId, {
-        reviewStatus: newStatus
-      });
-      // Create updated part object
-      const updatedPart = { ...part, status: newStatus };
-
-      // Update local part state
-      setPart(updatedPart);
-
-      // Notify parent component of the status change with the updated part
-      if (onPartChange) {
-        onPartChange(null, updatedPart);
-      }
-    } catch (error) {
-      console.error('Failed to update part status:', error);
-    } finally {
-      setUpdateLoading(false);
-    }
   };
 
   // Fetch detailed part information when modal opens

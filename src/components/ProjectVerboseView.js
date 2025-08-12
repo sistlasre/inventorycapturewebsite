@@ -140,6 +140,8 @@ const handleBoxClick = (boxId, event) => {
 
   const getFieldValue = (item, field) => {
     // For parts, try to get values from generated or manual content
+    console.log("FIELD: " + field);
+    console.log("FIELD VALUE: " + item[field] || '');
     return item[field] || item.manualContent?.[field] || item.generatedContent?.[field] || '';
   };
 
@@ -227,6 +229,7 @@ const handleBoxClick = (boxId, event) => {
 
     // Handle status update case
     if (updatedPart && updatedPart.partId) {
+      console.log("THIS IS THE UPDATED PART: " + JSON.stringify(updatedPart));
       // Update the part in currentBoxParts array
       const updatedBoxParts = currentBoxParts.map(part => 
         part.partId === updatedPart.partId ? updatedPart : part

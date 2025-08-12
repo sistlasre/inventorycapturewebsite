@@ -11,7 +11,7 @@
 
 .card {
   border-radius: 8px;
-  border: 1px solid #e3e6f0;
+  border: 1px solid #E5E7EB;
 }
 
 .card-header {
@@ -28,13 +28,22 @@
 
 /* Form styles */
 .form-control:focus {
-  border-color: #4e73df;
-  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+  border-color: #6fa5ff;
+  box-shadow: 0 0 0 0.2rem rgba(111, 165, 255, 0.25);
 }
 
 /* Navigation styles */
 .navbar-brand {
   font-weight: 600;
+}
+
+/* Logo styles */
+.navbar-brand img {
+  transition: transform 0.2s ease;
+}
+
+.navbar-brand:hover img {
+  transform: scale(1.05);
 }
 
 /* Card hover effects */
@@ -50,23 +59,23 @@
 
 /* Button styles */
 .btn-primary {
-  background-color: #4e73df;
-  border-color: #4e73df;
+  background-color: #6fa5ff;
+  border-color: #6fa5ff;
 }
 
 .btn-primary:hover {
-  background-color: #2e59d9;
-  border-color: #2653d4;
+  background-color: #5a8fff;
+  border-color: #4579ff;
 }
 
 .btn-success {
-  background-color: #1cc88a;
-  border-color: #1cc88a;
+  background-color: #059669;
+  border-color: #059669;
 }
 
 .btn-success:hover {
-  background-color: #17a673;
-  border-color: #169b6b;
+  background-color: #047857;
+  border-color: #065f46;
 }
 
 /* Footer styles */
@@ -77,7 +86,7 @@ footer {
 /* Project card styles */
 .project-card {
   transition: all 0.3s ease;
-  border-left: 4px solid #4e73df;
+  border-left: 4px solid #6fa5ff;
 }
 
 .project-card:hover {
@@ -92,7 +101,7 @@ footer {
 }
 
 .project-card-clickable:hover {
-  background-color: #f8f9fc;
+  background-color: #F9FAFB;
 }
 
 /* Remove text decoration from card links */
@@ -107,7 +116,7 @@ footer {
 
 /* Stats card styles */
 .stats-card {
-  background: linear-gradient(45deg, #4e73df, #224abe);
+  background: linear-gradient(45deg, #6fa5ff, #5a8fff);
   color: white;
 }
 
@@ -125,13 +134,13 @@ footer {
 }
 
 .upload-area:hover {
-  border-color: #4e73df;
-  background-color: #f8f9fc;
+  border-color: #6fa5ff;
+  background-color: #F9FAFB;
 }
 
 .upload-area.dragover {
-  border-color: #4e73df;
-  background-color: #f8f9fc;
+  border-color: #6fa5ff;
+  background-color: #F9FAFB;
 }
 
 /* Responsive adjustments */
@@ -144,6 +153,76 @@ footer {
   .card-body {
     padding: 1rem;
   }
+}
+
+/* Companion App Color Utilities */
+.text-primary-tint {
+  color: #6fa5ff !important;
+}
+
+.bg-primary-tint {
+  background-color: #6fa5ff !important;
+}
+
+.text-accent {
+  color: #059669 !important;
+}
+
+.bg-accent {
+  background-color: #059669 !important;
+}
+
+.text-warning-app {
+  color: #D97706 !important;
+}
+
+.bg-warning-app {
+  background-color: #D97706 !important;
+}
+
+.text-error-app {
+  color: #DC2626 !important;
+}
+
+.bg-error-app {
+  background-color: #DC2626 !important;
+}
+
+.text-icon {
+  color: #6B7280 !important;
+}
+
+.bg-card {
+  background-color: #F9FAFB !important;
+}
+
+.border-app {
+  border-color: #E5E7EB !important;
+}
+
+/* Button variants matching companion app */
+.btn-accent {
+  background-color: #059669;
+  border-color: #059669;
+  color: white;
+}
+
+.btn-accent:hover {
+  background-color: #047857;
+  border-color: #065f46;
+  color: white;
+}
+
+.btn-warning-app {
+  background-color: #D97706;
+  border-color: #D97706;
+  color: white;
+}
+
+.btn-warning-app:hover {
+  background-color: #B45309;
+  border-color: #92400E;
+  color: white;
 }
 
 /* Dark mode support (if needed in future) */

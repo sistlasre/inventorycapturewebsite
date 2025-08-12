@@ -15,11 +15,16 @@ const Header = () => {
   };
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" className="shadow-sm">
+    <Navbar bg="white" expand="lg" className="shadow-sm border-bottom" variant="light">
       <Container fluid>
-        <Navbar.Brand as={Link} to="/" className="fw-bold">
-          <FontAwesomeIcon icon={faBoxOpen} className="me-2" />
-          Inventory Capture
+        <Navbar.Brand as={Link} to="/" className="fw-bold d-flex align-items-center">
+          <img 
+            src="/inventory-capture-logo-main.png" 
+            alt="Inventory Capture Logo" 
+            height="40"
+            className="me-2"
+            style={{ maxHeight: '40px', width: 'auto' }}
+          />
         </Navbar.Brand>
         
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -39,7 +44,7 @@ const Header = () => {
                   <FontAwesomeIcon icon={faUser} className="me-1" />
                   Welcome, {user.username || user.user_id}
                 </Navbar.Text>
-                <Button variant="outline-light" size="sm" onClick={handleLogout}>
+                <Button variant="outline-primary" size="sm" onClick={handleLogout}>
                   <FontAwesomeIcon icon={faSignOutAlt} className="me-1" />
                   Logout
                 </Button>

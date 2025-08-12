@@ -7,8 +7,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8f9fc;
-  color: #5a5c69;
+  background-color: #F9FAFB;
+  color: #1F2937;
 }
 
 code {
@@ -26,7 +26,7 @@ code {
 }
 
 .bg-gradient-primary {
-  background: linear-gradient(45deg, #4e73df, #224abe);
+  background: linear-gradient(45deg, #6fa5ff, #5a8fff);
 }
 
 .shadow-sm {
@@ -63,7 +63,7 @@ code {
 .btn:focus,
 .form-control:focus,
 .form-select:focus {
-  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(111, 165, 255, 0.25);
 }
 
 /* Animation utilities */

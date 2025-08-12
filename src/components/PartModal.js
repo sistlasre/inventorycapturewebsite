@@ -165,8 +165,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
         icon={faThumbsUp} 
         style={{ 
           color: color, 
-          fontSize: '48px',
-          cursor: 'pointer'
+          fontSize: '48px'
         }}
       />
     );

@@ -5,6 +5,7 @@ export const getHeaderForPart = (localPart) => {
 
     let partHeader = localPart.name;
     if (localPart.mpn) {
+        partHeader = partHeader.replace("Part ", "");
         partHeader += `: ${localPart.mpn}`;
         if (localPart.quantity) {
             partHeader += ` (${localPart.quantity})`

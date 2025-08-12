@@ -23,6 +23,23 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const [allLocations, setAllLocations] = useState([]);
   const [currentLocationIndex, setCurrentLocationIndex] = useState(-1);
 
+  const [frozenPos, setFrozenPos] = useState(null);
+  const [freezeZoom, setFreezeZoom] = useState(false);
+  const handleToggleFreeze = () => {
+    setFreezeZoom((prev) => !prev);
+  };
+  const handleImageClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (!freezeZoom) {
+      setFrozenPos({ x, y });
+      setFreezeZoom(true);
+    } else {
+      setFreezeZoom(false);
+    }
+  };
+
   // Define the columns as specified
   const COLUMNS = [
     { key: 'mpn', label: 'MPN'},
@@ -324,6 +341,13 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     return { variant, text };
   };
 
+  const getImageDimension = (dimension) => {
+    if (window) {
+        return Math.floor(dimension == 'height' ? 0.33 * window.innerHeight : 0.28 * window.innerWidth);
+    }
+    return dimension == 'height'? 225 : 300;
+  };
+
   return (
     <Modal show={show} onHide={onHide} size="lg" scrollable dialogClassName="custom-modal-width">
       <Modal.Header closeButton>
@@ -462,35 +486,55 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                       </div>
 
                       {/* Image Display */}
-                      <div className="text-center position-relative">
+                      <div className='text-center position-relative' onClick={handleImageClick}>
+                        {!freezeZoom && (
                         <ReactImageMagnify
                           {...{
                             smallImage: {
                               alt: part?.partName || part?.name || 'Part Image',
-                              width: 480,
-                              height: 360,
+                              width: getImageDimension('width'),
+                              height: getImageDimension('height'),
                               src: getCurrentImage().uri
                             },
                             largeImage: {
                               src: getCurrentImage().uri,
-                              width: 900,
-                              height: 1350
+                              width: 1500,
+                              height: 1125
                             },
-                            enlargedImageContainerDimensions: {
-                              width: 480,
-                              height: 360
-                            },
-                            enlargedImageContainerStyle: {
-                              zIndex: 1500,
-                              marginTop: "10px",
-                              position: "absolute",
-                              left: 0,
-                              top: "100%"
-                            },
-                            shouldHideHintAfterFirstActivation: false,
-                            enlargedImagePosition: "beside"
+                            enlargedImagePosition: "over",
+                            hoverDelayInMs: 0
                           }}
                         />
+                        )}
+                        {freezeZoom && (
+                            <>
+                                <img
+                                    src={getCurrentImage().uri}
+                                    alt={part.name}
+                                    style={{height: getImageDimension('height'), width: getImageDimension('width'), display: "block" }}
+                                />
+                                {/* Frozen magnified view */}
+                                <div
+                                    style={{
+                                        width: getImageDimension('width'),
+                                        height: getImageDimension('height'),
+                                        marginTop: "10px",
+                                        overflow: "hidden",
+                                        border: "1px solid #ccc",
+                                    }}
+                                >
+                                    <img
+                                        src={getCurrentImage().uri}
+                                        style={{
+                                            width: "1500px",
+                                            height: "1125px",
+                                            transform: `translate(-${frozenPos?.x * 2 || 0}px, -${frozenPos?.y * 2 || 0}px)`,
+                                        }}
+                                        alt="Frozen zoom"
+                                    />
+                                </div>
+                            </>
+                        )}
 
                         {/* Image Type Badge */}
                         {(() => {

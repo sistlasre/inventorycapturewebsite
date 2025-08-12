@@ -4,6 +4,10 @@
   max-width: 90vw;
 }
 
+.freeze-zoom {
+  pointer-events: none;
+}
+
 /* Primary image badge positioning */
 .part-image-badge {
   position: absolute;

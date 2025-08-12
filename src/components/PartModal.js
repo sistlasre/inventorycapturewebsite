@@ -25,15 +25,15 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
   const [frozenPos, setFrozenPos] = useState(null);
   const [freezeZoom, setFreezeZoom] = useState(false);
-  const handleToggleFreeze = () => {
-    setFreezeZoom((prev) => !prev);
-  };
+  const [imageScale, setImageScale] = useState(null);
+
   const handleImageClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     if (!freezeZoom) {
       setFrozenPos({ x, y });
+      setImageScale({width: 1500.0/getImageDimension('width'), height: 1125.0/getImageDimension('height')})
       setFreezeZoom(true);
     } else {
       setFreezeZoom(false);
@@ -528,7 +528,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                                         style={{
                                             width: "1500px",
                                             height: "1125px",
-                                            transform: `translate(-${frozenPos?.x * 2 || 0}px, -${frozenPos?.y * 2 || 0}px)`,
+                                            transform: `translate(-${frozenPos?.x * imageScale.width || 0}px, -${frozenPos?.y * imageScale.height || 0}px)`,
                                         }}
                                         alt="Frozen zoom"
                                     />

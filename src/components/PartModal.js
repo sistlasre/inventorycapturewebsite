@@ -341,7 +341,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
   const getImageDimension = (dimension) => {
     if (window) {
-        return Math.floor(dimension == 'height' ? 0.33 * window.innerHeight : 0.28 * window.innerWidth);
+        return Math.floor(dimension == 'height' ? 0.33 * window.innerHeight : 0.5 * window.innerWidth);
     }
     return dimension == 'height'? 225 : 300;
   };
@@ -439,7 +439,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
         {part && !loading && (
           <Row style={{height: '100%'}}>
             {/* Left Column - Images */}
-            <Col md={4}>
+            <Col md={8}>
               {/* Image Gallery */}
               <Card className="mb-3" style={{height: '100%'}}>
                 <Card.Body>
@@ -500,7 +500,10 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                               height: getImageDimension('height') * 3
                             },
                             enlargedImagePosition: "over",
-                            hoverDelayInMs: 0
+                            hoverDelayInMs: 0,
+                            imageStyle: {
+                                objectFit: 'contain',
+                            }
                           }}
                         />
                         )}
@@ -509,7 +512,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                                 <img
                                     src={getCurrentImage().uri}
                                     alt={part.name}
-                                    style={{height: getImageDimension('height'), width: getImageDimension('width'), display: "block" }}
+                                    style={{height: getImageDimension('height'), width: getImageDimension('width'), display: "block", objectFit: 'contain' }}
                                 />
                                 {/* Frozen magnified view */}
                                 <div
@@ -558,7 +561,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
             </Col>
 
             {/* Right Column - Content Grid */}
-            <Col md={8}>
+            <Col md={4}>
               {((part.generatedContent && Object.keys(part.generatedContent).length > 0) || part.manualContent || isEditing) ? (
                 <Card>
                   <Card.Body>

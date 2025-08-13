@@ -1,6 +1,6 @@
 /* Modal width for image zoom */
 .custom-modal-width {
-  width: 90vw;
+  width: 80vw;
   max-width: 90vw;
 }
 
@@ -39,7 +39,7 @@
 .modal-body {
   overflow: visible;
   position: relative;
-  height: 90vh; /* Adjust based on header height */
+  max-height: 90vh; /* Adjust based on header height */
 }
 
 /* Ensure the row takes full height */

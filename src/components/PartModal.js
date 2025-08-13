@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import ReactImageMagnify from 'react-image-magnify';
 import './PartModal.css';
@@ -25,6 +25,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
   const [frozenPos, setFrozenPos] = useState(null);
   const [freezeZoom, setFreezeZoom] = useState(false);
+  const [imageRotation, setImageRotation] = useState(0);
 
   const handleImageClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -216,9 +217,10 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   }, [initialPart, show]);
 
 
-  // Reset image index when part changes
+  // Reset image index and rotation when part changes
   useEffect(() => {
     setCurrentImageIndex(0);
+    setImageRotation(0);
   }, [part?.partId]);
 
   // Initialize location navigation when project data is available
@@ -269,13 +271,20 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const goToNextImage = () => {
     if (part?.images && part.images.length > 1) {
       setCurrentImageIndex((prev) => (prev + 1) % part.images.length);
+      setImageRotation(0); // Reset rotation when changing images
     }
   };
 
   const goToPreviousImage = () => {
     if (part?.images && part.images.length > 1) {
       setCurrentImageIndex((prev) => (prev - 1 + part.images.length) % part.images.length);
+      setImageRotation(0); // Reset rotation when changing images
     }
+  };
+
+  // Image rotation function
+  const rotateImage = () => {
+    setImageRotation((prev) => (prev + 90) % 360);
   };
 
   // Part navigation functions
@@ -471,6 +480,15 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                               </Button>
                             </div>
                           )}
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={rotateImage}
+                            className="me-2"
+                            title="Rotate Image 90° Clockwise"
+                          >
+                            <FontAwesomeIcon icon={faRotateRight} />
+                          </Button>
                           <a 
                             href={getCurrentImage().uri} 
                             target="_blank" 
@@ -486,33 +504,44 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                       {/* Image Display */}
                       <div className='text-center position-relative' onClick={handleImageClick}>
                         {!freezeZoom && (
-                        <ReactImageMagnify
-                          {...{
-                            smallImage: {
-                              alt: part?.partName || part?.name || 'Part Image',
-                              width: getImageDimension('width'),
-                              height: getImageDimension('height'),
-                              src: getCurrentImage().uri
-                            },
-                            largeImage: {
-                              src: getCurrentImage().uri,
-                              width: getImageDimension('width') * 3,
-                              height: getImageDimension('height') * 3
-                            },
-                            enlargedImagePosition: "over",
-                            hoverDelayInMs: 0,
-                            imageStyle: {
-                                objectFit: 'contain',
-                            }
-                          }}
-                        />
+                          <ReactImageMagnify
+                            {...{
+                              smallImage: {
+                                alt: part?.partName || part?.name || 'Part Image',
+                                width: getImageDimension('width'),
+                                height: getImageDimension('height'),
+                                src: getCurrentImage().uri
+                              },
+                              largeImage: {
+                                src: getCurrentImage().uri,
+                                width: getImageDimension('width') * 3,
+                                height: getImageDimension('height') * 3,
+                                imageClassName: 'ic_enlarged_image'
+                              },
+                              enlargedImagePosition: "over",
+                              hoverDelayInMs: 0,
+                              imageStyle: {
+                                  objectFit: 'contain',
+                                  rotate: `${imageRotation}deg`
+                              },
+                              enlargedImageStyle: {
+                                  rotate: `${imageRotation}deg`
+                              }
+                            }}
+                          />
                         )}
                         {freezeZoom && (
                             <>
                                 <img
                                     src={getCurrentImage().uri}
                                     alt={part.name}
-                                    style={{height: getImageDimension('height'), width: getImageDimension('width'), display: "block", objectFit: 'contain' }}
+                                    style={{
+                                        height: getImageDimension('height'), 
+                                        width: getImageDimension('width'), 
+                                        display: "block", 
+                                        objectFit: 'contain',
+                                        rotate: `${imageRotation}deg`
+                                    }}
                                 />
                                 {/* Frozen magnified view */}
                                 <div
@@ -529,7 +558,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                                         style={{
                                             width: `${getImageDimension('width') * 3}px`,
                                             height: `${getImageDimension('height') * 3}px`,
-                                            transform: `translate(-${frozenPos?.x * 2 || 0}px, -${frozenPos?.y * 2 || 0}px)`,
+                                            transform: `translate(-${frozenPos?.x * 2 || 0}px, -${frozenPos?.y * 2 || 0}px) rotate(${imageRotation}deg)`,
                                         }}
                                         alt="Frozen zoom"
                                     />

@@ -524,9 +524,6 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                                   objectFit: 'contain',
                                   rotate: `${imageRotation}deg`
                               },
-                              enlargedImageStyle: {
-                                  rotate: `${imageRotation}deg`
-                              }
                             }}
                           />
                         )}

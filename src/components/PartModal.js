@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faRotateRight, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -18,6 +18,8 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const [editingContent, setEditingContent] = useState({});
   const [updateLoading, setUpdateLoading] = useState(false);
   const [originalContent, setOriginalContent] = useState({});
+  const [focusFieldKey, setFocusFieldKey] = useState(null);
+  const inputRefs = useRef({});
 
   // State for location navigation
   const [allLocations, setAllLocations] = useState([]);
@@ -96,6 +98,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                   <td>
                     {isEditing ? (
                       <input
+                        ref={(el) => { inputRefs.current[key] = el; }}
                         type="text"
                         className="form-control form-control-sm"
                         value={editingContent[key] || ''}
@@ -104,7 +107,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                     ) : (
                       <span 
                         className="manual-content-field"
-                        onClick={startEditing}
+                        onClick={() => startEditing(key)}
                         style={{
                           cursor: 'pointer',
                           padding: '4px 8px',
@@ -129,12 +132,26 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   };
 
   // Functions for editing manual content
-  const startEditing = () => {
+  const startEditing = (fieldKey = null) => {
     const contentToEdit = part.manualContent;
     setOriginalContent({ ...contentToEdit });
     setEditingContent({ ...contentToEdit });
     setIsEditing(true);
+    if (fieldKey) {
+      setFocusFieldKey(fieldKey);
+    }
   };
+
+  // Auto-focus the input field when editing starts for a specific field
+  useEffect(() => {
+    if (isEditing && focusFieldKey && inputRefs.current[focusFieldKey]) {
+      // Small delay to ensure the input is rendered
+      setTimeout(() => {
+        inputRefs.current[focusFieldKey]?.focus();
+        setFocusFieldKey(null); // Reset focus field
+      }, 0);
+    }
+  }, [isEditing, focusFieldKey]);
 
   const cancelEditing = () => {
     setEditingContent({ ...originalContent });

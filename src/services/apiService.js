@@ -136,6 +136,10 @@ class ApiService {
   async getImageUrl(imageId) {
     return this.api.get(`/image/${imageId}`);
   }
+
+  async updateImage(imageId, updateData) {
+    return this.api.put(`/image/${imageId}`, updateData);
+  }
 }
 
 export const apiService = new ApiService();

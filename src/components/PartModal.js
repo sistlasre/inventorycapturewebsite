@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faRotateRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faRotateRight, faSave } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import ReactImageMagnify from 'react-image-magnify';
 import './PartModal.css';
@@ -26,6 +26,16 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const [frozenPos, setFrozenPos] = useState(null);
   const [freezeZoom, setFreezeZoom] = useState(false);
   const [imageRotation, setImageRotation] = useState(0);
+  const [savedImageRotations, setSavedImageRotations] = useState({}); // Track saved rotations per image
+  const [savingRotation, setSavingRotation] = useState(false);
+  const [currentTimestamp, setCurrentTimestamp] = useState(Date.now());
+
+  // Update timestamp whenever the modal is shown
+  useEffect(() => {
+    if (show) {
+      setCurrentTimestamp(Date.now());
+    }
+  }, [show]);
 
   const handleImageClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -221,6 +231,14 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   useEffect(() => {
     setCurrentImageIndex(0);
     setImageRotation(0);
+    // Initialize saved rotations from part data
+    if (part?.images) {
+      const initialRotations = {};
+      part.images.forEach((image) => {
+        initialRotations[image.id] = image.rotation || 0;
+      });
+      setSavedImageRotations(initialRotations);
+    }
   }, [part?.partId]);
 
   // Initialize location navigation when project data is available
@@ -270,21 +288,70 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   // Image navigation functions
   const goToNextImage = () => {
     if (part?.images && part.images.length > 1) {
-      setCurrentImageIndex((prev) => (prev + 1) % part.images.length);
-      setImageRotation(0); // Reset rotation when changing images
+      const newIndex = (currentImageIndex + 1) % part.images.length;
+      setCurrentImageIndex(newIndex);
+      // Load the saved rotation for the new image
+      const newImage = part.images[newIndex];
+      setImageRotation(savedImageRotations[newImage?.id] || 0);
     }
   };
 
   const goToPreviousImage = () => {
     if (part?.images && part.images.length > 1) {
-      setCurrentImageIndex((prev) => (prev - 1 + part.images.length) % part.images.length);
-      setImageRotation(0); // Reset rotation when changing images
+      const newIndex = (currentImageIndex - 1 + part.images.length) % part.images.length;
+      setCurrentImageIndex(newIndex);
+      // Load the saved rotation for the new image
+      const newImage = part.images[newIndex];
+      setImageRotation(savedImageRotations[newImage?.id] || 0);
     }
   };
 
   // Image rotation function
   const rotateImage = () => {
     setImageRotation((prev) => (prev + 90) % 360);
+  };
+
+  // Save image rotation function
+  const saveImageRotation = async () => {
+    const currentImage = getCurrentImage();
+    if (!currentImage) return;
+
+    const currentSavedRotation = savedImageRotations[currentImage.id] || 0;
+
+    // Only make API call if rotation has actually changed
+    if (imageRotation === currentSavedRotation) {
+      return;
+    }
+
+    setSavingRotation(true);
+    try {
+      await apiService.updateImage(currentImage.id, {
+        partId: part.partId,
+        rotation: imageRotation - currentSavedRotation
+      });
+
+      // Update local saved rotations state
+      setSavedImageRotations(prev => ({
+        ...prev,
+        [currentImage.id]: imageRotation
+      }));
+
+      setCurrentTimestamp(Date.now());
+
+    } catch (error) {
+      console.error('Failed to save image rotation:', error);
+      // Could show a toast/alert here
+    } finally {
+      setSavingRotation(false);
+    }
+  };
+
+  // Check if current rotation is different from saved rotation
+  const hasUnsavedRotation = () => {
+    const currentImage = getCurrentImage();
+    if (!currentImage) return false;
+    const savedRotation = savedImageRotations[currentImage.id] || 0;
+    return imageRotation !== savedRotation;
   };
 
   // Part navigation functions
@@ -489,8 +556,22 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                           >
                             <FontAwesomeIcon icon={faRotateRight} />
                           </Button>
+                          <Button
+                            variant={hasUnsavedRotation() ? "outline-warning" : "outline-secondary"}
+                            size="sm"
+                            onClick={saveImageRotation}
+                            className="me-2"
+                            disabled={savingRotation || !hasUnsavedRotation()}
+                            title={hasUnsavedRotation() ? "Save Image Rotation" : "No rotation changes to save"}
+                          >
+                            {savingRotation ? (
+                              <Spinner animation="border" size="sm" />
+                            ) : (
+                              <FontAwesomeIcon icon={faSave} />
+                            )}
+                          </Button>
                           <a 
-                            href={getCurrentImage().uri} 
+                            href={getCurrentImage().uri + `?v=${currentTimestamp}`} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="btn btn-outline-primary btn-sm"
@@ -504,40 +585,43 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                       {/* Image Display */}
                       <div className='text-center position-relative' onClick={handleImageClick}>
                         {!freezeZoom && (
+                        <div style={{
+                          '--magnify-rotation': `${imageRotation}deg`
+                        }} className={`magnify-container rotation-${imageRotation}`}>
                           <ReactImageMagnify
                             {...{
                               smallImage: {
                                 alt: part?.partName || part?.name || 'Part Image',
                                 width: getImageDimension('width'),
                                 height: getImageDimension('height'),
-                                src: getCurrentImage().uri
+                                src: getCurrentImage().uri + `?v=${currentTimestamp}`
                               },
                               largeImage: {
-                                src: getCurrentImage().uri,
+                                src: getCurrentImage().uri + `?v=${currentTimestamp}`,
                                 width: getImageDimension('width') * 3,
-                                height: getImageDimension('height') * 3,
-                                imageClassName: 'ic_enlarged_image'
+                                height: getImageDimension('height') * 3
                               },
                               enlargedImagePosition: "over",
                               hoverDelayInMs: 0,
                               imageStyle: {
                                   objectFit: 'contain',
-                                  rotate: `${imageRotation}deg`
-                              },
+                                  transform: `rotate(${imageRotation}deg)`
+                              }
                             }}
                           />
+                        </div>
                         )}
                         {freezeZoom && (
                             <>
                                 <img
-                                    src={getCurrentImage().uri}
+                                    src={getCurrentImage().uri + `?v=${currentTimestamp}`}
                                     alt={part.name}
                                     style={{
                                         height: getImageDimension('height'), 
                                         width: getImageDimension('width'), 
                                         display: "block", 
                                         objectFit: 'contain',
-                                        rotate: `${imageRotation}deg`
+                                        transform: `rotate(${imageRotation}deg)`
                                     }}
                                 />
                                 {/* Frozen magnified view */}
@@ -551,7 +635,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                                     }}
                                 >
                                     <img
-                                        src={getCurrentImage().uri}
+                                        src={getCurrentImage().uri + `?v=${currentTimestamp}`}
                                         style={{
                                             width: `${getImageDimension('width') * 3}px`,
                                             height: `${getImageDimension('height') * 3}px`,

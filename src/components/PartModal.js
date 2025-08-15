@@ -72,7 +72,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
     return (
       <div className="table-responsive">
-        <table className="table table-striped">
+        <table className="table table-striped table-sm">
           <thead>
             <tr>
               <th style={{width: '150px'}}>Field</th>
@@ -93,14 +93,14 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
               return (
                 <tr key={key}>
-                  <td><strong>{label}</strong></td>
-                  <td className="text-muted">{generatedValue}</td>
-                  <td>
+                  <td className="ic-small"><strong>{label}</strong></td>
+                  <td className="text-muted ic-small">{generatedValue}</td>
+                  <td className="ic-small">
                     {isEditing ? (
                       <input
                         ref={(el) => { inputRefs.current[key] = el; }}
                         type="text"
-                        className="form-control form-control-sm"
+                        className="form-control form-control-sm ic-small"
                         value={editingContent[key] || ''}
                         onChange={(e) => handleFieldChange(key, e.target.value)}
                       />

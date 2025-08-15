@@ -1,7 +1,7 @@
 /* Modal width for image zoom */
 .custom-modal-width {
-  width: 80vw;
-  max-width: 90vw;
+  width: 90vw;
+  max-width: 95vw;
 }
 
 .freeze-zoom {
@@ -112,5 +112,9 @@
 /* Ensure modal title doesn't overlap with close button */
 .custom-modal-width .modal-title {
   padding-right: 1rem;
+}
+
+.ic-small {
+  font-size: 11px;
 }
 

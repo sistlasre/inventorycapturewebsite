@@ -873,7 +873,7 @@ return (
           <Card className="shadow-sm">
             <Card.Body style={{ padding: 0 }}>
               <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-                <Table className="mb-0" style={{ minWidth: '1200px' }}>
+                <Table className="mb-0" style={{ minWidth: '1200px' }} size="sm">
                   <thead 
                     className="table-light" 
                     style={{ 

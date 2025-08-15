@@ -322,13 +322,6 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <Link 
-                        to={`/project/${project.projectId}`} 
-                        className="btn btn-outline-primary btn-sm ms-3"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <FontAwesomeIcon icon={faBox} className="me-2" /> Simple View
-                      </Link>
                     </div>
                   </Card.Body>
                 </Link>

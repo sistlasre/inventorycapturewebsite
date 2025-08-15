@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, Toast, ToastContainer } from 'react-bootstrap';
+import { Container, Row, Col, Button, Toast, ToastContainer, Form } from 'react-bootstrap';
 import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faPlus, faChevronDown, faChevronRight, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faPlus, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
+import { useAuth } from '../contexts/AuthContext';
 import PartModal from './PartModal';
 import ConfirmationModal from './ConfirmationModal';
 import CreateBoxModal from './CreateBoxModal';
 
 const ProjectVerboseView = () => {
+  const { user } = useAuth();
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
@@ -32,6 +34,15 @@ const ProjectVerboseView = () => {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [deleteType, setDeleteType] = useState(null); // 'project', 'box', or 'part'
   const [showCreateBoxModal, setShowCreateBoxModal] = useState(false);
+
+  // States for inline editing
+  const [editingProjectName, setEditingProjectName] = useState(false);
+  const [tempProjectName, setTempProjectName] = useState('');
+  const [editingBoxId, setEditingBoxId] = useState(null);
+  const [tempBoxName, setTempBoxName] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const projectNameInputRef = useRef(null);
+  const boxNameInputRefs = useRef({});
 
   // Define the columns as specified
   const columns = [
@@ -344,13 +355,80 @@ const handleBoxClick = (boxId, event) => {
                         icon={expandedItems.has(box.boxId) ? faChevronDown : faChevronRight} 
                       />
                     </button>
-                    <Link 
-                      to={`/box/${box.boxId}`}
-                      onClick={(e) => handleBoxClick(box.boxId, e)}
-                      style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
-                    >
-                      📦 {box.boxName}
-                    </Link>
+                    {editingBoxId === box.boxId ? (
+                      <div className="d-inline-flex align-items-center gap-1">
+                        <span>📦</span>
+                        <Form.Control
+                          ref={(el) => { boxNameInputRefs.current[box.boxId] = el; }}
+                          type="text"
+                          value={tempBoxName}
+                          onChange={(e) => setTempBoxName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveBoxName(box.boxId, projectId);
+                            if (e.key === 'Escape') cancelEditingBoxName();
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ 
+                            fontWeight: 'bold',
+                            width: 'auto',
+                            minWidth: '150px',
+                            maxWidth: '300px',
+                            height: '28px',
+                            padding: '2px 8px'
+                          }}
+                          disabled={savingName}
+                        />
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            saveBoxName(box.boxId, projectId);
+                          }}
+                          disabled={savingName}
+                          style={{ padding: '2px 6px', fontSize: '12px' }}
+                          title="Save"
+                        >
+                          <FontAwesomeIcon icon={faCheck} />
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cancelEditingBoxName();
+                          }}
+                          disabled={savingName}
+                          style={{ padding: '2px 6px', fontSize: '12px' }}
+                          title="Cancel"
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="d-inline-flex align-items-center gap-1">
+                        <Link 
+                          to={`/box/${box.boxId}`}
+                          onClick={(e) => handleBoxClick(box.boxId, e)}
+                          style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
+                        >
+                          📦 {box.boxName}
+                        </Link>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditingBoxName(box);
+                          }}
+                          className="text-secondary p-0"
+                          style={{ fontSize: '12px' }}
+                          title="Edit location name"
+                        >
+                          <FontAwesomeIcon icon={faPencil} />
+                        </Button>
+                      </div>
+                    )}
                     <span style={{ color: '#666', fontSize: '0.9em', marginLeft: '0.5rem' }}>
                       ({box.subBoxCount} sub-locations, {box.partCount} parts)
                     </span>
@@ -576,6 +654,109 @@ const handleBoxClick = (boxId, event) => {
     setShowToast(true);
   };
 
+  // Functions for inline editing
+  const startEditingProjectName = () => {
+    setTempProjectName(project.projectName);
+    setEditingProjectName(true);
+    setTimeout(() => {
+      projectNameInputRef.current?.focus();
+      projectNameInputRef.current?.select();
+    }, 0);
+  };
+
+  const cancelEditingProjectName = () => {
+    setEditingProjectName(false);
+    setTempProjectName('');
+  };
+
+  const saveProjectName = async () => {
+    if (tempProjectName.trim() === '' || tempProjectName === project.projectName) {
+      cancelEditingProjectName();
+      return;
+    }
+
+    setSavingName(true);
+    try {
+      await apiService.updateProject(
+          projectId,
+          { project_name: tempProjectName, user_id: user.userId || user.user_id || user.id }
+      );
+      setProject(prev => ({ ...prev, projectName: tempProjectName }));
+      setToastMessage(`Project name updated successfully.`);
+      setShowToast(true);
+      setEditingProjectName(false);
+    } catch (error) {
+      console.error('Failed to update project name:', error);
+      setToastMessage('Failed to update project name. Please try again.');
+      setShowToast(true);
+      setTempProjectName(project.projectName);
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const startEditingBoxName = (box) => {
+    setEditingBoxId(box.boxId);
+    setTempBoxName(box.boxName);
+    setTimeout(() => {
+      boxNameInputRefs.current[box.boxId]?.focus();
+      boxNameInputRefs.current[box.boxId]?.select();
+    }, 0);
+  };
+
+  const cancelEditingBoxName = () => {
+    setEditingBoxId(null);
+    setTempBoxName('');
+  };
+
+  const saveBoxName = async (boxId, providedProjectId) => {
+    if (tempBoxName.trim() === '') {
+      cancelEditingBoxName();
+      return;
+    }
+
+    setSavingName(true);
+    try {
+      await apiService.updateBox(
+          boxId,
+          { box_name: tempBoxName, project_id: providedProjectId }
+      );
+
+      // Update the box name in the project state
+      setProject(prevProject => {
+        const updateBoxName = (boxes) => {
+          return boxes.map(box => {
+            if (box.boxId === boxId) {
+              return { ...box, boxName: tempBoxName };
+            }
+            if (box.childBoxes && box.childBoxes.length > 0) {
+              return {
+                ...box,
+                childBoxes: updateBoxName(box.childBoxes)
+              };
+            }
+            return box;
+          });
+        };
+
+        return {
+          ...prevProject,
+          boxes: updateBoxName(prevProject.boxes)
+        };
+      });
+
+      setToastMessage(`Location name updated successfully.`);
+      setShowToast(true);
+      setEditingBoxId(null);
+    } catch (error) {
+      console.error('Failed to update location name:', error);
+      setToastMessage('Failed to update location name. Please try again.');
+      setShowToast(true);
+    } finally {
+      setSavingName(false);
+    }
+  };
+
   if (loading) {
     return (
       <Container fluid className="py-5">
@@ -614,7 +795,55 @@ return (
       <Row className="mb-4">
         <Col>
           <div className="d-flex justify-content-between align-items-center">
-            <h1 className="text-center flex-grow-1">{project.projectName}</h1>
+            <div className="text-center flex-grow-1">
+              {editingProjectName ? (
+                <div className="d-inline-flex align-items-center gap-2">
+                  <Form.Control
+                    ref={projectNameInputRef}
+                    type="text"
+                    value={tempProjectName}
+                    onChange={(e) => setTempProjectName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveProjectName();
+                      if (e.key === 'Escape') cancelEditingProjectName();
+                    }}
+                    style={{ fontSize: '2rem', fontWeight: 'bold', width: 'auto', minWidth: '300px' }}
+                    disabled={savingName}
+                  />
+                  <Button
+                    variant="success"
+                    size="sm"
+                    onClick={saveProjectName}
+                    disabled={savingName}
+                    title="Save"
+                  >
+                    <FontAwesomeIcon icon={faCheck} />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={cancelEditingProjectName}
+                    disabled={savingName}
+                    title="Cancel"
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                  </Button>
+                </div>
+              ) : (
+                <h1 className="d-inline-flex align-items-center gap-2">
+                  {project.projectName}
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={startEditingProjectName}
+                    className="text-secondary p-1"
+                    title="Edit project name"
+                  >
+                    <FontAwesomeIcon icon={faPencil} />
+                  </Button>
+                </h1>
+              )}
+            </div>
             <div className="d-flex gap-2">
               <Button
                 variant="primary"

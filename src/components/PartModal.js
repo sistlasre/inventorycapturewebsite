@@ -447,35 +447,6 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
         </div>
         <Modal.Title className="d-flex align-items-center justify-content-center w-100 me-4">
           <div className="d-flex align-items-center flex-column">
-            {/* Location Navigation */}
-            {allLocations.length > 1 && currentLocation && (
-              <div className="d-flex align-items-center mb-2">
-                {currentLocationIndex > 0 && (
-                  <Button
-                    variant="outline-info"
-                    size="sm"
-                    onClick={goToPreviousLocation}
-                    className="me-2"
-                    title="Previous Location"
-                  >
-                    <FontAwesomeIcon icon={faChevronLeft} />
-                  </Button>
-                )}
-                <span className="text-primary fw-semibold">📦 {currentLocation.boxName}</span>
-                {currentLocationIndex < allLocations.length - 1 && (
-                  <Button
-                    variant="outline-info"
-                    size="sm"
-                    onClick={goToNextLocation}
-                    className="ms-2"
-                    title="Next Location"
-                  >
-                    <FontAwesomeIcon icon={faChevronRight} />
-                  </Button>
-                )}
-              </div>
-            )}
-
             {/* Part Navigation */}
             <div className="d-flex align-items-center">
               <span className="fw-bold">{getHeaderForPart(part)}</span>

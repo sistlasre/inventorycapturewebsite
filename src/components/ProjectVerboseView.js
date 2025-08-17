@@ -299,6 +299,10 @@ const handleBoxClick = (boxId, event) => {
     }
   };
 
+  const pluralizeWithCount = (word, numCount = 0) => {
+      return numCount === 1 ? `1 ${word}` : `${numCount} ${word}s`;
+  };
+
   const renderTableRows = (boxes, level = 0, startingRowIndex = 0) => {
     const rows = [];
     let currentRowIndex = startingRowIndex;
@@ -430,7 +434,7 @@ const handleBoxClick = (boxId, event) => {
                       </div>
                     )}
                     <span style={{ color: '#666', fontSize: '0.9em', marginLeft: '0.5rem' }}>
-                      ({box.subBoxCount} sub-locations, {box.partCount} parts)
+                      ({pluralizeWithCount('part', box.partCount || 0)}, {pluralizeWithCount('sub-location', box.subBoxCount || 0)}, {pluralizeWithCount('part', box.partCount || 0 + box.subLocationsPartCount || 0)})
                     </span>
                   </div>
                   <button

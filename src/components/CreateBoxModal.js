@@ -3,8 +3,10 @@ import { Modal, Button, Form, Spinner, Alert } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const CreateBoxModal = ({ show, onHide, onBoxCreated, projectId, parentBoxId = null }) => {
+  const { user } = useAuth();
   const [boxName, setBoxName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -30,6 +32,7 @@ const CreateBoxModal = ({ show, onHide, onBoxCreated, projectId, parentBoxId = n
       const boxData = {
         boxName: boxName.trim(),
         projectId: projectId,
+        userId: user.userId || user.user_id || user.id,
         ...(parentBoxId && { parentBoxId: parentBoxId })
       };
 

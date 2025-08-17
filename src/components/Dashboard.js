@@ -2,7 +2,7 @@ import React from 'react';
 import { Container, Row, Col, Card, Spinner, Alert, Badge, Form, Button, Toast, ToastContainer } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBox, faPlus, faCog, faCalendarAlt, faCubes, faEdit, faCheck, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBox, faPlus, faCog, faCalendarAlt, faMapMarkerAlt, faCubes, faEdit, faCheck, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/apiService';
 import CreateProjectModal from './CreateProjectModal';
@@ -150,7 +150,8 @@ const Dashboard = () => {
           projectId: project.projectId || project.project_id || project.id,
           projectName: project.projectName || project.project_name || project.name || 'Unnamed Project',
           dateUpdated: project.date_updated || project.dateUpdated || project.updated_at,
-          boxCount: project.extra_info?.boxCount || project.boxCount || 0
+          boxCount: project.box_count || project.boxCount || project.extra_info?.boxCount || 0,
+          partCount: project.part_count || 0
         }));
         
         setProjects(transformedProjects);
@@ -316,9 +317,14 @@ const Dashboard = () => {
                             Last updated: {formatDate(project.dateUpdated)}
                           </div>
                           <div className="d-flex align-items-center">
-                            <FontAwesomeIcon icon={faCubes} className="me-1" />
+                            <FontAwesomeIcon icon={faMapMarkerAlt} className="me-1" />
                             <Badge bg="secondary" className="me-1">{project.boxCount}</Badge>
                             {project.boxCount === 1 ? 'location' : 'locations'}
+                          </div>
+                          <div className="d-flex align-items-center">
+                            <FontAwesomeIcon icon={faCubes} className="me-1" />
+                            <Badge bg="secondary" className="me-1">{project.partCount}</Badge>
+                            {project.partCount === 1 ? 'part' : 'parts'}
                           </div>
                         </div>
                       </div>

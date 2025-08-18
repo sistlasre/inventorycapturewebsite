@@ -225,6 +225,10 @@ footer {
   color: white;
 }
 
+.sortable-column:hover {
+  cursor: pointer;
+}
+
 /* Dark mode support (if needed in future) */
 @media (prefers-color-scheme: dark) {
   /* Add dark mode styles here if needed */

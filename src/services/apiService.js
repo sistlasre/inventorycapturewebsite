@@ -70,6 +70,10 @@ class ApiService {
     return this.api.get(`/project/${projectId}`);
   }
 
+  async getAllPartsForProject(projectId) {
+    return this.api.get(`/project/${projectId}/allparts`);
+  }
+
   async createProject(projectData) {
     return this.api.post('/project/create', projectData);
   }

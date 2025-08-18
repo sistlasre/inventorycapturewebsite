@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import Table from 'react-bootstrap/Table';
-
-const API_URL = 'https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev/project/cdb4ce3f-713c-45ac-82e1-cabe41af2b2e/allparts';
+import { apiService } from '../services/apiService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSort, faSortAsc, faSortDesc } from '@fortawesome/free-solid-svg-icons';
 
 function AllPartsForProjectTableView() {
+  const { projectId } = useParams();
   const [parts, setParts] = useState([]);
   const [filteredParts, setFilteredParts] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -13,16 +15,17 @@ function AllPartsForProjectTableView() {
   const [projectName, setProjectName] = useState('');
 
   useEffect(() => {
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
-        const sortedParts = (data.parts || []).sort((part1, part2) => part1.boxId.localeCompare(part2.boxId));
-        setParts(sortedParts || []);
-        setFilteredParts(sortedParts || []);
-        setBoxNames(data.boxNames || {});
-        setProjectName(data.projectName);
-      });
-  }, []);
+    const fetchAllPartsForProject = async () => {
+        const response = await apiService.getAllPartsForProject(projectId);
+        setParts(response.data.parts || []);
+        setFilteredParts(response.data.parts || []);
+        setBoxNames(response.data.boxNames || {});
+        setProjectName(response.data.projectName);
+    };
+    if (projectId) {
+        fetchAllPartsForProject();
+    }
+  }, [projectId]);
 
   // Filtering
   useEffect(() => {
@@ -77,11 +80,11 @@ function AllPartsForProjectTableView() {
       />
       <Table className="parts-table mb-0" style={{ minWidth: '1200px' }} size="sm">
         <thead>
-          <tr>
+          <tr className="sortable-column">
             {columns.map(col => (
               <th key={col.key} onClick={() => handleSort(col.key)}>
                 {col.label}
-                {sortConfig.key === col.key && (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽')}
+                <FontAwesomeIcon icon={sortConfig.key === col.key ? (sortConfig.direction === 'asc' ? faSortAsc : faSortDesc) : faSort} />
               </th>
             ))}
           </tr>

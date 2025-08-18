@@ -6,12 +6,14 @@ import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faPlus, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faPlus, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
 import PartModal from './PartModal';
 import ConfirmationModal from './ConfirmationModal';
 import CreateBoxModal from './CreateBoxModal';
+
+const API_BASE_URL = 'https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev';
 
 const ProjectVerboseView = () => {
   const { user } = useAuth();
@@ -857,6 +859,18 @@ return (
               >
                 <FontAwesomeIcon icon={faPlus} className="me-1" />
                 Add Location
+              </Button>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  window.location.href = `${API_BASE_URL}/project/${projectId}/export`;
+                }}
+                title="Download project as CSV"
+              >
+                <FontAwesomeIcon icon={faDownload} />
               </Button>
               <Button
                 variant="outline-danger"

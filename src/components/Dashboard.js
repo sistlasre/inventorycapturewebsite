@@ -2,11 +2,13 @@ import React from 'react';
 import { Container, Row, Col, Card, Spinner, Alert, Badge, Form, Button, Toast, ToastContainer } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBox, faPlus, faCog, faCalendarAlt, faMapMarkerAlt, faCubes, faEdit, faCheck, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBox, faPlus, faCog, faCalendarAlt, faMapMarkerAlt, faCubes, faEdit, faCheck, faTimes, faTrash, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/apiService';
 import CreateProjectModal from './CreateProjectModal';
 import ConfirmationModal from './ConfirmationModal';
+
+const API_BASE_URL = 'https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -295,6 +297,18 @@ const Dashboard = () => {
                                 title="Edit project name"
                               >
                                 <FontAwesomeIcon icon={faEdit} />
+                              </Button>
+                              <Button
+                                variant="outline-primary"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  window.location.href = `${API_BASE_URL}/project/${project.projectId}/export`;
+                                }}
+                                title="Download project as CSV"
+                              >
+                                <FontAwesomeIcon icon={faDownload} />
                               </Button>
                               <Button
                                 variant="outline-danger"

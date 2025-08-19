@@ -6,7 +6,7 @@ import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faPlus, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faGlobe, faTrash, faPlus, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
 import PartModal from './PartModal';
@@ -57,7 +57,10 @@ const ProjectVerboseView = () => {
     { key: 'coo', label: 'COO'},
     { key: 'rohsstatus', label: 'RoHS'},
     { key: 'msl', label: 'MSL' },
-    { key: 'notes', label: 'Notes'}
+    { key: 'serialorlotnumber', label: 'Serial/Lot Number'},
+    { key: 'notes', label: 'Notes'},
+    { key: 'ipn', label: 'IPN'},
+    { key: 'ipnlotserial', label: 'Internal Lot Code/Serial Number'}
   ];
 
   useEffect(() => {
@@ -151,8 +154,9 @@ const handleBoxClick = (boxId, event) => {
   };
 
   const getFieldValue = (item, field) => {
-    // For parts, try to get values from generated or manual content
-    return item[field] || item.manualContent?.[field] || item.generatedContent?.[field] || '';
+    // For parts, try to get values from generated or manual content as fallback
+    const fieldValue = item[field] || item.manualContent?.[field] || item.generatedContent?.[field] || '';
+    return Array.isArray(fieldValue) ? fieldValue.join(', ') : fieldValue;
   };
 
   // Function to get status indicator for parts
@@ -328,6 +332,7 @@ const handleBoxClick = (boxId, event) => {
             <td 
               key='name'
               colSpan='100'
+              className="ic-small"
               style={{ 
                 paddingLeft: paddingLeft,
                 borderRight: '1px solid #e9ecef',
@@ -488,7 +493,8 @@ const handleBoxClick = (boxId, event) => {
               >
                 {columns.map(column => (
                   <td 
-                    key={column.key} 
+                    key={column.key}
+                    className="ic-small"
                     style={{ 
                       paddingLeft: column.key === 'name' ? `${(level + 1) * 1.5}rem` : '0.75rem',
                       borderRight: '1px solid #e9ecef',
@@ -505,6 +511,11 @@ const handleBoxClick = (boxId, event) => {
                         >
                           🔧 {part.name}
                         </Link>
+                        {'imageCount' in part && (
+                            <span style={{ color: '#666', fontSize: '9px', marginLeft: '0.5rem' }}>
+                                ({part.imageCount} images)
+                            </span>
+                        )}
                         <button
                           onClick={(e) => {
                             e.preventDefault();
@@ -765,7 +776,7 @@ const handleBoxClick = (boxId, event) => {
 
   if (loading) {
     return (
-      <Container fluid className="py-5">
+      <Container fluid className="py-5 ic-container">
         <div className="text-center py-5">
           <Spinner animation="border" role="status">
             <span className="visually-hidden">Loading...</span>
@@ -797,10 +808,25 @@ const handleBoxClick = (boxId, event) => {
   }
 
 return (
-    <Container fluid className="py-5">
+    <Container fluid className="py-5 ic-container">
       <Row className="mb-4">
         <Col>
           <div className="d-flex justify-content-between align-items-center">
+            <div className="d-flex gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  window.location.href = `/project/${projectId}/allparts`;
+                }}
+                title="Go to all parts search"
+              >
+                <FontAwesomeIcon icon={faGlobe} className="me-1" />
+                All Parts Search
+              </Button>
+            </div>
             <div className="text-center flex-grow-1">
               {editingProjectName ? (
                 <div className="d-inline-flex align-items-center gap-2">
@@ -909,7 +935,12 @@ return (
                             fontWeight: '600',
                             borderRight: index < columns.length - 1 ? '1px solid #dee2e6' : 'none',
                             whiteSpace: 'nowrap',
-                            minWidth: column.key === 'name' ? '300px' : '120px'
+                            fontSize: '14px',
+                            textAlign: 'center',
+                            verticalAlign: 'middle',
+                            paddingTop: '2px',
+                            paddingBottom: '2px'
+                            //minWidth: column.key === 'name' ? '300px' : '120px'
                           }}
                         >
                           {column.label}

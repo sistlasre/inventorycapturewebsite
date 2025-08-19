@@ -162,5 +162,13 @@
 
 .ic-small {
   font-size: 11px;
+  vertical-align: middle;
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+}
+
+.ic-container {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
 }
 

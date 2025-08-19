@@ -69,7 +69,7 @@ function AllPartsForProjectTableView() {
   };
 
   const columns = [
-    { key: 'boxName', label: 'Box Name' },
+    { key: 'boxName', label: 'Location Name' },
     { key: 'name', label: 'Part Name' },
     { key: 'mpn', label: 'MPN' },
     { key: 'secondarypartnumber', label: 'Secondary PN' },

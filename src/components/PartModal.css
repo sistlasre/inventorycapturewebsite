@@ -4,6 +4,11 @@
   max-width: 95vw;
 }
 
+.accordion-button {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
 /* The container react-inner-image-zoom creates */
 .confined-zoom {
   max-width: 100%;
@@ -47,7 +52,11 @@
 }
 
 .modal-content {
-  max-height: 90vh;
+  max-height: 95vh;
+}
+
+.ic-modal .modal-content {
+  height: 95vh;
 }
 
 .freeze-zoom {
@@ -153,6 +162,8 @@
 .custom-modal-width .modal-header {
   position: relative;
   padding-right: 3rem; /* Make room for close button */
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
 /* Ensure modal title doesn't overlap with close button */
@@ -165,6 +176,10 @@
   vertical-align: middle;
   padding-top: 1px !important;
   padding-bottom: 1px !important;
+}
+
+.ic-centered {
+  text-align: center;
 }
 
 .ic-container {

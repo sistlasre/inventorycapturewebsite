@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert, Form } from 'react-bootstrap';
+import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert, Form, Accordion } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faRotateRight, faSave, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
@@ -66,6 +66,12 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     { key: 'notes', label: 'Notes'}
   ];
 
+  const IPN_COLUMNS = [
+    { key: 'ipn', label: 'IPN'},
+    { key: 'ipnquantity', label: 'Internal QTY'},
+    { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'}
+  ];
+
   // Helper function to render content grid
   const renderContentGrid = () => {
     const generatedContent = part.generatedContent || {};
@@ -76,9 +82,9 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
         <table className="table table-striped table-sm">
           <thead>
             <tr>
-              <th style={{width: '150px'}}>Field</th>
-              <th style={{width: '200px'}}>Generated</th>
-              <th style={{width: '200px'}}>Manual</th>
+              <th className="ic-centered" style={{width: '110px'}}>Field</th>
+              <th className="ic-centered" style={{width: '210px'}}>Generated</th>
+              <th className="ic-centered" style={{width: '210px'}}>Manual</th>
             </tr>
           </thead>
           <tbody>
@@ -94,9 +100,9 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
               return (
                 <tr key={key}>
-                  <td className="ic-small"><strong>{label}</strong></td>
-                  <td className="text-muted ic-small">{generatedValue}</td>
-                  <td className="ic-small">
+                  <td className="ic-centered ic-small"><strong>{label}</strong></td>
+                  <td className="ic-centered text-muted ic-small">{generatedValue}</td>
+                  <td className="ic-centered ic-small">
                     {isEditing ? (
                       <input
                         ref={(el) => { inputRefs.current[key] = el; }}
@@ -128,6 +134,84 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
             })}
           </tbody>
         </table>
+              {/* Extracted Text Section - Collapsible */}
+              {part?.primaryExtractedText && (
+                <Accordion className="mt-3">
+                  <Accordion.Item eventKey="0">
+                    <Accordion.Header>
+                      <strong className="ic-small">Extracted Text</strong>
+                    </Accordion.Header>
+                    <Accordion.Body>
+                      <div style={{ 
+                        maxHeight: '300px', 
+                        overflowY: 'auto',
+                        padding: '10px',
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: '4px',
+                        fontFamily: 'monospace',
+                        fontSize: '11px',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word'
+                      }}>
+                        {part.primaryExtractedText}
+                      </div>
+                    </Accordion.Body>
+                  </Accordion.Item>
+                </Accordion>
+              )}
+      </div>
+    );
+  };
+
+  // Helper function to render content grid
+  const renderIPNGrid = () => {
+    return (
+      <div className="table-responsive">
+        <table className="table table-striped table-sm">
+          <thead>
+            <tr>
+              <th style={{width: '110px'}} className="ic-centered">Field</th>
+              <th className="ic-centered">Extracted Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {IPN_COLUMNS.map(column => {
+              const {key, label} = column;
+              const fieldValue = Array.isArray(part[key]) ? part[key].join(', ') : String(part[key] || '');
+              return (
+                <tr key={key}>
+                  <td className="ic-small ic-centered"><strong>{label}</strong></td>
+                  <td className="text-muted ic-small ic-centered">{fieldValue}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {/* Extracted Text Section - Collapsible */}
+        {part?.ipnExtractedText && (
+            <Accordion className="mt-3">
+              <Accordion.Item eventKey="0">
+                <Accordion.Header>
+                  <strong className="ic-small">Extracted Text</strong>
+                </Accordion.Header>
+                <Accordion.Body>
+                  <div style={{ 
+                    maxHeight: '300px', 
+                    overflowY: 'auto',
+                    padding: '10px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '4px',
+                    fontFamily: 'monospace',
+                    fontSize: '11px',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word'
+                  }}>
+                    {part.ipnExtractedText}
+                  </div>
+                </Accordion.Body>
+              </Accordion.Item>
+            </Accordion>
+        )}
       </div>
     );
   };
@@ -440,7 +524,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   };
 
   return (
-    <Modal show={show} onHide={handleHide} size="lg" scrollable dialogClassName="custom-modal-width">
+    <Modal show={show} onHide={handleHide} size="lg" scrollable dialogClassName="custom-modal-width ic-modal">
       <Modal.Header closeButton>
         <div className="position-absolute" style={{ left: '16px', top: '16px', zIndex: 1060 }}>
           {part && getStatusIndicator(part)}
@@ -591,7 +675,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                       {/* Image Display */}
                       <div className='text-center position-relative' onClick={handleImageClick} style={{
                             width: "100%",
-                            maxHeight: "60vh",   // limit modal body height
+                            maxHeight: "65vh",   // limit modal body height
                             display: "flex",
                             justifyContent: "center",
                             alignItems: "center",
@@ -637,7 +721,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                 <Card>
                   <Card.Body>
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h6>Part Information</h6>
+                      <h6>Primary Image Information</h6>
                       <div>
                         {!isEditing && (
                           <Button
@@ -690,7 +774,17 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                     </div>
                   </Card.Body>
                 </Card>
-              )}
+            )}
+            {part.ipn && part.ipnExtractedText && (
+                <Card>
+                  <Card.Body>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h6>IPN Image Information</h6>
+                    </div>
+                    {renderIPNGrid()}
+                  </Card.Body>
+                </Card>
+            )}
             </Col>
           </Row>
         )}

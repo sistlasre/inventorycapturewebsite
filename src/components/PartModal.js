@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert } from 'react-bootstrap';
+import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert, Form } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faRotateRight, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faRotateRight, faSave, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import './PartModal.css';
 import { getHeaderForPart } from './sharedFunctions';
@@ -31,6 +31,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const [savingRotation, setSavingRotation] = useState(false);
   const [currentTimestamp, setCurrentTimestamp] = useState(Date.now());
   const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1.5); // Default zoom scale
 
   // Update timestamp whenever the modal is shown
   useEffect(() => {
@@ -557,6 +558,24 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                               <FontAwesomeIcon icon={faSave} />
                             )}
                           </Button>
+
+                          {/* Zoom Slider */}
+                          <div className="d-flex align-items-center" style={{ minWidth: '150px' }}>
+                            <FontAwesomeIcon icon={faSearchPlus} className="text-muted me-2" style={{ fontSize: '14px' }} />
+                            <Form.Range
+                              min="0.5"
+                              max="3.0"
+                              step="0.1"
+                              value={zoomScale}
+                              onChange={(e) => setZoomScale(parseFloat(e.target.value))}
+                              style={{ width: '80px' }}
+                              title={`Zoom: ${zoomScale.toFixed(1)}x`}
+                            />
+                            <span className="small text-muted ms-2" style={{ minWidth: '35px' }}>
+                              {zoomScale.toFixed(1)}x
+                            </span>
+                          </div>
+
                           <a 
                             href={getCurrentImage().uri + `?v=${currentTimestamp}`} 
                             target="_blank" 
@@ -584,7 +603,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                             src={getCurrentImage().uri + `?v=${currentTimestamp}`}
                             zoomType="hover"
                             zoomPreload={true}
-                            zoomScale={1.5}
+                            zoomScale={zoomScale}
                             hasSpacer={false}
                             alt="Zoomable"
                             className={`confined-zoom ${isZoomed ? "iiz__zoom-active" : ""} rotate-${imageRotation}`}

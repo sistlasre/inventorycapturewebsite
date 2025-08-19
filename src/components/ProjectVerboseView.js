@@ -6,14 +6,14 @@ import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGlobe, faTrash, faPlus, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
 import PartModal from './PartModal';
 import ConfirmationModal from './ConfirmationModal';
 import CreateBoxModal from './CreateBoxModal';
+import ProjectHeader from './ProjectHeader';
 
-const API_BASE_URL = 'https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev';
 
 const ProjectVerboseView = () => {
   const { user } = useAuth();
@@ -38,12 +38,9 @@ const ProjectVerboseView = () => {
   const [showCreateBoxModal, setShowCreateBoxModal] = useState(false);
 
   // States for inline editing
-  const [editingProjectName, setEditingProjectName] = useState(false);
-  const [tempProjectName, setTempProjectName] = useState('');
   const [editingBoxId, setEditingBoxId] = useState(null);
   const [tempBoxName, setTempBoxName] = useState('');
   const [savingName, setSavingName] = useState(false);
-  const projectNameInputRef = useRef(null);
   const boxNameInputRefs = useRef({});
 
   // Define the columns as specified
@@ -672,46 +669,6 @@ const handleBoxClick = (boxId, event) => {
   };
 
   // Functions for inline editing
-  const startEditingProjectName = () => {
-    setTempProjectName(project.projectName);
-    setEditingProjectName(true);
-    setTimeout(() => {
-      projectNameInputRef.current?.focus();
-      projectNameInputRef.current?.select();
-    }, 0);
-  };
-
-  const cancelEditingProjectName = () => {
-    setEditingProjectName(false);
-    setTempProjectName('');
-  };
-
-  const saveProjectName = async () => {
-    if (tempProjectName.trim() === '' || tempProjectName === project.projectName) {
-      cancelEditingProjectName();
-      return;
-    }
-
-    setSavingName(true);
-    try {
-      await apiService.updateProject(
-          projectId,
-          { project_name: tempProjectName, user_id: user.userId || user.user_id || user.id }
-      );
-      setProject(prev => ({ ...prev, projectName: tempProjectName }));
-      setToastMessage(`Project name updated successfully.`);
-      setShowToast(true);
-      setEditingProjectName(false);
-    } catch (error) {
-      console.error('Failed to update project name:', error);
-      setToastMessage('Failed to update project name. Please try again.');
-      setShowToast(true);
-      setTempProjectName(project.projectName);
-    } finally {
-      setSavingName(false);
-    }
-  };
-
   const startEditingBoxName = (box) => {
     setEditingBoxId(box.boxId);
     setTempBoxName(box.boxName);
@@ -809,108 +766,28 @@ const handleBoxClick = (boxId, event) => {
 
 return (
     <Container fluid className="py-5 ic-container">
-      <Row className="mb-4">
-        <Col>
-          <div className="d-flex justify-content-between align-items-center">
-            <div className="d-flex gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  window.location.href = `/project/${projectId}/allparts`;
-                }}
-                title="Go to all parts search"
-              >
-                <FontAwesomeIcon icon={faGlobe} className="me-1" />
-                All Parts Search
-              </Button>
-            </div>
-            <div className="text-center flex-grow-1">
-              {editingProjectName ? (
-                <div className="d-inline-flex align-items-center gap-2">
-                  <Form.Control
-                    ref={projectNameInputRef}
-                    type="text"
-                    value={tempProjectName}
-                    onChange={(e) => setTempProjectName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveProjectName();
-                      if (e.key === 'Escape') cancelEditingProjectName();
-                    }}
-                    style={{ fontSize: '2rem', fontWeight: 'bold', width: 'auto', minWidth: '300px' }}
-                    disabled={savingName}
-                  />
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={saveProjectName}
-                    disabled={savingName}
-                    title="Save"
-                  >
-                    <FontAwesomeIcon icon={faCheck} />
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={cancelEditingProjectName}
-                    disabled={savingName}
-                    title="Cancel"
-                  >
-                    <FontAwesomeIcon icon={faTimes} />
-                  </Button>
-                </div>
-              ) : (
-                <h1 className="d-inline-flex align-items-center gap-2">
-                  {project.projectName}
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={startEditingProjectName}
-                    className="text-secondary p-1"
-                    title="Edit project name"
-                  >
-                    <FontAwesomeIcon icon={faPencil} />
-                  </Button>
-                </h1>
-              )}
-            </div>
-            <div className="d-flex gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setShowCreateBoxModal(true)}
-                title="Add new location"
-              >
-                <FontAwesomeIcon icon={faPlus} className="me-1" />
-                Add Location
-              </Button>
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  window.location.href = `${API_BASE_URL}/project/${projectId}/export`;
-                }}
-                title="Download project as CSV"
-              >
-                <FontAwesomeIcon icon={faDownload} />
-              </Button>
-              <Button
-                variant="outline-danger"
-                size="sm"
-                onClick={handleDeleteProject}
-                title="Delete project"
-              >
-                <FontAwesomeIcon icon={faTrash} className="me-1" />
-                Delete
-              </Button>
-            </div>
-          </div>
-        </Col>
-      </Row>
+      <ProjectHeader
+        project={project}
+        projectId={projectId}
+        leftButton={{
+          text: 'All Parts Search',
+          icon: faGlobe,
+          onClick: (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            window.location.href = `/project/${projectId}/allparts`;
+          },
+          title: 'Go to all parts search'
+        }}
+        showAddLocation={true}
+        onAddLocation={() => setShowCreateBoxModal(true)}
+        onProjectUpdate={setProject}
+        onDeleteProject={handleDeleteProject}
+        onShowToast={(message) => {
+          setToastMessage(message);
+          setShowToast(true);
+        }}
+      />
 
       <Row>
         <Col>
@@ -940,7 +817,6 @@ return (
                             verticalAlign: 'middle',
                             paddingTop: '2px',
                             paddingBottom: '2px'
-                            //minWidth: column.key === 'name' ? '300px' : '120px'
                           }}
                         >
                           {column.label}

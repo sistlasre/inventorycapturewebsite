@@ -47,7 +47,7 @@
 }
 
 .modal-content {
-  height: 90vh;
+  max-height: 90vh;
 }
 
 .freeze-zoom {

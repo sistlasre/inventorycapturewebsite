@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Container, Form, InputGroup } from 'react-bootstrap';
 import Table from 'react-bootstrap/Table';
 import { apiService } from '../services/apiService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,15 +12,22 @@ function AllPartsForProjectTableView() {
   const [filteredParts, setFilteredParts] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [filterText, setFilterText] = useState('');
-  const [boxNames, setBoxNames] = useState({});
   const [projectName, setProjectName] = useState('');
+  const [filterField, setFilterField] = useState('all');
+
+  const normalize = (val) => {
+    return (val || '').toString()
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]/gi, ''); // strip non-alphanumeric
+  };
 
   useEffect(() => {
     const fetchAllPartsForProject = async () => {
         const response = await apiService.getAllPartsForProject(projectId);
-        setParts(response.data.parts || []);
-        setFilteredParts(response.data.parts || []);
-        setBoxNames(response.data.boxNames || {});
+        const parts = response.data.parts || [];
+        parts.forEach((part) => part['boxName'] = response.data.boxNames[part.boxId]);
+        setParts(parts);
+        setFilteredParts(parts);
         setProjectName(response.data.projectName);
     };
     if (projectId) {
@@ -29,24 +37,29 @@ function AllPartsForProjectTableView() {
 
   // Filtering
   useEffect(() => {
-    const lower = filterText.toLowerCase();
+    const normFilter = normalize(filterText);
     setFilteredParts(
-      parts.filter(part =>
-        Object.values(part).some(value =>
-          Array.isArray(value)
-            ? value.some(item => (item || '').toString().toLowerCase().includes(lower))
-            : (value || '').toString().toLowerCase().includes(lower)
-        )
-      )
+      parts.filter(part => {
+        if (filterField === 'all') {
+            return Object.values(part).some(value =>
+                Array.isArray(value)
+                ? value.some(item => normalize(item).includes(normFilter))
+                : normalize(value).includes(normFilter)
+            );
+        } else {
+            const value = part[filterField];
+            return Array.isArray(value) ? value.some(item => normalize(item).includes(normFilter)) : normalize(value).includes(normFilter);
+        }
+      })
     );
-  }, [filterText, parts]);
+  },[filterText, filterField, parts]);
 
   // Sorting
   const handleSort = key => {
     const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
     const sorted = [...filteredParts].sort((a, b) => {
-      const valA = a[key] ?? '';
-      const valB = b[key] ?? '';
+      const valA = normalize(a[key]) || '';
+      const valB = normalize(b[key]) || '';
       if (valA < valB) return direction === 'asc' ? -1 : 1;
       if (valA > valB) return direction === 'asc' ? 1 : -1;
       return 0;
@@ -56,7 +69,7 @@ function AllPartsForProjectTableView() {
   };
 
   const columns = [
-    { key: 'boxId', label: 'Box Name' },
+    { key: 'boxName', label: 'Box Name' },
     { key: 'name', label: 'Part Name' },
     { key: 'mpn', label: 'MPN' },
     { key: 'secondarypartnumber', label: 'Secondary PN' },
@@ -71,13 +84,21 @@ function AllPartsForProjectTableView() {
   return (
     <div className="parts-table-container">
       <h2>All Parts Search For <b>{projectName}</b></h2>
-      <input
-        type="text"
-        placeholder="Filter parts..."
-        value={filterText}
-        onChange={e => setFilterText(e.target.value)}
-        className="filter-input"
-      />
+      <InputGroup className="mb-3" style={{ maxWidth: '400px' }}>
+        <Form.Select value={filterField} onChange={e => setFilterField(e.target.value)}>
+            <option value="all">All Fields</option>
+            {columns.map(col => (
+                <option key={col.key} value={col.key}>{col.label}</option>
+            ))}
+        </Form.Select>
+        <Form.Control
+            type="text"
+            placeholder="Filter parts..."
+            value={filterText}
+            onChange={e => setFilterText(e.target.value)}
+            className="filter-input"
+        />
+      </InputGroup>
       <Table className="parts-table mb-0" style={{ minWidth: '1200px' }} size="sm">
         <thead>
           <tr className="sortable-column">
@@ -92,7 +113,7 @@ function AllPartsForProjectTableView() {
         <tbody>
           {filteredParts.map((part, idx) => (
             <tr key={idx}>
-              <td><Link to={`/box/${part.boxId}`}>{boxNames[part.boxId] || part.boxId}</Link></td>
+              <td><Link to={`/box/${part.boxId}`}>{part.boxName}</Link></td>
               <td className="part-name-cell">
                 {part.name}
               </td>

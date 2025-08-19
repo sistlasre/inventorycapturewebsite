@@ -3,9 +3,10 @@ import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert } from 'react-boot
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faRotateRight, faSave } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
-import ReactImageMagnify from 'react-image-magnify';
 import './PartModal.css';
 import { getHeaderForPart } from './sharedFunctions';
+import InnerImageZoom from "react-inner-image-zoom";
+import "react-inner-image-zoom/lib/styles.min.css";
 
 const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPartIndex = -1, onPartChange, projectData = null, currentLocation = null, onLocationChange }) => {
   const [part, setPart] = useState(null);
@@ -25,12 +26,11 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const [allLocations, setAllLocations] = useState([]);
   const [currentLocationIndex, setCurrentLocationIndex] = useState(-1);
 
-  const [frozenPos, setFrozenPos] = useState(null);
-  const [freezeZoom, setFreezeZoom] = useState(false);
   const [imageRotation, setImageRotation] = useState(0);
   const [savedImageRotations, setSavedImageRotations] = useState({}); // Track saved rotations per image
   const [savingRotation, setSavingRotation] = useState(false);
   const [currentTimestamp, setCurrentTimestamp] = useState(Date.now());
+  const [isZoomed, setIsZoomed] = useState(false);
 
   // Update timestamp whenever the modal is shown
   useEffect(() => {
@@ -39,17 +39,17 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     }
   }, [show]);
 
-  const handleImageClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    if (!freezeZoom) {
-      setFrozenPos({ x, y });
-      setFreezeZoom(true);
-    } else {
-      setFreezeZoom(false);
+  const handleImageClick = () => {
+    setIsZoomed(!isZoomed);
+  };
+
+  const handleHide = () => {
+    setIsZoomed(false);
+    if (onHide) {
+      onHide();
     }
   };
+
 
   // Define the columns as specified
   const COLUMNS = [
@@ -304,6 +304,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
   // Image navigation functions
   const goToNextImage = () => {
+    setIsZoomed(false);
     if (part?.images && part.images.length > 1) {
       const newIndex = (currentImageIndex + 1) % part.images.length;
       setCurrentImageIndex(newIndex);
@@ -314,6 +315,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   };
 
   const goToPreviousImage = () => {
+    setIsZoomed(false);
     if (part?.images && part.images.length > 1) {
       const newIndex = (currentImageIndex - 1 + part.images.length) % part.images.length;
       setCurrentImageIndex(newIndex);
@@ -373,12 +375,14 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
   // Part navigation functions
   const goToNextPart = () => {
+    setIsZoomed(false);
     if (allParts.length > 1 && currentPartIndex < allParts.length - 1 && onPartChange) {
       onPartChange(currentPartIndex + 1);
     }
   };
 
   const goToPreviousPart = () => {
+    setIsZoomed(false);
     if (allParts.length > 1 && currentPartIndex > 0 && onPartChange) {
       onPartChange(currentPartIndex - 1);
     }
@@ -386,6 +390,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
   // Location navigation functions
   const goToNextLocation = () => {
+    setIsZoomed(false);
     if (allLocations.length > 1 && currentLocationIndex < allLocations.length - 1 && onLocationChange) {
       const nextLocation = allLocations[currentLocationIndex + 1];
       onLocationChange(nextLocation, 0); // Go to first part in next location
@@ -393,6 +398,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   };
 
   const goToPreviousLocation = () => {
+    setIsZoomed(false);
     if (allLocations.length > 1 && currentLocationIndex > 0 && onLocationChange) {
       const prevLocation = allLocations[currentLocationIndex - 1];
       onLocationChange(prevLocation, 0); // Go to first part in previous location
@@ -432,15 +438,8 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     return { variant, text };
   };
 
-  const getImageDimension = (dimension) => {
-    if (window) {
-        return Math.floor(dimension == 'height' ? 0.33 * window.innerHeight : 0.5 * window.innerWidth);
-    }
-    return dimension == 'height'? 225 : 300;
-  };
-
   return (
-    <Modal show={show} onHide={onHide} size="lg" scrollable dialogClassName="custom-modal-width">
+    <Modal show={show} onHide={handleHide} size="lg" scrollable dialogClassName="custom-modal-width">
       <Modal.Header closeButton>
         <div className="position-absolute" style={{ left: '16px', top: '16px', zIndex: 1060 }}>
           {part && getStatusIndicator(part)}
@@ -571,70 +570,25 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                       </div>
 
                       {/* Image Display */}
-                      <div className='text-center position-relative' onClick={handleImageClick}>
-                        {!freezeZoom && (
-                        <div style={{
-                          '--magnify-rotation': `${imageRotation}deg`
-                        }} className={`magnify-container rotation-${imageRotation}`}>
-                          <ReactImageMagnify
-                            {...{
-                              smallImage: {
-                                alt: part?.partName || part?.name || 'Part Image',
-                                width: getImageDimension('width'),
-                                height: getImageDimension('height'),
-                                src: getCurrentImage().uri + `?v=${currentTimestamp}`
-                              },
-                              largeImage: {
-                                src: getCurrentImage().uri + `?v=${currentTimestamp}`,
-                                width: getImageDimension('width') * 3,
-                                height: getImageDimension('height') * 3
-                              },
-                              enlargedImagePosition: "over",
-                              hoverDelayInMs: 0,
-                              imageStyle: {
-                                  objectFit: 'contain',
-                                  transform: `rotate(${imageRotation}deg)`
-                              }
-                            }}
+                      <div className='text-center position-relative' onClick={handleImageClick} style={{
+                            width: "100%",
+                            maxHeight: "60vh",   // limit modal body height
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            overflow: "hidden", // 🚨 prevent scrollbars
+                            cursor: isZoomed ? "zoom-out" : "zoom-in"
+                          }}
+                      >
+                          <InnerImageZoom
+                            src={getCurrentImage().uri + `?v=${currentTimestamp}`}
+                            zoomType="hover"
+                            zoomPreload={true}
+                            zoomScale={1.5}
+                            hasSpacer={false}
+                            alt="Zoomable"
+                            className={`confined-zoom ${isZoomed ? "iiz__zoom-active" : ""} rotate-${imageRotation}`}
                           />
-                        </div>
-                        )}
-                        {freezeZoom && (
-                            <>
-                                <img
-                                    src={getCurrentImage().uri + `?v=${currentTimestamp}`}
-                                    alt={part.name}
-                                    style={{
-                                        height: getImageDimension('height'), 
-                                        width: getImageDimension('width'), 
-                                        display: "block", 
-                                        objectFit: 'contain',
-                                        transform: `rotate(${imageRotation}deg)`
-                                    }}
-                                />
-                                {/* Frozen magnified view */}
-                                <div
-                                    style={{
-                                        width: getImageDimension('width'),
-                                        height: getImageDimension('height'),
-                                        marginTop: "10px",
-                                        overflow: "hidden",
-                                        border: "1px solid #ccc",
-                                    }}
-                                >
-                                    <img
-                                        src={getCurrentImage().uri + `?v=${currentTimestamp}`}
-                                        style={{
-                                            width: `${getImageDimension('width') * 3}px`,
-                                            height: `${getImageDimension('height') * 3}px`,
-                                            transform: `translate(-${frozenPos?.x * 2 || 0}px, -${frozenPos?.y * 2 || 0}px) rotate(${imageRotation}deg)`,
-                                        }}
-                                        alt="Frozen zoom"
-                                    />
-                                </div>
-                            </>
-                        )}
-
                         {/* Image Type Badge */}
                         {(() => {
                           const badge = getImageTypeBadge(getCurrentImage());

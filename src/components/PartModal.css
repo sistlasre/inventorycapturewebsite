@@ -4,6 +4,52 @@
   max-width: 95vw;
 }
 
+/* The container react-inner-image-zoom creates */
+.confined-zoom {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  position: relative;
+  overflow: hidden; /* ✅ clips the zoomed image */
+}
+
+/* The zoomed image it injects */
+.confined-zoom .iiz__img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+.confined-zoom.rotate-90 img {
+  rotate: 90deg;
+}
+
+.confined-zoom.rotate-180 img {
+  rotate: 180deg;
+}
+
+.confined-zoom.rotate-270 img {
+  rotate: 270deg;
+}
+
+.confined-zoom.rotate-0 img {
+  rotate: 0deg;
+}
+
+/* Force zoom image to stay visible when state says zoomed */
+.confined-zoom.iiz__zoom-active .iiz__zoom-img {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.confined-zoom.iiz__zoom-active {
+  pointer-events: none; /* disables all JS-based updates */
+}
+
+.modal-content {
+  height: 90vh;
+}
+
 .freeze-zoom {
   pointer-events: none;
 }

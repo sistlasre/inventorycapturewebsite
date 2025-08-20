@@ -87,14 +87,17 @@ function AllPartsForProjectTableView() {
     { key: 'name', label: 'Part Name' },
     { key: 'mpn', label: 'MPN' },
     { key: 'secondarypartnumber', label: 'Secondary PN' },
-    { key: 'manufacturer', label: 'Manufacturer' },
+    { key: 'quantity', label: 'QTY' },
+    { key: 'manufacturer', label: 'MFR' },
+    { key: 'datecode', label: 'Datecode' },
     { key: 'coo', label: 'COO' },
     { key: 'rohsstatus', label: 'RoHS' },
-    { key: 'datecode', label: 'Date Code' },
+    { key: 'msl', label: 'MSL' },
     { key: 'serialorlotnumber', label: 'Serial/Lot Number' },
     { key: 'notes', label: 'Notes' },
     { key: 'ipn', label: 'IPN'},
-    { key: 'ipnlotserial', label: 'Internal Lot Code/Serial Number'}
+    { key: 'ipnquantity', label: 'Internal QTY'},
+    { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'}
   ];
 
   // Function to handle project deletion

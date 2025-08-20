@@ -5,7 +5,7 @@ import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import { apiService } from '../services/apiService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSort, faSortAsc, faSortDesc, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faSortAsc, faSortDesc, faThumbTack } from '@fortawesome/free-solid-svg-icons';
 import ProjectHeader from './ProjectHeader';
 import ConfirmationModal from './ConfirmationModal';
 
@@ -125,14 +125,14 @@ function AllPartsForProjectTableView() {
         project={project}
         projectId={projectId}
         leftButton={{
-          text: 'Back to Project',
-          icon: faArrowLeft,
+          text: 'Location View',
+          icon: faThumbTack,
           onClick: (e) => {
             e.stopPropagation();
             e.preventDefault();
             window.location.href = `/project/${projectId}/verbose`;
           },
-          title: 'Go back to project view'
+          title: 'Go to location view'
         }}
         showAddLocation={false}
         onProjectUpdate={setProject}

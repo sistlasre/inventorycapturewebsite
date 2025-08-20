@@ -6,7 +6,7 @@ import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faImage, faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
 import PartModal from './PartModal';
@@ -438,6 +438,8 @@ const handleBoxClick = (boxId, event) => {
                         </Button>
                       </div>
                     )}
+                    {box.imageUri && (<Link to={box.imageUri} target="_blank"> <FontAwesomeIcon icon={faImage} /> </Link>)}
+
                     <span style={{ color: '#666', fontSize: '0.9em', marginLeft: '0.5rem' }}>
                       ({pluralizeWithCount('part', box.partCount || 0)}, {pluralizeWithCount('sub-location', box.subBoxCount || 0)}, {pluralizeWithCount('part', box.partCount || 0 + box.subLocationsPartCount || 0)})
                     </span>

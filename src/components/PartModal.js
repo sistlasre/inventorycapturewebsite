@@ -255,18 +255,31 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     setUpdateLoading(true);
     try {
       const currentStatus = part.status || 'never_reviewed';
+      const contentFields = {}
+      const generatedContent = part.generatedContent || {};
       if (Object.keys(editingContent).length || currentStatus != 'reviewed') {
+        COLUMNS.forEach(column => {
+            const newManualFieldValue = editingContent[column.key];
+            const generatedFieldValue = Array.isArray(generatedContent[column.key]) ? generatedContent[column.key].join(', ') : String(generatedContent[column.key] || '');
+            console.log(generatedFieldValue);
+            const fieldValue = newManualFieldValue?.trim() || generatedFieldValue?.trim() || '';
+            if (column.key != 'mpn') {
+                contentFields[column.key] = fieldValue;
+            } else if (fieldValue) {
+                contentFields[column.key] = fieldValue;
+            }
+        });
         await apiService.updatePart(part.partId, {
             manualContent: editingContent,
             reviewStatus: 'reviewed',
-            ...editingContent
+            ...contentFields
         });
       } else {
         console.log("Manual content didn't change. No need to make a request to the backend");
       }
 
       // Create updated part object
-      const updatedPart = { ...part, manualContent: editingContent, status: 'reviewed', reviewStatus: 'reviewed', ...editingContent};
+      const updatedPart = { ...part, manualContent: editingContent, status: 'reviewed', reviewStatus: 'reviewed', ...contentFields};
       // Update local part state
       setPart(updatedPart);
       // Notify parent component of the status change with the updated part

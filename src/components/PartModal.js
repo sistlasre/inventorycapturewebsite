@@ -63,7 +63,10 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     { key: 'rohsstatus', label: 'RoHS'},
     { key: 'msl', label: 'MSL'},
     { key: 'serialorlotnumber', label: 'Serial/Lot Number'},
-    { key: 'notes', label: 'Notes'}
+    { key: 'notes', label: 'Notes'},
+    { key: 'ipn', label: 'IPN'},
+    { key: 'ipnquantity', label: 'Internal QTY'},
+    { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'}
   ];
 
   const IPN_COLUMNS = [
@@ -74,7 +77,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
   // Helper function to render content grid
   const renderContentGrid = () => {
-    const generatedContent = part.generatedContent || {};
+    const generatedContent = {...(part.generatedContent || {}), ...(part.generatedIpnContent || {})};
     const manualContent = part.manualContent || {};
 
     return (
@@ -134,65 +137,36 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
             })}
           </tbody>
         </table>
-              {/* Extracted Text Section - Collapsible */}
-              {part?.primaryExtractedText && (
-                <Accordion className="mt-3">
-                  <Accordion.Item eventKey="0">
-                    <Accordion.Header>
-                      <strong className="ic-small">Extracted Text</strong>
-                    </Accordion.Header>
-                    <Accordion.Body>
-                      <div style={{ 
-                        maxHeight: '300px', 
-                        overflowY: 'auto',
-                        padding: '10px',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '4px',
-                        fontFamily: 'monospace',
-                        fontSize: '11px',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word'
-                      }}>
-                        {part.primaryExtractedText}
-                      </div>
-                    </Accordion.Body>
-                  </Accordion.Item>
-                </Accordion>
-              )}
-      </div>
-    );
-  };
-
-  // Helper function to render content grid
-  const renderIPNGrid = () => {
-    return (
-      <div className="table-responsive">
-        <table className="table table-striped table-sm">
-          <thead>
-            <tr>
-              <th style={{width: '110px'}} className="ic-centered">Field</th>
-              <th className="ic-centered">Extracted Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {IPN_COLUMNS.map(column => {
-              const {key, label} = column;
-              const fieldValue = Array.isArray(part[key]) ? part[key].join(', ') : String(part[key] || '');
-              return (
-                <tr key={key}>
-                  <td className="ic-small ic-centered"><strong>{label}</strong></td>
-                  <td className="text-muted ic-small ic-centered">{fieldValue}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
         {/* Extracted Text Section - Collapsible */}
+        {part?.primaryExtractedText && (
+        <Accordion className="mt-3">
+          <Accordion.Item eventKey="0">
+            <Accordion.Header>
+              <strong className="ic-small">Primary Image Extracted Text</strong>
+            </Accordion.Header>
+            <Accordion.Body>
+              <div style={{ 
+                maxHeight: '300px', 
+                overflowY: 'auto',
+                padding: '10px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '4px',
+                fontFamily: 'monospace',
+                fontSize: '11px',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word'
+              }}>
+                {part.primaryExtractedText}
+              </div>
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
+        )}
         {part?.ipnExtractedText && (
             <Accordion className="mt-3">
               <Accordion.Item eventKey="0">
                 <Accordion.Header>
-                  <strong className="ic-small">Extracted Text</strong>
+                  <strong className="ic-small">IPN Photo Extracted Text</strong>
                 </Accordion.Header>
                 <Accordion.Body>
                   <div style={{ 
@@ -250,22 +224,20 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     }));
   };
 
-
   const saveManualContent = async () => {
     setUpdateLoading(true);
     try {
       const currentStatus = part.status || 'never_reviewed';
       const contentFields = {}
-      const generatedContent = part.generatedContent || {};
+      const generatedContent = {...(part.generatedContent || {}), ...(part.generatedIpnContent || {})};
+
       if (Object.keys(editingContent).length || currentStatus != 'reviewed') {
         COLUMNS.forEach(column => {
             const newManualFieldValue = editingContent[column.key];
-            const generatedFieldValue = Array.isArray(generatedContent[column.key]) ? generatedContent[column.key].join(', ') : String(generatedContent[column.key] || '');
-            console.log(generatedFieldValue);
-            const fieldValue = newManualFieldValue?.trim() || generatedFieldValue?.trim() || '';
+            const fieldValue = newManualFieldValue?.trim() || generatedContent[column.key] || '';
             if (column.key != 'mpn') {
                 contentFields[column.key] = fieldValue;
-            } else if (fieldValue) {
+            } else if (fieldValue && typeof fieldValue === "string") {
                 contentFields[column.key] = fieldValue;
             }
         });
@@ -734,7 +706,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                 <Card>
                   <Card.Body>
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h6>Primary Image Information</h6>
+                      <h6>Part Information</h6>
                       <div>
                         {!isEditing && (
                           <Button
@@ -785,16 +757,6 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                         Create Manual Content
                       </Button>
                     </div>
-                  </Card.Body>
-                </Card>
-            )}
-            {part.ipn && part.ipnExtractedText && (
-                <Card>
-                  <Card.Body>
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h6>IPN Image Information</h6>
-                    </div>
-                    {renderIPNGrid()}
                   </Card.Body>
                 </Card>
             )}

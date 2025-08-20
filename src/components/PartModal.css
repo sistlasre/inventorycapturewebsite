@@ -59,6 +59,16 @@
   height: 95vh;
 }
 
+.ic-modal .modal-body .col-md-4 {
+  overflow-y: auto;     /* only right column scrolls */
+  max-height: 100%;     /* stay within modal height */
+}
+
+.ic-modal .modal-body {
+  display: flex;
+  overflow: hidden;     /* stop body from scrolling */
+}
+
 .freeze-zoom {
   pointer-events: none;
 }

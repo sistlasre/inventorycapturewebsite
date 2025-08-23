@@ -273,7 +273,27 @@ function AllPartsForProjectTableView() {
                                 whiteSpace: 'nowrap'
                               }}
                             >
+                              {part.quantity}
+                            </td>
+                            <td 
+                              className="ic-small"
+                              style={{ 
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
                               {part.manufacturer}
+                            </td>
+                            <td 
+                              className="ic-small"
+                              style={{ 
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.datecode}
                             </td>
                             <td 
                               className="ic-small"
@@ -303,7 +323,7 @@ function AllPartsForProjectTableView() {
                                 whiteSpace: 'nowrap'
                               }}
                             >
-                              {part.datecode}
+                              {part.msl}
                             </td>
                             <td 
                               className="ic-small"
@@ -336,6 +356,16 @@ function AllPartsForProjectTableView() {
                               }}
                             >
                               {part.ipn}
+                            </td>
+                            <td 
+                              className="ic-small"
+                              style={{ 
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.ipnquantity}
                             </td>
                             <td 
                               className="ic-small"

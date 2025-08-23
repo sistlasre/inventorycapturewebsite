@@ -85,8 +85,8 @@ const ProjectHeader = ({
         {leftButton && (
           <Button
             variant="primary"
+            href={leftButton.destinationUrl}
             size="sm"
-            onClick={leftButton.onClick}
             title={leftButton.title || ''}
           >
             {leftButton.icon && (

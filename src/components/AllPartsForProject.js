@@ -8,11 +8,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSort, faSortAsc, faSortDesc, faThumbTack } from '@fortawesome/free-solid-svg-icons';
 import ProjectHeader from './ProjectHeader';
 import ConfirmationModal from './ConfirmationModal';
+import { useAuth } from '../contexts/AuthContext';
 
-function AllPartsForProjectTableView() {
+function AllPartsForProjectTableView({ isViewOnly = false }) {
+  const { user } = useAuth();
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
+  const [userCanEdit, setUserCanEdit] = useState(!isViewOnly);
   const [parts, setParts] = useState([]);
   const [filteredParts, setFilteredParts] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -43,6 +46,8 @@ function AllPartsForProjectTableView() {
           projectId: projectId,
           projectName: response.data.projectName
         });
+
+        setUserCanEdit(userCanEdit && !(response.data?.projectOwnerId !== user?.user_id));
     };
     if (projectId) {
         fetchAllPartsForProject();
@@ -100,6 +105,14 @@ function AllPartsForProjectTableView() {
     { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'}
   ];
 
+  const onCopyPublicProjectUrl = () => {
+    const link = `${window.location.origin}/project/${projectId}/allparts/view`;
+    navigator.clipboard.writeText(link)
+        .then(() => setToastMessage("Successfully copied link to clipboard"))
+        .catch(() => setToastMessage("Failed to copy link"));
+    setShowToast(true);
+  };
+
   // Function to handle project deletion
   const handleDeleteProject = () => {
     setShowDeleteModal(true);
@@ -130,11 +143,7 @@ function AllPartsForProjectTableView() {
         leftButton={{
           text: 'Location View',
           icon: faThumbTack,
-          onClick: (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            window.location.href = `/project/${projectId}/verbose`;
-          },
+          destinationUrl: `/project/${projectId}/${userCanEdit ? 'edit' : 'view'}`,
           title: 'Go to location view'
         }}
         showAddLocation={false}
@@ -144,6 +153,8 @@ function AllPartsForProjectTableView() {
           setToastMessage(message);
           setShowToast(true);
         }}
+        userCanEdit={userCanEdit}
+        onCopyPublicProjectUrl={onCopyPublicProjectUrl}
       />
 
       <Row className="mb-3">
@@ -414,11 +425,8 @@ function AllPartsForProjectTableView() {
           onClose={() => setShowToast(false)} 
           delay={4000} 
           autohide
-          bg={toastMessage?.includes('successfully') ? "success" : "danger"}
+          bg={toastMessage?.toLowerCase()?.includes('successfully') ? "success" : "danger"}
         >
-          <Toast.Header>
-            <strong className="me-auto">{toastMessage?.includes('successfully') ? 'Success' : 'Error'}</strong>
-          </Toast.Header>
           <Toast.Body className="text-white">
             {toastMessage}
           </Toast.Body>

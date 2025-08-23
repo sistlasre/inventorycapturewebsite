@@ -73,6 +73,20 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/project/:projectId/allparts/edit"
+                element={
+                  <ProtectedRoute>
+                    <AllPartsForProjectTableView />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/project/:projectId/allparts/view"
+                element={
+                    <AllPartsForProjectTableView isViewOnly={true} />
+                }
+              />
               <Route 
                 path="/box/:boxId" 
                 element={

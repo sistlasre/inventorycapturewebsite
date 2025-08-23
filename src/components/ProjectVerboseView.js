@@ -791,11 +791,7 @@ return (
         leftButton={{
           text: 'All Parts Search',
           icon: faGlobe,
-          onClick: (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            window.location.href = `/project/${projectId}/allparts`;
-          },
+          destinationUrl: `/project/${projectId}/allparts/${userCanEdit ? 'edit' : 'view'}`,
           title: 'Go to all parts search'
         }}
         showAddLocation={true}

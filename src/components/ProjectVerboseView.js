@@ -925,9 +925,6 @@ return (
           autohide
           bg={toastMessage?.toLowerCase()?.includes('successfully') ? "success" : "danger"}
         >
-          <Toast.Header>
-            <strong className="me-auto">{toastMessage?.toLowerCase()?.includes('successfully') ? 'Success' : 'Error'}</strong>
-          </Toast.Header>
           <Toast.Body className="text-white">
             {toastMessage}
           </Toast.Body>

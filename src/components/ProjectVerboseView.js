@@ -15,10 +15,11 @@ import CreateBoxModal from './CreateBoxModal';
 import ProjectHeader from './ProjectHeader';
 
 
-const ProjectVerboseView = () => {
+const ProjectVerboseView = ({ isViewOnly = false }) => {
   const { user } = useAuth();
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const [userCanEdit, setUserCanEdit] = useState(!isViewOnly);
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -69,6 +70,7 @@ const ProjectVerboseView = () => {
 
         const response = await apiService.getProjectDetails(projectId);
         setProject(response.data);
+        setUserCanEdit(userCanEdit && !(response.data?.projectMetadata?.userId !== user?.user_id));
       } catch (error) {
         console.error('Failed to fetch project details:', error);
         setError('Failed to load project details. Please try again.');
@@ -134,7 +136,7 @@ const handleBoxClick = (boxId, event) => {
 
     // Check if we're in the ProjectVerboseView context
     const currentPath = window.location.pathname;
-    if (currentPath.includes('/verbose')) {
+    if (currentPath.includes('/verbose') || currentPath.includes('/view') || currentPath.includes('/edit')) {
       // We're in the verbose view, toggle expansion
       const newExpanded = new Set(expandedItems);
       if (newExpanded.has(boxId)) {
@@ -423,19 +425,21 @@ const handleBoxClick = (boxId, event) => {
                         >
                           📦 {box.boxName}
                         </Link>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEditingBoxName(box);
-                          }}
-                          className="text-secondary p-0"
-                          style={{ fontSize: '12px' }}
-                          title="Edit location name"
-                        >
-                          <FontAwesomeIcon icon={faPencil} />
-                        </Button>
+                        {userCanEdit && (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEditingBoxName(box);
+                              }}
+                              className="text-secondary p-0"
+                              style={{ fontSize: '12px' }}
+                              title="Edit location name"
+                            >
+                              <FontAwesomeIcon icon={faPencil} />
+                            </Button>
+                        )}
                       </div>
                     )}
                     {box.imageUri && (<Link to={box.imageUri} target="_blank"> <FontAwesomeIcon icon={faImage} /> </Link>)}
@@ -444,28 +448,30 @@ const handleBoxClick = (boxId, event) => {
                       ({pluralizeWithCount('part', box.partCount || 0)}, {pluralizeWithCount('sub-location', box.subBoxCount || 0)}, {pluralizeWithCount('part', box.partCount || 0 + box.subLocationsPartCount || 0)})
                     </span>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleDeleteBox(box);
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#dc3545',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      marginLeft: '8px',
-                      borderRadius: '3px',
-                      fontSize: '14px'
-                    }}
-                    title={`Delete location "${box.boxName}"`}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
+                  {userCanEdit && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDeleteBox(box);
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#dc3545',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          marginLeft: '8px',
+                          borderRadius: '3px',
+                          fontSize: '14px'
+                        }}
+                        title={`Delete location "${box.boxName}"`}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                      >
+                        <FontAwesomeIcon icon={faTrash} />
+                      </button>
+                  )}
                 </div>
             </td>
         </tr>
@@ -516,28 +522,30 @@ const handleBoxClick = (boxId, event) => {
                                 ({part.imageCount} images)
                             </span>
                         )}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDeletePart(part);
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#dc3545',
-                            cursor: 'pointer',
-                            padding: '4px',
-                            marginLeft: '8px',
-                            borderRadius: '3px',
-                            fontSize: '12px'
-                          }}
-                          title={`Delete part "${part.partName || part.name}"`}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </button>
+                        {userCanEdit && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDeletePart(part);
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#dc3545',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                marginLeft: '8px',
+                                borderRadius: '3px',
+                                fontSize: '12px'
+                              }}
+                              title={`Delete part "${part.partName || part.name}"`}
+                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                        )}
                       </div>
                     )}
                     {column.key !== 'name' && getFieldValue(part, column.key)}
@@ -553,6 +561,14 @@ const handleBoxClick = (boxId, event) => {
     });
 
     return { rows, nextRowIndex: currentRowIndex };
+  };
+
+  const onCopyPublicProjectUrl = () => {
+    const link = `${window.location.origin}/project/${projectId}/view`;
+    navigator.clipboard.writeText(link)
+        .then(() => setToastMessage("Successfully copied link to clipboard"))
+        .catch(() => setToastMessage("Failed to copy link"));
+    setShowToast(true);
   };
 
   // Function to handle project deletion
@@ -790,6 +806,8 @@ return (
           setToastMessage(message);
           setShowToast(true);
         }}
+        userCanEdit={userCanEdit}
+        onCopyPublicProjectUrl={onCopyPublicProjectUrl}
       />
 
       <Row>
@@ -856,6 +874,7 @@ return (
         projectData={project}
         currentLocation={selectedPart ? findBoxContainingPart(project?.boxes || [], selectedPart.partId) : null}
         onLocationChange={handleLocationChange}
+        userCanEdit={userCanEdit}
       />
 
       {/* Create Box Modal */}
@@ -904,10 +923,10 @@ return (
           onClose={() => setShowToast(false)} 
           delay={4000} 
           autohide
-          bg={toastMessage?.includes('successfully') ? "success" : "danger"}
+          bg={toastMessage?.toLowerCase()?.includes('successfully') ? "success" : "danger"}
         >
           <Toast.Header>
-            <strong className="me-auto">{toastMessage?.includes('successfully') ? 'Success' : 'Error'}</strong>
+            <strong className="me-auto">{toastMessage?.toLowerCase()?.includes('successfully') ? 'Success' : 'Error'}</strong>
           </Toast.Header>
           <Toast.Body className="text-white">
             {toastMessage}

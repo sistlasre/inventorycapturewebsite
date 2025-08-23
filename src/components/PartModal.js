@@ -8,7 +8,7 @@ import { getHeaderForPart } from './sharedFunctions';
 import InnerImageZoom from "react-inner-image-zoom";
 import "react-inner-image-zoom/lib/styles.min.css";
 
-const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPartIndex = -1, onPartChange, projectData = null, currentLocation = null, onLocationChange }) => {
+const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPartIndex = -1, onPartChange, projectData = null, currentLocation = null, onLocationChange, userCanEdit = true }) => {
   const [part, setPart] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -117,16 +117,18 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                     ) : (
                       <span 
                         className="manual-content-field"
-                        onClick={() => startEditing(key)}
                         style={{
-                          cursor: 'pointer',
+                          cursor: userCanEdit ? "pointer" : "default",
                           padding: '4px 8px',
                           borderRadius: '4px',
                           transition: 'background-color 0.2s ease'
                         }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                        title="Click to edit"
+                        {...(userCanEdit ? {
+                            onClick: () => startEditing(key),
+                            onMouseEnter: (e) => (e.target.style.backgroundColor = "#f8f9fa"),
+                            onMouseLeave: (e) => (e.target.style.backgroundColor = "transparent"),
+                            title: "Click to edit",
+                        } : {})}
                       >
                         {manualValue || <span className="text-muted">—</span>}
                       </span>
@@ -613,7 +615,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                           >
                             <FontAwesomeIcon icon={faRotateRight} />
                           </Button>
-                          <Button
+                          {userCanEdit && (<Button
                             variant={hasUnsavedRotation() ? "outline-warning" : "outline-secondary"}
                             size="sm"
                             onClick={saveImageRotation}
@@ -627,6 +629,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                               <FontAwesomeIcon icon={faSave} />
                             )}
                           </Button>
+                          )}
 
                           {/* Zoom Slider */}
                           <div className="d-flex align-items-center" style={{ minWidth: '150px' }}>
@@ -708,7 +711,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <h6>Part Information</h6>
                       <div>
-                        {!isEditing && (
+                        {!isEditing && userCanEdit && (
                           <Button
                             variant="outline-info"
                             size="sm"
@@ -718,7 +721,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                             {part.manualContent ? 'Edit Manual Content' : 'Create Manual Content'}
                           </Button>
                         )}
-                        {isEditing && (
+                        {isEditing && userCanEdit && (
                           <>
                             <Button
                               variant="success"
@@ -749,13 +752,14 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                   <Card.Body>
                     <div className="text-center py-4">
                       <p className="text-muted">No part information available</p>
-                      <Button
+                      {userCanEdit && (<Button
                         variant="outline-info"
                         size="sm"
                         onClick={startEditing}
                       >
                         Create Manual Content
                       </Button>
+                      )}
                     </div>
                   </Card.Body>
                 </Card>

@@ -44,12 +44,26 @@ function App() {
                 } 
               />
               <Route 
-                path="/project/:projectId/verbose" 
+                path="/project/:projectId/edit"
                 element={
                   <ProtectedRoute>
                     <ProjectVerboseView />
                   </ProtectedRoute>
                 } 
+              />
+              <Route
+                path="/project/:projectId/view"
+                element={
+                    <ProjectVerboseView isViewOnly={true} />
+                }
+              />
+              <Route
+                path="/project/:projectId/verbose"
+                element={
+                  <ProtectedRoute>
+                    <ProjectVerboseView />
+                  </ProtectedRoute>
+                }
               />
               <Route
                 path="/project/:projectId/allparts"

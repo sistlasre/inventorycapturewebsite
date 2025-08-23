@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPencil, faCheck, faTimes, faDownload, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faShareAlt, faPencil, faCheck, faTimes, faDownload, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -15,7 +15,9 @@ const ProjectHeader = ({
   onAddLocation,
   onProjectUpdate,
   onDeleteProject,
-  onShowToast
+  onShowToast,
+  userCanEdit = true,
+  onCopyPublicProjectUrl = null
 }) => {
   const { user } = useAuth();
   const [editingProjectName, setEditingProjectName] = useState(false);
@@ -133,23 +135,25 @@ const ProjectHeader = ({
         ) : (
           <h1 className="d-inline-flex align-items-center gap-2">
             {project?.projectName || 'Loading...'}
-            <Button
-              variant="link"
-              size="sm"
-              onClick={startEditingProjectName}
-              className="text-secondary p-1"
-              title="Edit project name"
-              disabled={!project}
-            >
-              <FontAwesomeIcon icon={faPencil} />
-            </Button>
+            {userCanEdit && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={startEditingProjectName}
+                  className="text-secondary p-1"
+                  title="Edit project name"
+                  disabled={!project}
+                >
+                  <FontAwesomeIcon icon={faPencil} />
+                </Button>
+            )}
           </h1>
         )}
       </div>
 
       {/* Right Buttons - Add Location, Export and Delete */}
       <div className="d-flex gap-2">
-        {showAddLocation && (
+        {showAddLocation && userCanEdit && (
           <Button
             variant="primary"
             size="sm"
@@ -169,14 +173,24 @@ const ProjectHeader = ({
           <FontAwesomeIcon icon={faDownload} />
         </Button>
         <Button
-          variant="outline-danger"
+          variant="outline-primary"
           size="sm"
-          onClick={onDeleteProject}
-          title="Delete project"
+          title="Copy public project URL"
+          {... (onCopyPublicProjectUrl ? { onClick: onCopyPublicProjectUrl } : {} )}
         >
-          <FontAwesomeIcon icon={faTrash} className="me-1" />
-          Delete
+          <FontAwesomeIcon icon={faShareAlt} />
         </Button>
+        {userCanEdit &&  (
+            <Button
+              variant="outline-danger"
+              size="sm"
+              onClick={onDeleteProject}
+              title="Delete project"
+            >
+              <FontAwesomeIcon icon={faTrash} className="me-1" />
+              Delete
+            </Button>
+        )}
       </div>
     </div>
   );

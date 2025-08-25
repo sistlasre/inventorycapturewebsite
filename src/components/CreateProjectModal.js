@@ -39,12 +39,14 @@ const CreateProjectModal = ({ show, onHide, onProjectCreated }) => {
       console.log('Project created:', response);
 
       const createdProject = response.data?.project;
+      const currentDate = new Date().toISOString();
 
       // Transform the response to match the expected format
       const newProject = {
         projectId: createdProject?.projectId || createdProject?.project_id || createdProject?.id,
         projectName: createdProject?.projectName || createdProject?.project_name || projectName.trim(),
-        dateUpdated: createdProject?.date_updated || createdProject?.dateUpdated || createdProject?.created_at || new Date().toISOString(),
+        dateUpdated: createdProject?.date_updated || createdProject?.dateUpdated || createdProject?.created_at || currentDate,
+        dateCreated: createdProject?.created_at || currentDate,
         boxCount: 0
       };
 

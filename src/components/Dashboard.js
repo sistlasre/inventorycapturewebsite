@@ -152,6 +152,7 @@ const Dashboard = () => {
           projectId: project.projectId || project.project_id || project.id,
           projectName: project.projectName || project.project_name || project.name || 'Unnamed Project',
           dateUpdated: project.date_updated || project.dateUpdated || project.updated_at,
+          dateCreated: project.created_at,
           boxCount: project.box_count || project.boxCount || project.extra_info?.boxCount || 0,
           partCount: project.part_count || 0
         }));
@@ -328,7 +329,7 @@ const Dashboard = () => {
                         <div className="d-flex flex-wrap gap-3 text-muted small">
                           <div className="d-flex align-items-center">
                             <FontAwesomeIcon icon={faCalendarAlt} className="me-1" />
-                            Last updated: {formatDate(project.dateUpdated)}
+                            Created: {formatDate(project.dateCreated)}
                           </div>
                           <div className="d-flex align-items-center">
                             <FontAwesomeIcon icon={faMapMarkerAlt} className="me-1" />

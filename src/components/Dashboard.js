@@ -215,7 +215,7 @@ const Dashboard = () => {
             projects.map((project) => (
               <Card key={project.projectId} className="mb-3 project-card">
                 <Link 
-                  to={`/project/${project.projectId}/verbose`} 
+                  to={`/project/${project.projectId}/edit`}
                   className="text-decoration-none"
                   onClick={(e) => {
                     // Prevent navigation if clicking on interactive elements

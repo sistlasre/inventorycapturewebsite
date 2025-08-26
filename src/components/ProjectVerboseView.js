@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, Toast, ToastContainer, Form } from 'react-bootstrap';
+import { Container, Row, Col, Button, Toast, ToastContainer, Form, InputGroup } from 'react-bootstrap';
 import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faImage, faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes, faSort, faSortAsc, faSortDesc } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
 import PartModal from './PartModal';
@@ -43,6 +43,30 @@ const ProjectVerboseView = ({ isViewOnly = false }) => {
   const [tempBoxName, setTempBoxName] = useState('');
   const [savingName, setSavingName] = useState(false);
   const boxNameInputRefs = useRef({});
+
+  // Sorting & Filtering state
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [filterText, setFilterText] = useState('');
+  const [filterField, setFilterField] = useState('all');
+
+  const normalize = (val) => {
+    return (val || '').toString().toLowerCase().replace(/[^a-z0-9]/gi, '');
+  };
+
+  const matchesFilter = (part) => {
+    const normFilter = normalize(filterText);
+    if (!normFilter) {
+        return true;
+    }
+    if (filterField === 'all') {
+        return Object.values(part).some(value =>
+            Array.isArray(value) ? value.some(item => normalize(item).includes(normFilter)) : normalize(value).includes(normFilter)
+        );
+    } else {
+        const value = part[filterField];
+        return Array.isArray(value) ? value.some(item => normalize(item).includes(normFilter)) : normalize(value).includes(normFilter);
+    }
+  };
 
   // Define the columns as specified
   const columns = [
@@ -488,7 +512,17 @@ const handleBoxClick = (boxId, event) => {
         }
         // Then render parts
         if (box.parts && box.parts.length > 0) {
-          box.parts.forEach(part => {
+          let filteredParts = box.parts.filter(matchesFilter);
+          if (sortConfig.key) {
+            filteredParts = [...filteredParts].sort((a, b) => {
+                const valA = normalize(a[sortConfig.key]);
+                const valB = normalize(b[sortConfig.key]);
+                if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+          }
+          filteredParts.forEach(part => {
             const isEvenPartRow = currentRowIndex % 2 === 0;
             rows.push(
               <tr 
@@ -807,6 +841,25 @@ return (
       />
 
       <Row>
+        <Col className="mb-3">
+          <InputGroup style={{ maxWidth: '400px' }}>
+            <Form.Select value={filterField} onChange={e => setFilterField(e.target.value)}>
+                <option value="all">All Fields</option>
+                {columns.filter(c => c.key !== 'name').map(col => (
+                    <option key={col.key} value={col.key}>{col.label}</option>
+                ))}
+            </Form.Select>
+            <Form.Control
+                type="text"
+                placeholder="Filter parts..."
+                value={filterText}
+                onChange={e => setFilterText(e.target.value)}
+                className="filter-input"
+            />
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row>
         <Col>
           <Card className="shadow-sm">
             <Card.Body style={{ padding: 0 }}>
@@ -825,6 +878,10 @@ return (
                       {columns.map((column, index) => (
                         <th 
                           key={column.key} 
+                          onClick={() => {
+                            const direction = sortConfig.key === column.key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+                            setSortConfig({ key: column.key, direction });
+                          }}
                           style={{ 
                             fontWeight: '600',
                             borderRight: index < columns.length - 1 ? '1px solid #dee2e6' : 'none',
@@ -833,10 +890,16 @@ return (
                             textAlign: 'center',
                             verticalAlign: 'middle',
                             paddingTop: '2px',
-                            paddingBottom: '2px'
+                            paddingBottom: '2px',
+                            cursor: 'pointer',
+                            userSelect: 'none'
                           }}
                         >
                           {column.label}
+                          <FontAwesomeIcon
+                            icon={sortConfig.key === column.key ? (sortConfig.direction === 'asc' ? faSortAsc : faSortDesc) : faSort}
+                            style={{ marginLeft: '5px', fontSize: '12px' }}
+                          />
                         </th>
                       ))}
                     </tr>

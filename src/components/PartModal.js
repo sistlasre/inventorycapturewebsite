@@ -75,6 +75,12 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'}
   ];
 
+  const REVIEW_STATUS_COLORS = {
+    'reviewed': '#28a745',
+    'more_photos_requested': '#d5b60a',
+    'never_reviewed': '#6c757d'
+  }
+
   // Helper function to render content grid
   const renderContentGrid = () => {
     const generatedContent = {...(part.generatedContent || {}), ...(part.generatedIpnContent || {})};
@@ -226,6 +232,22 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     }));
   };
 
+  const handleRequestMorePhotos = async () => {
+    setUpdateLoading(true);
+    try {
+        await apiService.updatePart(part.partId, { reviewStatus: 'more_photos_requested' });
+        const updatedPart = { ...part, status: 'more_photos_requested', reviewStatus: 'more_photos_requested' };
+        setPart(updatedPart);
+        if (onPartChange) {
+            onPartChange(null, updatedPart);
+        }
+    } catch (error) {
+        console.error('Failed to update the reviewStatus when requesting more photos', error);
+    } finally {
+        setUpdateLoading(false);
+    }
+  };
+
   const saveManualContent = async () => {
     setUpdateLoading(true);
     try {
@@ -271,9 +293,8 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
   // Function to get status indicator for parts
   const getStatusIndicator = (part) => {
-    const status = part?.status || 'never_reviewed';
-    const color = status === 'reviewed' ? '#28a745' : '#6c757d'; // Green for reviewed, gray for never_reviewed
-    const title = status === 'reviewed' ? 'Reviewed' : 'Not reviewed';
+    const reviewStatus = part.status || 'never_reviewed';
+    const color = REVIEW_STATUS_COLORS[reviewStatus] || '#6c757d';
 
     return (
       <FontAwesomeIcon 
@@ -572,7 +593,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
         )}
 
         {part && !loading && (
-          <Row style={{height: '100%'}}>
+          <Row style={{height: '100%', width: '100%'}}>
             {/* Left Column - Images */}
             <Col md={8}>
               {/* Image Gallery */}
@@ -648,15 +669,28 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                             </span>
                           </div>
 
-                          <a 
-                            href={getCurrentImage().uri + `?v=${currentTimestamp}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="btn btn-outline-primary btn-sm"
-                            title="View Full Image"
-                          >
-                            View Full Image
-                          </a>
+                        </div>
+                        <div>
+                            {part.status && part.status != 'more_photos_requested' && (
+                                <Button
+                                  variant="outline-secondary"
+                                  size="sm"
+                                  className="me-2"
+                                  onClick={handleRequestMorePhotos}
+                                  disabled={updateLoading}
+                                >
+                                  {updateLoading ? 'Requesting...' : 'Request More Photos'}
+                                </Button>
+                            )}
+                            <a
+                              href={getCurrentImage().uri + `?v=${currentTimestamp}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-outline-primary btn-sm"
+                              title="View Full Image"
+                            >
+                              View Full Image
+                            </a>
                         </div>
                       </div>
 

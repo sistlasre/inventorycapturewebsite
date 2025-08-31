@@ -86,6 +86,12 @@ const ProjectVerboseView = ({ isViewOnly = false }) => {
     { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'}
   ];
 
+  const REVIEW_STATUS_MAPPINGS = {
+    'reviewed': { color: '#28a745', titleText: 'Reviewed'},
+    'more_photos_requested': { color: '#d5b60a', titleText: 'More photos requested' },
+    'never_reviewed': { color: '#6c757d', titleText: 'Not reviewed' }
+  }
+
   useEffect(() => {
     const fetchProjectDetails = async () => {
       try {
@@ -185,9 +191,30 @@ const handleBoxClick = (boxId, event) => {
 
   // Function to get status indicator for parts
   const getStatusIndicator = (part) => {
-    const status = part.status || 'never_reviewed';
-    const color = status === 'reviewed' ? '#28a745' : '#6c757d'; // Green for reviewed, gray for never_reviewed
-    const title = status === 'reviewed' ? 'Reviewed' : 'Not reviewed';
+    const reviewStatus = part.status || 'never_reviewed';
+    const color = REVIEW_STATUS_MAPPINGS[reviewStatus]?.color || '#6c757d';
+    const title = REVIEW_STATUS_MAPPINGS[reviewStatus]?.titleText || 'Not reviewed';
+
+    return (
+      <FontAwesomeIcon
+        icon={faThumbsUp}
+        style={{
+          color: color,
+          fontSize: '14px',
+          marginLeft: '6px'
+        }}
+        title={title}
+      />
+    );
+  };
+
+  // Function to get status indicator for locations
+  const getStatusIndicatorForLocation = (box) => {
+    const partCount = box.partCount || 0;
+    const numReviewedParts = box.numReviewedParts || 0;
+    const numPartsRequiringMorePhotos = box.numPartsRequiringMorePhotos || 0;
+    const color = partCount == numReviewedParts ? '#28a745' : numPartsRequiringMorePhotos > 0 ? '#d5b60a' : '#6c757d';
+    const title = partCount == numReviewedParts ? 'Reviewed' : 'Needs review';
 
     return (
       <FontAwesomeIcon 
@@ -447,7 +474,7 @@ const handleBoxClick = (boxId, event) => {
                           onClick={(e) => handleBoxClick(box.boxId, e)}
                           style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
                         >
-                          📦 {box.boxName}
+                          {getStatusIndicatorForLocation(box)} 📦 {box.boxName}
                         </Link>
                         {userCanEdit && (
                             <Button

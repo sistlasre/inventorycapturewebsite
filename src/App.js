@@ -8,6 +8,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import Login from './components/Login';
 import Register from './components/Register';
+import Users from './components/Users';
 import Dashboard from './components/Dashboard';
 import ProjectDetails from './components/ProjectDetails';
 import ProjectVerboseView from './components/ProjectVerboseView';
@@ -32,6 +33,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/users" 
+                element={
+                  <ProtectedRoute>
+                    <Users />
                   </ProtectedRoute>
                 } 
               />

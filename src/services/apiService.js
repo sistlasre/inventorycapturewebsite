@@ -61,6 +61,11 @@ class ApiService {
     });
   }
 
+  async getUsers(parentUserId = '') {
+    const params = parentUserId ? { parentUser: parentUserId } : {};
+    return this.api.get('/users', { params });
+  }
+
   // Project endpoints
   async getUserProjects() {
     return this.api.get('/user/projects');

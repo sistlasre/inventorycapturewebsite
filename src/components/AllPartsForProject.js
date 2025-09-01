@@ -98,7 +98,6 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     { key: 'coo', label: 'COO' },
     { key: 'rohsstatus', label: 'RoHS' },
     { key: 'msl', label: 'MSL' },
-    { key: 'serialorlotnumber', label: 'Serial/Lot Number' },
     { key: 'serialnumber', label: 'Serial Number'},
     { key: 'lotcode', label: 'Lot Code'},
     { key: 'notes', label: 'Notes' },
@@ -337,18 +336,6 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                               }}
                             >
                               {part.msl}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {Array.isArray(part.serialorlotnumber)
-                                ? part.serialorlotnumber.join(', ')
-                                : part.serialorlotnumber}
                             </td>
                             <td
                               className="ic-small"

@@ -1,30 +1,37 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Container, Row, Col, Card, Spinner, Alert, Button, Badge, Toast, ToastContainer, Form } from 'react-bootstrap';
+import { useParams } from "react-router-dom";
+import { Container, Row, Col, Card, Spinner, Alert, Button, Badge, Toast, ToastContainer, Form, InputGroup } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faUser, faCheck, faTimes, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
-
-const API_BASE_URL = 'https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev';
+import CreateUserModal from './CreateUserModal';
 
 const normalize = (str) => (str || "").toLowerCase().replace(/[^a-z0-9]/gi, "");
 
-const Users = () => {
+const Users = ({ pageHeader }) => {
+  const { parentUser } = useParams();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const [showCreateUserModal, setShowCreateUserModal] = React.useState(false);
 
   // filter + sort states
   const [search, setSearch] = useState('');
-  const [sortOption, setSortOption] = useState('username-asc');
+  const [sortOption, setSortOption] = useState('date-newest');
+
+  const [editingUser, setEditingUser] = useState(null);
+  const [editPassword, setEditPassword] = useState('');
+  const [editActive, setEditActive] = useState(false);
+  const [originalActive, setOriginalActive] = useState(false);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await apiService.getUsers();
+      const response = await apiService.getUsers(parentUser);
       setUsers(response.data?.users || []);
     } catch (err) {
       console.error('Failed to fetch users:', err);
@@ -34,19 +41,49 @@ const Users = () => {
     }
   };
 
-  const toggleUserStatus = async (userId, isActive) => {
-    try {
-      setActionLoading(userId);
-      await apiService.put(`${API_BASE_URL}/users/${userId}`, {
-        active: !isActive
-      });
+  const startEditing = (user) => {
+    setEditingUser(user.user_id);
+    setEditPassword('');
+    setEditActive(!user.user_status || user.user_status == 'active');
+    setOriginalActive(!user.user_status || user.user_status == 'active');
+  };
 
+  const cancelEditing = () => {
+    setEditingUser(null);
+    setEditPassword('');
+    setEditActive(false);
+    setOriginalActive(false);
+  };
+
+  const saveUserChanges = async (userId) => {
+    try {
+      const payload = {};
+      if (editPassword.trim()) {
+        payload.new_password = editPassword.trim();
+      }
+      if (editActive !== originalActive) {
+        payload.new_status = editActive ? 'active' : 'inactive';
+      }
+
+      if (Object.keys(payload).length === 0) {
+        // Nothing changed
+        cancelEditing();
+        return;
+      }
+
+      setActionLoading(userId);
+      await apiService.updateUser(userId, payload);
+
+      // Update local state only with changed fields
       setUsers(users.map(u =>
-        u.user_id === userId ? { ...u, active: !isActive } : u
+        u.user_id === userId
+          ? { ...u, ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}) }
+          : u
       ));
 
-      setToastMessage(`User ${!isActive ? 'activated' : 'deactivated'} successfully.`);
+      setToastMessage('User updated successfully.');
       setShowToast(true);
+      cancelEditing();
     } catch (err) {
       console.error('Failed to update user:', err);
       setToastMessage('Failed to update user. Please try again.');
@@ -56,9 +93,14 @@ const Users = () => {
     }
   };
 
+  // Function to handle project creation
+  const handleUserCreated = (newUser) => {
+    setUsers([newUser, ...users]);
+  };
+
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [parentUser]);
 
   // filter + sort processing
   const processedUsers = useMemo(() => {
@@ -95,27 +137,34 @@ const Users = () => {
     <Container fluid className="py-5">
       <Row className="mb-4">
         <Col>
-          <h1 className="text-center">Users</h1>
+          <h1 className="text-center">{pageHeader}</h1>
         </Col>
       </Row>
 
       {/* Controls */}
       <Row className="mb-3">
-        <Col md={6}>
-          <Form.Control
-            type="text"
-            placeholder="Filter by username..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </Col>
-        <Col md={6}>
-          <Form.Select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
-            <option value="username-asc">Sort by Username (A → Z)</option>
-            <option value="username-desc">Sort by Username (Z → A)</option>
-            <option value="date-newest">Sort by Date Created (Newest)</option>
-            <option value="date-oldest">Sort by Date Created (Oldest)</option>
-          </Form.Select>
+        <Col>
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <InputGroup style={{ maxWidth: '400px' }}>
+            <Form.Select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+              <option value="username-asc">Username (A → Z)</option>
+              <option value="username-desc">Username (Z → A)</option>
+              <option value="date-newest">Date Created (Newest)</option>
+              <option value="date-oldest">Date Created (Oldest)</option>
+            </Form.Select>
+            <Form.Control
+              type="text"
+              placeholder="Filter by username..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </InputGroup>
+          {parentUser && (
+              <Button variant="primary" onClick={() => setShowCreateUserModal(true)}>
+                <FontAwesomeIcon icon={faPlus} className="me-2" /> Create Sub Account
+              </Button>
+          )}
+        </div>
         </Col>
       </Row>
 
@@ -140,28 +189,73 @@ const Users = () => {
           ) : (
             processedUsers.map(user => (
               <Card key={user.user_id} className="mb-3 shadow-sm">
-                <Card.Body className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5 className="mb-1">{user.username}</h5>
-                    <p className="mb-0 text-muted small">
-                      Created: {new Date(user.created_at).toLocaleDateString()}
-                    </p>
-                    <Badge bg={user.active ? "success" : "secondary"} className="mt-2">
-                      {user.active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </div>
-                  <Button
-                    variant={user.active ? "outline-danger" : "outline-success"}
-                    onClick={() => toggleUserStatus(user.user_id, user.active)}
-                    disabled={actionLoading === user.user_id}
-                  >
-                    {actionLoading === user.user_id ? (
-                      <Spinner as="span" animation="border" size="sm" />
-                    ) : (
-                      <FontAwesomeIcon icon={user.active ? faTimes : faCheck} />
-                    )}
-                    {user.active ? ' Deactivate' : ' Activate'}
-                  </Button>
+                <Card.Body>
+                  {editingUser === user.user_id ? (
+                    <>
+                      <h5 className="mb-3">Editing {user.username}</h5>
+                      <Form.Group className="mb-3">
+                        <Form.Label>New Password</Form.Label>
+                        <Form.Control
+                          type="password"
+                          value={editPassword}
+                          placeholder="Enter new password"
+                          onChange={(e) => setEditPassword(e.target.value)}
+                          disabled={actionLoading === user.user_id}
+                        />
+                      </Form.Group>
+                      <Form.Group className="mb-3 d-flex align-items-center">
+                        <Form.Check
+                          type="switch"
+                          id={`active-switch-${user.user_id}`}
+                          label={editActive ? 'Active' : 'Inactive'}
+                          checked={editActive}
+                          onChange={(e) => setEditActive(e.target.checked)}
+                          disabled={actionLoading === user.user_id}
+                        />
+                      </Form.Group>
+                      <div className="d-flex gap-2">
+                        <Button
+                          variant="success"
+                          onClick={() => saveUserChanges(user.user_id)}
+                          disabled={actionLoading === user.user_id}
+                        >
+                          {actionLoading === user.user_id ? (
+                            <Spinner as="span" animation="border" size="sm" />
+                          ) : (
+                            <FontAwesomeIcon icon={faCheck} className="me-1" />
+                          )}
+                          Save
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={cancelEditing}
+                          disabled={actionLoading === user.user_id}
+                        >
+                          <FontAwesomeIcon icon={faTimes} className="me-1" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <h5 className="mb-1">{user.username}</h5>
+                        <p className="mb-0 text-muted small">
+                          Created: {new Date(user.created_at).toLocaleDateString()}
+                        </p>
+                        <Badge bg={user.active ? "success" : "secondary"} className="mt-2">
+                          {user.user_status && user.user_status == 'inactive' ? 'Inactive' : 'Active'}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="outline-primary"
+                        onClick={() => startEditing(user)}
+                      >
+                        <FontAwesomeIcon icon={faEdit} className="me-1" />
+                        Edit
+                      </Button>
+                    </div>
+                  )}
                 </Card.Body>
               </Card>
             ))
@@ -169,6 +263,13 @@ const Users = () => {
         </Col>
       </Row>
 
+      {/* Create Project Modal */}
+      <CreateUserModal
+        show={showCreateUserModal}
+        onHide={() => setShowCreateUserModal(false)}
+        onUserCreated={handleUserCreated}
+      />
+      
       {/* Toast Notifications */}
       <ToastContainer className="p-3" position="top-end">
         <Toast

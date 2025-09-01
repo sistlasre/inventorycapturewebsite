@@ -37,10 +37,18 @@ function App() {
                 } 
               />
               <Route 
-                path="/users" 
+                path="/admin" 
                 element={
                   <ProtectedRoute>
-                    <Users />
+                    <Users pageHeader="All Users"/>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/subaccounts/:parentUser" 
+                element={
+                  <ProtectedRoute>
+                    <Users pageHeader="Sub Accounts"/>
                   </ProtectedRoute>
                 } 
               />

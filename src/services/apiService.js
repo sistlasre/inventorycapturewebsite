@@ -52,18 +52,22 @@ class ApiService {
     return this.api.post('/user/signin', { username, password });
   }
 
-  async register(username, password, email) {
+  async register(username, password, email='', parent_user_id='') {
     return this.api.post('/user', { 
       username, 
       password, 
       email,
-      user_metadata: { email }
+      parent_user_id
     });
   }
 
   async getUsers(parentUserId = '') {
     const params = parentUserId ? { parentUser: parentUserId } : {};
     return this.api.get('/users', { params });
+  }
+
+  async updateUser(userId, userData) {
+    return this.api.put(`/user/${userId}`, userData);
   }
 
   // Project endpoints

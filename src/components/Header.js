@@ -33,6 +33,7 @@ const Header = () => {
             {user && (
               <>
                 <Nav.Link as={Link} to="/">Dashboard</Nav.Link>
+                <Nav.Link as={Link} to={`/subaccounts/${user.user_id}`}>Sub Accounts</Nav.Link>
               </>
             )}
           </Nav>

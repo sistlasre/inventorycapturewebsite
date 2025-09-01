@@ -99,6 +99,8 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     { key: 'rohsstatus', label: 'RoHS' },
     { key: 'msl', label: 'MSL' },
     { key: 'serialorlotnumber', label: 'Serial/Lot Number' },
+    { key: 'serialnumber', label: 'Serial Number'},
+    { key: 'lotcode', label: 'Lot Code'},
     { key: 'notes', label: 'Notes' },
     { key: 'ipn', label: 'IPN'},
     { key: 'ipnquantity', label: 'Internal QTY'},
@@ -347,6 +349,26 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                               {Array.isArray(part.serialorlotnumber)
                                 ? part.serialorlotnumber.join(', ')
                                 : part.serialorlotnumber}
+                            </td>
+                            <td
+                              className="ic-small"
+                              style={{
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.serialnumber}
+                            </td>
+                            <td
+                              className="ic-small"
+                              style={{
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.lotcode}
                             </td>
                             <td 
                               className="ic-small"

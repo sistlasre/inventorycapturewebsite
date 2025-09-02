@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert, Form, Accordion } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faRotateRight, faSave, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faThumbsDown, faRotateRight, faSave, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import './PartModal.css';
 import { getHeaderForPart } from './sharedFunctions';
@@ -298,8 +298,8 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     const color = REVIEW_STATUS_COLORS[reviewStatus] || '#6c757d';
 
     return (
-      <FontAwesomeIcon 
-        icon={faThumbsUp} 
+      <FontAwesomeIcon
+        icon={reviewStatus == 'reviewed' ? faThumbsUp : faThumbsDown}
         style={{ 
           color: color, 
           fontSize: '48px'

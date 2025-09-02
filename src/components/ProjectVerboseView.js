@@ -6,7 +6,7 @@ import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faPencil, faCheck, faTimes, faSort, faSortAsc, faSortDesc } from '@fortawesome/free-solid-svg-icons';
+import { faImage, faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faThumbsDown, faPencil, faCheck, faTimes, faSort, faSortAsc, faSortDesc } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
 import PartModal from './PartModal';
@@ -198,7 +198,7 @@ const handleBoxClick = (boxId, event) => {
 
     return (
       <FontAwesomeIcon
-        icon={faThumbsUp}
+        icon={reviewStatus == 'reviewed' ? faThumbsUp : faThumbsDown}
         style={{
           color: color,
           fontSize: '14px',
@@ -214,12 +214,29 @@ const handleBoxClick = (boxId, event) => {
     const partCount = box.partCount || 0;
     const numReviewedParts = box.numReviewedParts || 0;
     const numPartsRequiringMorePhotos = box.numPartsRequiringMorePhotos || 0;
-    const color = partCount == numReviewedParts ? '#28a745' : numPartsRequiringMorePhotos > 0 ? '#d5b60a' : '#6c757d';
-    const title = partCount == numReviewedParts ? 'Reviewed' : 'Needs review';
+    let locationStatus = 'unreviewed';
+    let color = '';
+    let title = '';
+    let locationIcon;
+    if (partCount == numReviewedParts) {
+        locationStatus = 'reviewed';
+        color = '#28a745';
+        title = 'Reviewed';
+        locationIcon = faThumbsUp;
+    } else if (numPartsRequiringMorePhotos > 0) {
+        locationStatus = 'more_photos_needed';
+        color = '#d5b60a';
+        title = 'Needs review';
+        locationIcon = faThumbsDown;
+    }
+
+    if (locationStatus == 'unreviewed') {
+        return '';
+    }
 
     return (
       <FontAwesomeIcon 
-        icon={faThumbsUp} 
+        icon={locationIcon}
         style={{ 
           color: color, 
           fontSize: '14px', 

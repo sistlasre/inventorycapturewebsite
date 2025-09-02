@@ -240,7 +240,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                               }}
                             >
                               <Link 
-                                to={`/box/${part.boxId}`}
+                                to="#"
                                 title={part.locationTree}
                                 style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
                               >

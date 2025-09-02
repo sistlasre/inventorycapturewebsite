@@ -40,7 +40,7 @@ function App() {
                 path="/admin" 
                 element={
                   <ProtectedRoute>
-                    <Users pageHeader="All Users"/>
+                    <Users pageHeader="All Accounts"/>
                   </ProtectedRoute>
                 } 
               />
@@ -49,6 +49,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Users pageHeader="Sub Accounts"/>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/account/:parentUser" 
+                element={
+                  <ProtectedRoute>
+                    <Users pageHeader="Accounts"/>
                   </ProtectedRoute>
                 } 
               />

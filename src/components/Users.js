@@ -1,8 +1,35 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams } from "react-router-dom";
-import { Container, Row, Col, Card, Spinner, Alert, Button, Badge, Toast, ToastContainer, Form, InputGroup } from 'react-bootstrap';
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Spinner,
+  Alert,
+  Button,
+  Badge,
+  Toast,
+  ToastContainer,
+  Form,
+  InputGroup,
+  Table
+} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faUser, faCheck, faTimes, faEdit } from '@fortawesome/free-solid-svg-icons';
+import {
+  faPlus,
+  faUser,
+  faCheck,
+  faTimes,
+  faEdit,
+  faChevronDown,
+  faChevronRight,
+  faTrash,
+  faPencil,
+  faSort,
+  faSortAsc,
+  faSortDesc
+} from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import CreateUserModal from './CreateUserModal';
 
@@ -16,16 +43,22 @@ const Users = ({ pageHeader }) => {
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
-  const [showCreateUserModal, setShowCreateUserModal] = React.useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
 
   // filter + sort states
   const [search, setSearch] = useState('');
-  const [sortOption, setSortOption] = useState('date-newest');
+  const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
+  const [filterField, setFilterField] = useState('all');
 
-  const [editingUser, setEditingUser] = useState(null);
-  const [editPassword, setEditPassword] = useState('');
-  const [editActive, setEditActive] = useState(false);
-  const [originalActive, setOriginalActive] = useState(false);
+  // editing states - now stores multiple users being edited
+  const [editingUsers, setEditingUsers] = useState(new Map());
+  const [savingUsers, setSavingUsers] = useState(new Set());
+
+  // expanded parent users
+  const [expandedUsers, setExpandedUsers] = useState(new Set());
+
+  // Refs for inline editing inputs
+  const passwordInputRefs = useRef({});
 
   const fetchUsers = async () => {
     try {
@@ -42,58 +75,95 @@ const Users = ({ pageHeader }) => {
   };
 
   const startEditing = (user) => {
-    setEditingUser(user.user_id);
-    setEditPassword('');
-    setEditActive(!user.user_status || user.user_status == 'active');
-    setOriginalActive(!user.user_status || user.user_status == 'active');
+    const editData = {
+      password: '',
+      status: !user.user_status || user.user_status === 'active',
+      originalStatus: !user.user_status || user.user_status === 'active'
+    };
+    setEditingUsers(prev => new Map(prev).set(user.user_id, editData));
+
+    // Focus on password input after a brief delay
+    setTimeout(() => {
+      passwordInputRefs.current[user.user_id]?.focus();
+    }, 50);
   };
 
-  const cancelEditing = () => {
-    setEditingUser(null);
-    setEditPassword('');
-    setEditActive(false);
-    setOriginalActive(false);
+  const cancelEditing = (userId) => {
+    setEditingUsers(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(userId);
+      return newMap;
+    });
+  };
+
+  const updateEditingData = (userId, field, value) => {
+    setEditingUsers(prev => {
+      const newMap = new Map(prev);
+      const data = newMap.get(userId);
+      if (data) {
+        newMap.set(userId, { ...data, [field]: value });
+      }
+      return newMap;
+    });
   };
 
   const saveUserChanges = async (userId) => {
+    const editData = editingUsers.get(userId);
+    if (!editData) return;
+
     try {
       const payload = {};
-      if (editPassword.trim()) {
-        payload.new_password = editPassword.trim();
+      if (editData.password.trim()) {
+        payload.new_password = editData.password.trim();
       }
-      if (editActive !== originalActive) {
-        payload.new_status = editActive ? 'active' : 'inactive';
+      if (editData.status !== editData.originalStatus) {
+        payload.new_status = editData.status ? 'active' : 'inactive';
       }
 
       if (Object.keys(payload).length === 0) {
-        // Nothing changed
-        cancelEditing();
+        cancelEditing(userId);
         return;
       }
 
-      setActionLoading(userId);
+      setSavingUsers(prev => new Set(prev).add(userId));
       await apiService.updateUser(userId, payload);
 
-      // Update local state only with changed fields
-      setUsers(users.map(u =>
-        u.user_id === userId
-          ? { ...u, ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}) }
-          : u
-      ));
+      // Update both parent users and subAccounts
+      setUsers(prevUsers => {
+        return prevUsers.map(u => {
+          if (u.user_id === userId) {
+            return { ...u, ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}) };
+          }
+          if (u.subAccounts) {
+            return {
+              ...u,
+              subAccounts: u.subAccounts.map(sub =>
+                sub.user_id === userId
+                  ? { ...sub, ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}) }
+                  : sub
+              )
+            };
+          }
+          return u;
+        });
+      });
 
       setToastMessage('User updated successfully.');
       setShowToast(true);
-      cancelEditing();
+      cancelEditing(userId);
     } catch (err) {
       console.error('Failed to update user:', err);
       setToastMessage('Failed to update user. Please try again.');
       setShowToast(true);
     } finally {
-      setActionLoading(null);
+      setSavingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
     }
   };
 
-  // Function to handle project creation
   const handleUserCreated = (newUser) => {
     setUsers([newUser, ...users]);
   };
@@ -102,36 +172,280 @@ const Users = ({ pageHeader }) => {
     fetchUsers();
   }, [parentUser]);
 
-  // filter + sort processing
+  // Define table columns
+  const columns = [
+    { key: 'username', label: 'Username' },
+    { key: 'created_at', label: 'Created' },
+    { key: 'status', label: 'Status' },
+    { key: 'password', label: 'Password' },
+    { key: 'actions', label: 'Actions' }
+  ];
+
+  // Helper function to match filter
+  const matchesFilter = (user) => {
+    const normFilter = normalize(search);
+    if (!normFilter) return true;
+
+    if (filterField === 'all') {
+      return normalize(user.username).includes(normFilter) || 
+             normalize(user.user_status || 'active').includes(normFilter) ||
+             normalize(new Date(user.created_at).toLocaleDateString()).includes(normFilter);
+    } else if (filterField === 'username') {
+      return normalize(user.username).includes(normFilter);
+    } else if (filterField === 'status') {
+      return normalize(user.user_status || 'active').includes(normFilter);
+    } else if (filterField === 'created_at') {
+      return normalize(new Date(user.created_at).toLocaleDateString()).includes(normFilter);
+    }
+    return true;
+  };
+
+  // Process and sort users
   const processedUsers = useMemo(() => {
     let result = [...users];
 
-    // filter by username
-    if (search.trim()) {
-      const normalizedSearch = normalize(search);
-      result = result.filter(u => normalize(u.username).includes(normalizedSearch));
+    // Apply filter
+    result = result.filter(matchesFilter);
+
+    // Apply sorting
+    if (sortConfig.key) {
+      result.sort((a, b) => {
+        let valA, valB;
+
+        if (sortConfig.key === 'username') {
+          valA = normalize(a.username);
+          valB = normalize(b.username);
+        } else if (sortConfig.key === 'created_at') {
+          valA = new Date(a.created_at).getTime();
+          valB = new Date(b.created_at).getTime();
+        } else if (sortConfig.key === 'status') {
+          valA = normalize(a.user_status || 'active');
+          valB = normalize(b.user_status || 'active');
+        } else {
+          return 0;
+        }
+
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
     }
 
-    // sort
-    result.sort((a, b) => {
-      if (sortOption.startsWith('username')) {
-        const nameA = normalize(a.username);
-        const nameB = normalize(b.username);
-        return sortOption === 'username-asc'
-          ? nameA.localeCompare(nameB)
-          : nameB.localeCompare(nameA);
-      } else if (sortOption.startsWith('date')) {
-        const dateA = new Date(a.created_at);
-        const dateB = new Date(b.created_at);
-        return sortOption === 'date-newest'
-          ? dateB - dateA
-          : dateA - dateB;
+    return result;
+  }, [users, search, filterField, sortConfig]);
+
+  const toggleExpand = (userId) => {
+    setExpandedUsers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
       }
-      return 0;
+      return newSet;
+    });
+  };
+
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const renderTableRows = (usersToRender, level = 0, startingRowIndex = 0) => {
+    const rows = [];
+    let currentRowIndex = startingRowIndex;
+
+    usersToRender.forEach(user => {
+      const isEditing = editingUsers.has(user.user_id);
+      const editData = editingUsers.get(user.user_id);
+      const isSaving = savingUsers.has(user.user_id);
+      const paddingLeft = `${level * 1.5}rem`;
+      const isEvenRow = currentRowIndex % 2 === 0;
+      const hasSubAccounts = user.subAccounts && user.subAccounts.length > 0;
+
+      rows.push(
+        <tr 
+          key={`user-${user.user_id}`}
+          style={{
+            backgroundColor: level === 0
+              ? (isEvenRow ? '#f8f9fa' : '#ffffff')
+              : (isEvenRow ? '#f5f5f5' : '#fafafa')
+          }}
+        >
+          {/* Username Column */}
+          <td
+            className="ic-small"
+            style={{
+              paddingLeft: paddingLeft,
+              borderRight: '1px solid #e9ecef',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {hasSubAccounts && (
+                <button
+                  onClick={() => toggleExpand(user.user_id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#666',
+                    cursor: 'pointer',
+                    padding: '2px',
+                    marginRight: '8px',
+                    borderRadius: '3px',
+                    fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '20px',
+                    height: '20px'
+                  }}
+                  title={expandedUsers.has(user.user_id) ? 'Collapse sub-accounts' : 'Expand sub-accounts'}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <FontAwesomeIcon
+                    icon={expandedUsers.has(user.user_id) ? faChevronDown : faChevronRight}
+                  />
+                </button>
+              )}
+              {!hasSubAccounts && <div style={{ width: '28px' }} />}
+
+              <FontAwesomeIcon icon={faUser} className="text-muted me-2" style={{ fontSize: '14px' }} />
+              <span title={user.user_id} className="fw-bold">{user.username}</span>
+
+              {hasSubAccounts && (
+                <span style={{ color: '#666', fontSize: '0.85em', marginLeft: '0.5rem' }}>
+                  ({user.subAccounts.length} sub-account{user.subAccounts.length !== 1 ? 's' : ''})
+                </span>
+              )}
+            </div>
+          </td>
+
+          {/* Created Date Column */}
+          <td
+            className="ic-small"
+            style={{
+              borderRight: '1px solid #e9ecef',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {new Date(user.created_at).toLocaleDateString()}
+          </td>
+
+          {/* Status Column */}
+          <td
+            className="ic-small"
+            style={{
+              borderRight: '1px solid #e9ecef',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {isEditing ? (
+              <Form.Check
+                type="switch"
+                id={`status-switch-${user.user_id}`}
+                label={editData?.status ? 'Active' : 'Inactive'}
+                checked={editData?.status || false}
+                onChange={(e) => updateEditingData(user.user_id, 'status', e.target.checked)}
+                disabled={isSaving}
+              />
+            ) : (
+              <Badge bg={user.user_status === 'inactive' ? 'secondary' : 'success'}>
+                {user.user_status === 'inactive' ? 'Inactive' : 'Active'}
+              </Badge>
+            )}
+          </td>
+
+          {/* Password Column */}
+          <td
+            className="ic-small"
+            style={{
+              borderRight: '1px solid #e9ecef',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {isEditing ? (
+              <Form.Control
+                ref={(el) => { passwordInputRefs.current[user.user_id] = el; }}
+                type="password"
+                placeholder="New password"
+                value={editData?.password || ''}
+                onChange={(e) => updateEditingData(user.user_id, 'password', e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveUserChanges(user.user_id);
+                  if (e.key === 'Escape') cancelEditing(user.user_id);
+                }}
+                disabled={isSaving}
+                style={{
+                  maxWidth: '200px',
+                  fontSize: '11px'
+                }}
+              />
+            ) : (
+              <span className="text-muted">••••••••</span>
+            )}
+          </td>
+
+          {/* Actions Column */}
+          <td className="ic-small" style={{ whiteSpace: 'nowrap' }}>
+            {isEditing ? (
+              <div className="d-flex gap-2">
+                <Button
+                  variant="success"
+                  size="sm"
+                  onClick={() => saveUserChanges(user.user_id)}
+                  disabled={isSaving}
+                  style={{ padding: '4px 8px', fontSize: '12px' }}
+                  title="Save changes"
+                >
+                  {isSaving ? (
+                    <Spinner as="span" animation="border" size="sm" />
+                  ) : (
+                    <FontAwesomeIcon icon={faCheck} />
+                  )}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => cancelEditing(user.user_id)}
+                  disabled={isSaving}
+                  style={{ padding: '4px 8px', fontSize: '12px' }}
+                  title="Cancel"
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => startEditing(user)}
+                className="text-primary p-0"
+                style={{ fontSize: '14px' }}
+                title="Edit user"
+              >
+                <FontAwesomeIcon icon={faPencil} />
+              </Button>
+            )}
+          </td>
+        </tr>
+      );
+      currentRowIndex++;
+
+      // Render subAccounts if expanded
+      if (expandedUsers.has(user.user_id) && user.subAccounts) {
+        const filteredSubAccounts = user.subAccounts.filter(matchesFilter);
+        const subRows = renderTableRows(filteredSubAccounts, level + 1, currentRowIndex);
+        rows.push(...subRows.rows);
+        currentRowIndex = subRows.nextRowIndex;
+      }
     });
 
-    return result;
-  }, [users, search, sortOption]);
+    return { rows, nextRowIndex: currentRowIndex };
+  };
 
   return (
     <Container fluid className="py-5">
@@ -144,35 +458,37 @@ const Users = ({ pageHeader }) => {
       {/* Controls */}
       <Row className="mb-3">
         <Col>
-        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <InputGroup style={{ maxWidth: '400px' }}>
-            <Form.Select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
-              <option value="username-asc">Username (A → Z)</option>
-              <option value="username-desc">Username (Z → A)</option>
-              <option value="date-newest">Date Created (Newest)</option>
-              <option value="date-oldest">Date Created (Oldest)</option>
-            </Form.Select>
-            <Form.Control
-              type="text"
-              placeholder="Filter by username..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </InputGroup>
-          {parentUser && (
-              <Button variant="primary" onClick={() => setShowCreateUserModal(true)}>
-                <FontAwesomeIcon icon={faPlus} className="me-2" /> Create Sub Account
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <InputGroup style={{ maxWidth: '400px' }}>
+              <Form.Select value={filterField} onChange={(e) => setFilterField(e.target.value)}>
+                <option value="all">All Fields</option>
+                <option value="username">Username</option>
+                <option value="status">Status</option>
+                <option value="created_at">Created Date</option>
+              </Form.Select>
+              <Form.Control
+                type="text"
+                placeholder="Filter users..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </InputGroup>
+            {parentUser && (
+              <Button
+                variant="primary"
+                onClick={() => setShowCreateUserModal(true)}
+              >
+                <FontAwesomeIcon icon={faPlus} className="me-2" />
+                Create Sub Account
               </Button>
-          )}
-        </div>
+            )}
+          </div>
         </Col>
       </Row>
 
       <Row>
         <Col>
-          {error && (
-            <Alert variant="danger" className="mb-3">{error}</Alert>
-          )}
+          {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
 
           {loading ? (
             <div className="text-center py-5">
@@ -182,95 +498,88 @@ const Users = ({ pageHeader }) => {
           ) : processedUsers.length === 0 ? (
             <Card className="mb-2">
               <Card.Body className="text-center py-5">
-                <FontAwesomeIcon icon={faUser} size="3x" className="text-muted mb-3" />
+                <FontAwesomeIcon
+                  icon={faUser}
+                  size="3x"
+                  className="text-muted mb-3"
+                />
                 <h6 className="text-muted">No users found</h6>
               </Card.Body>
             </Card>
           ) : (
-            processedUsers.map(user => (
-              <Card key={user.user_id} className="mb-3 shadow-sm">
-                <Card.Body>
-                  {editingUser === user.user_id ? (
-                    <>
-                      <h5 className="mb-3">Editing {user.username}</h5>
-                      <Form.Group className="mb-3">
-                        <Form.Label>New Password</Form.Label>
-                        <Form.Control
-                          type="password"
-                          value={editPassword}
-                          placeholder="Enter new password"
-                          onChange={(e) => setEditPassword(e.target.value)}
-                          disabled={actionLoading === user.user_id}
-                        />
-                      </Form.Group>
-                      <Form.Group className="mb-3 d-flex align-items-center">
-                        <Form.Check
-                          type="switch"
-                          id={`active-switch-${user.user_id}`}
-                          label={editActive ? 'Active' : 'Inactive'}
-                          checked={editActive}
-                          onChange={(e) => setEditActive(e.target.checked)}
-                          disabled={actionLoading === user.user_id}
-                        />
-                      </Form.Group>
-                      <div className="d-flex gap-2">
-                        <Button
-                          variant="success"
-                          onClick={() => saveUserChanges(user.user_id)}
-                          disabled={actionLoading === user.user_id}
-                        >
-                          {actionLoading === user.user_id ? (
-                            <Spinner as="span" animation="border" size="sm" />
-                          ) : (
-                            <FontAwesomeIcon icon={faCheck} className="me-1" />
-                          )}
-                          Save
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={cancelEditing}
-                          disabled={actionLoading === user.user_id}
-                        >
-                          <FontAwesomeIcon icon={faTimes} className="me-1" />
-                          Cancel
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <h5 className="mb-1">{user.username}</h5>
-                        <p className="mb-0 text-muted small">
-                          Created: {new Date(user.created_at).toLocaleDateString()}
-                        </p>
-                        <Badge bg={user.active ? "success" : "secondary"} className="mt-2">
-                          {user.user_status && user.user_status == 'inactive' ? 'Inactive' : 'Active'}
-                        </Badge>
-                      </div>
-                      <Button
-                        variant="outline-primary"
-                        onClick={() => startEditing(user)}
-                      >
-                        <FontAwesomeIcon icon={faEdit} className="me-1" />
-                        Edit
-                      </Button>
-                    </div>
-                  )}
-                </Card.Body>
-              </Card>
-            ))
+            <Card className="shadow-sm">
+              <Card.Body style={{ padding: 0 }}>
+                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                  <Table className="mb-0" style={{ minWidth: '900px' }} size="sm">
+                    <thead
+                      className="table-light"
+                      style={{
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 10,
+                        backgroundColor: '#f8f9fa'
+                      }}
+                    >
+                      <tr>
+                        {columns.map((column, index) => (
+                          <th
+                            key={column.key}
+                            onClick={() => column.key !== 'password' && column.key !== 'actions' && handleSort(column.key)}
+                            style={{
+                              fontWeight: '600',
+                              borderRight: index < columns.length - 1 ? '1px solid #dee2e6' : 'none',
+                              whiteSpace: 'nowrap',
+                              fontSize: '14px',
+                              textAlign: column.key === 'actions' ? 'center' : 'left',
+                              verticalAlign: 'middle',
+                              paddingTop: '8px',
+                              paddingBottom: '8px',
+                              cursor: column.key !== 'password' && column.key !== 'actions' ? 'pointer' : 'default',
+                              userSelect: 'none'
+                            }}
+                          >
+                            {column.label}
+                            {column.key !== 'password' && column.key !== 'actions' && (
+                              <FontAwesomeIcon
+                                icon={
+                                  sortConfig.key === column.key
+                                    ? (sortConfig.direction === 'asc' ? faSortAsc : faSortDesc)
+                                    : faSort
+                                }
+                                style={{ marginLeft: '5px', fontSize: '12px' }}
+                              />
+                            )}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {processedUsers.length > 0 ? (
+                        renderTableRows(processedUsers).rows
+                      ) : (
+                        <tr>
+                          <td colSpan={columns.length} className="text-center text-muted py-4">
+                            No users found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </Table>
+                </div>
+              </Card.Body>
+            </Card>
           )}
         </Col>
       </Row>
 
-      {/* Create Project Modal */}
+      {/* Create User Modal */}
       <CreateUserModal
         show={showCreateUserModal}
         onHide={() => setShowCreateUserModal(false)}
         onUserCreated={handleUserCreated}
       />
-      
-      {/* Toast Notifications */}
+
+      {/* Toast */}
       <ToastContainer className="p-3" position="top-end">
         <Toast
           show={showToast}
@@ -280,7 +589,9 @@ const Users = ({ pageHeader }) => {
           bg={toastMessage?.includes('successfully') ? "success" : "danger"}
         >
           <Toast.Header>
-            <strong className="me-auto">{toastMessage?.includes('successfully') ? 'Success' : 'Error'}</strong>
+            <strong className="me-auto">
+              {toastMessage?.includes('successfully') ? 'Success' : 'Error'}
+            </strong>
           </Toast.Header>
           <Toast.Body className="text-white">{toastMessage}</Toast.Body>
         </Toast>
@@ -290,3 +601,4 @@ const Users = ({ pageHeader }) => {
 };
 
 export default Users;
+

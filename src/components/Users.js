@@ -60,6 +60,12 @@ const Users = ({ pageHeader }) => {
   // Refs for inline editing inputs
   const passwordInputRefs = useRef({});
 
+  const USER_STATUS_MAPPINGS = {
+    'active': { badge_type: 'success', label: 'Active' },
+    'inactive': { badge_type: 'danger', label: 'Inactive' },
+    'pending': { badge_type: 'warning', label: 'Pending' },
+  };
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -353,8 +359,8 @@ const Users = ({ pageHeader }) => {
                 disabled={isSaving}
               />
             ) : (
-              <Badge bg={user.user_status === 'inactive' ? 'secondary' : 'success'}>
-                {user.user_status === 'inactive' ? 'Inactive' : 'Active'}
+              <Badge bg={USER_STATUS_MAPPINGS[user.user_status]?.badge_type || 'secondary'}>
+                {USER_STATUS_MAPPINGS[user.user_status]?.label || 'Inactive'}
               </Badge>
             )}
           </td>
@@ -473,15 +479,13 @@ const Users = ({ pageHeader }) => {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </InputGroup>
-            {parentUser && (
-              <Button
-                variant="primary"
-                onClick={() => setShowCreateUserModal(true)}
-              >
-                <FontAwesomeIcon icon={faPlus} className="me-2" />
-                Create Sub Account
-              </Button>
-            )}
+            <Button
+              variant="primary"
+              onClick={() => setShowCreateUserModal(true)}
+            >
+              <FontAwesomeIcon icon={faPlus} className="me-2" />
+              {parentUser ? 'Create New Sub Account' : 'Create New Account'}
+            </Button>
           </div>
         </Col>
       </Row>

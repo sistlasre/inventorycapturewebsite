@@ -45,7 +45,8 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
         user_id: createdUser.sub_account_id,
         username: createdUser.username,
         created_at: createdUser.created_at,
-        updated_at: createdUser.updated_at
+        updated_at: createdUser.updated_at,
+        user_status: 'active'
       };
 
       // Call the callback to add the project to the list
@@ -66,7 +67,7 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
       <Modal.Header closeButton>
         <Modal.Title>
           <FontAwesomeIcon icon={faPlus} className="me-2" />
-          Create Sub Account
+          Create Account
         </Modal.Title>
       </Modal.Header>
       
@@ -126,7 +127,7 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
             ) : (
               <>
                 <FontAwesomeIcon icon={faPlus} className="me-2" />
-                Create Sub Account
+                Create Account
               </>
             )}
           </Button>

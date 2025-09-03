@@ -194,7 +194,7 @@ const handleBoxClick = (boxId, event) => {
   const getStatusIndicator = (part) => {
     const reviewStatus = part.status || 'never_reviewed';
     const color = REVIEW_STATUS_MAPPINGS[reviewStatus]?.color || '#6c757d';
-    const title = REVIEW_STATUS_MAPPINGS[reviewStatus]?.titleText || 'Not reviewed';
+    const title = REVIEW_STATUS_MAPPINGS[reviewStatus]?.titleText || 'Needs further review';
 
     return (
       <FontAwesomeIcon

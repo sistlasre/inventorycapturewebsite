@@ -70,6 +70,10 @@ class ApiService {
     return this.api.put(`/user/${userId}`, userData);
   }
 
+  async getUserAccess() {
+      return this.api.get('/get_user_access');
+  }
+
   // Project endpoints
   async getUserProjects() {
     return this.api.get('/user/projects');

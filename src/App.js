@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-
 // Components
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -15,6 +14,7 @@ import ProjectVerboseView from './components/ProjectVerboseView';
 import AllPartsForProjectTableView from './components/AllPartsForProject';
 import BoxDetails from './components/BoxDetails';
 import PartDetails from './components/PartDetails';
+import AdminRoute from './components/AdminRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -39,9 +39,9 @@ function App() {
               <Route 
                 path="/admin" 
                 element={
-                  <ProtectedRoute>
+                  <AdminRoute>
                     <Users pageHeader="All Accounts"/>
-                  </ProtectedRoute>
+                  </AdminRoute>
                 } 
               />
               <Route 

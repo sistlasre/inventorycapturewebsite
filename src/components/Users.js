@@ -83,8 +83,8 @@ const Users = ({ pageHeader }) => {
   const startEditing = (user) => {
     const editData = {
       password: '',
-      status: !user.user_status || user.user_status === 'active',
-      originalStatus: !user.user_status || user.user_status === 'active'
+      status: user.user_status || 'active',
+      originalStatus: user.user_status || 'active'
     };
     setEditingUsers(prev => new Map(prev).set(user.user_id, editData));
 
@@ -123,7 +123,7 @@ const Users = ({ pageHeader }) => {
         payload.new_password = editData.password.trim();
       }
       if (editData.status !== editData.originalStatus) {
-        payload.new_status = editData.status ? 'active' : 'inactive';
+        payload.new_status = editData.status;
       }
 
       if (Object.keys(payload).length === 0) {
@@ -350,14 +350,19 @@ const Users = ({ pageHeader }) => {
             }}
           >
             {isEditing ? (
-              <Form.Check
-                type="switch"
-                id={`status-switch-${user.user_id}`}
-                label={editData?.status ? 'Active' : 'Inactive'}
-                checked={editData?.status || false}
-                onChange={(e) => updateEditingData(user.user_id, 'status', e.target.checked)}
+              <Form.Select
+                value={editData?.status || 'active'}
+                onChange={(e) => updateEditingData(user.user_id, 'status', e.target.value)}
                 disabled={isSaving}
-              />
+                style={{
+                  maxWidth: '150px',
+                  fontSize: '12px'
+                }}
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="pending">Pending</option>
+              </Form.Select>
             ) : (
               <Badge bg={USER_STATUS_MAPPINGS[user.user_status]?.badge_type || 'secondary'}>
                 {USER_STATUS_MAPPINGS[user.user_status]?.label || 'Inactive'}

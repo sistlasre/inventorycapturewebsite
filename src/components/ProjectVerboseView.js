@@ -217,7 +217,7 @@ const handleBoxClick = (boxId, event) => {
 
   // Function to get status indicator for locations
   const getStatusIndicatorForLocation = (box) => {
-    const partCount = box.partCount || 0;
+    const partCount = (box.partCount || 0) + (box.subLocationsPartCount || 0);
     const numReviewedParts = box.numReviewedParts || 0;
     const numPartsRequiringMorePhotos = box.numPartsRequiringMorePhotos || 0;
     let locationStatus = 'unreviewed';

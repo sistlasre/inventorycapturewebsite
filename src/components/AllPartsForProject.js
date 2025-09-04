@@ -90,6 +90,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
   const columns = [
     { key: 'boxName', label: 'Location Name' },
     { key: 'name', label: 'Part Name' },
+    // Fields that are derived from primary image uploads and manual content
     { key: 'mpn', label: 'MPN' },
     { key: 'secondarypartnumber', label: 'Secondary PN' },
     { key: 'quantity', label: 'QTY' },
@@ -100,10 +101,19 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     { key: 'msl', label: 'MSL' },
     { key: 'serialnumber', label: 'Serial Number'},
     { key: 'lotcode', label: 'Lot Code'},
+    // Manually provided notes
     { key: 'notes', label: 'Notes' },
+    // Fields that are derived from IPN image uploads and manual content
     { key: 'ipn', label: 'IPN'},
     { key: 'ipnquantity', label: 'Internal QTY'},
-    { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'}
+    { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'},
+    // Fields that are generated from external API
+    { key: 'eccn', label: 'ECCN'},
+    { key: 'htsus', label: 'HTSUS'},
+    { key: 'price_at_my_break', label: 'Price at my break'},
+    { key: 'quantity_at_my_break', label: 'Quantity at my break'},
+    { key: 'lowest_price_at_any_break', label: 'Lowest price at any break'},
+    { key: 'quantity_at_that_price_break', label: 'Quantity at that price break'}
   ];
 
   const onCopyPublicProjectUrl = () => {
@@ -391,12 +401,72 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                               className="ic-small"
                               style={{ 
                                 paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
                                 whiteSpace: 'nowrap'
                               }}
                             >
                               {Array.isArray(part.ipnlotserial)
                                 ? part.ipnlotserial.join(', ')
                                 : part.ipnlotserial}
+                            </td>
+                            <td 
+                              className="ic-small"
+                              style={{ 
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.eccn}
+                            </td>
+                            <td 
+                              className="ic-small"
+                              style={{ 
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.htsus}
+                            </td>
+                            <td 
+                              className="ic-small"
+                              style={{ 
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.price_at_my_break}
+                            </td>
+                            <td 
+                              className="ic-small"
+                              style={{ 
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.quantity_at_my_break}
+                            </td>
+                            <td 
+                              className="ic-small"
+                              style={{ 
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.lowest_price_at_any_break}
+                            </td>
+                            <td 
+                              className="ic-small"
+                              style={{ 
+                                paddingLeft: '0.75rem',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.quantity_at_that_price_break}
                             </td>
                           </tr>
                         );

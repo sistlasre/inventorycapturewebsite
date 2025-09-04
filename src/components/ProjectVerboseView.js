@@ -84,7 +84,13 @@ const ProjectVerboseView = ({ isViewOnly = false }) => {
     { key: 'notes', label: 'Notes' },
     { key: 'ipn', label: 'IPN'},
     { key: 'ipnquantity', label: 'Internal QTY'},
-    { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'}
+    { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'},
+    { key: 'eccn', label: 'ECCN'},
+    { key: 'htsus', label: 'HTSUS'},
+    { key: 'price_at_my_break', label: 'Price at my break'},
+    { key: 'quantity_at_my_break', label: 'Quantity at my break'},
+    { key: 'lowest_price_at_any_break', label: 'Lowest price at any break'},
+    { key: 'quantity_at_that_price_break', label: 'Quantity at that price break'}
   ];
 
   const REVIEW_STATUS_MAPPINGS = {

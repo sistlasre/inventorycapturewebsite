@@ -320,7 +320,7 @@ const Users = ({ pageHeader }) => {
               {!hasSubAccounts && <div style={{ width: '28px' }} />}
 
               <FontAwesomeIcon icon={faUser} className="text-muted me-2" style={{ fontSize: '14px' }} />
-              <span title={user.user_id} className="fw-bold">{user.username}</span>
+              <span title={user.user_id} className="fw-bold">{user.user_friendly_name || user.username}</span>
 
               {hasSubAccounts && (
                 <span style={{ color: '#666', fontSize: '0.85em', marginLeft: '0.5rem' }}>

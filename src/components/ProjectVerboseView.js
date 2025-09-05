@@ -205,7 +205,7 @@ const handleBoxClick = (boxId, event) => {
 
     return (
       <FontAwesomeIcon
-        icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' ? faThumbsUp : faThumbsDown}
+        icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' || reviewStatus == 'more_photos_requested' ? faThumbsUp : faThumbsDown}
         style={{
           color: color,
           fontSize: '14px',

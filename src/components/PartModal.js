@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Card, Row, Col, Badge, Spinner, Alert, Form, Accordion } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faThumbsDown, faRotateRight, faSave, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faArrowLeft, faArrowRight, faThumbsUp, faThumbsDown, faRotateRight, faSave, faSearchPlus, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import './PartModal.css';
 import { getHeaderForPart } from './sharedFunctions';
@@ -299,13 +299,26 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     const color = REVIEW_STATUS_COLORS[reviewStatus] || '#6c757d';
 
     return (
-      <FontAwesomeIcon
-        icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' || reviewStatus == 'more_photos_requested' ? faThumbsUp : faThumbsDown}
-        style={{ 
-          color: color, 
-          fontSize: '48px'
-        }}
-      />
+      <div className="d-flex align-items-center">
+        {part.gotExternalHit && (
+          <FontAwesomeIcon
+            icon={faCircleCheck}
+            style={{
+              color: '#28a745',
+              fontSize: '48px',
+              marginLeft: '10px'
+            }}
+            title="External data available"
+          />
+        )}
+        <FontAwesomeIcon
+          icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' || reviewStatus == 'more_photos_requested' ? faThumbsUp : faThumbsDown}
+          style={{ 
+            color: color, 
+            fontSize: '48px'
+          }}
+        />
+      </div>
     );
   };
 

@@ -6,7 +6,7 @@ import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faThumbsDown, faPencil, faCheck, faTimes, faSort, faSortAsc, faSortDesc } from '@fortawesome/free-solid-svg-icons';
+import { faImage, faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faThumbsDown, faPencil, faCheck, faTimes, faSort, faSortAsc, faSortDesc, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
 import PartModal from './PartModal';
@@ -204,15 +204,28 @@ const handleBoxClick = (boxId, event) => {
     const title = REVIEW_STATUS_MAPPINGS[reviewStatus]?.titleText || 'Needs further review';
 
     return (
-      <FontAwesomeIcon
-        icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' || reviewStatus == 'more_photos_requested' ? faThumbsUp : faThumbsDown}
-        style={{
-          color: color,
-          fontSize: '14px',
-          marginLeft: '6px'
-        }}
-        title={title}
-      />
+      <>
+        {part.gotExternalHit && (
+          <FontAwesomeIcon
+            icon={faCircleCheck}
+            style={{
+              color: '#28a745',
+              fontSize: '14px',
+              marginLeft: '6px'
+            }}
+            title="External data available"
+          />
+        )}
+        <FontAwesomeIcon
+          icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' ? faThumbsUp : faThumbsDown}
+          style={{
+            color: color,
+            fontSize: '14px',
+            marginLeft: '6px'
+          }}
+          title={title}
+        />
+      </>
     );
   };
 

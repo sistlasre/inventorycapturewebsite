@@ -5,9 +5,10 @@ import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import { apiService } from '../services/apiService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSort, faSortAsc, faSortDesc, faThumbTack } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faSortAsc, faSortDesc, faThumbTack, faThumbsUp, faThumbsDown } from '@fortawesome/free-solid-svg-icons';
 import ProjectHeader from './ProjectHeader';
 import ConfirmationModal from './ConfirmationModal';
+import PartModal from './PartModal';
 import { useAuth } from '../contexts/AuthContext';
 
 function AllPartsForProjectTableView({ isViewOnly = false }) {
@@ -25,11 +26,41 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  // State for PartModal
+  const [selectedPart, setSelectedPart] = useState(null);
+  const [showPartModal, setShowPartModal] = useState(false);
+  const [currentPartIndex, setCurrentPartIndex] = useState(-1);
+
+  const REVIEW_STATUS_MAPPINGS = {
+    'reviewed': { color: '#28a745', titleText: 'Reviewed'},
+    'needs_further_review': { color: '#d5b60a', titleText: 'Needs further review'},
+    'more_photos_requested': { color: '#950606', titleText: 'More photos requested' },
+    'never_reviewed': { color: '#6c757d', titleText: 'Not reviewed' }
+  };
 
   const normalize = (val) => {
     return (val || '').toString()
                       .toLowerCase()
                       .replace(/[^a-z0-9]/gi, ''); // strip non-alphanumeric
+  };
+
+  // Function to get status indicator for parts
+  const getStatusIndicator = (part) => {
+    const reviewStatus = part.reviewStatus || part.status || 'never_reviewed';
+    const color = REVIEW_STATUS_MAPPINGS[reviewStatus]?.color || '#6c757d';
+    const title = REVIEW_STATUS_MAPPINGS[reviewStatus]?.titleText || 'Needs further review';
+
+    return (
+      <FontAwesomeIcon
+        icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' ? faThumbsUp : faThumbsDown}
+        style={{
+          color: color,
+          fontSize: '14px',
+          marginRight: '6px'
+        }}
+        title={title}
+      />
+    );
   };
 
   useEffect(() => {
@@ -85,6 +116,47 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     });
     setSortConfig({ key, direction });
     setFilteredParts(sorted);
+  };
+
+  // Function to handle part modal opening with navigation context
+  const handlePartClick = (part, index, e) => {
+    e.preventDefault();
+
+    // Set the current part index based on the filtered parts
+    setCurrentPartIndex(index);
+    setSelectedPart(part);
+    setShowPartModal(true);
+  };
+
+  // Function to handle part navigation and status updates from the modal
+  const handlePartChange = (newIndex = null, updatedPart = null) => {
+    // Handle navigation case
+    if (newIndex !== null && newIndex >= 0 && newIndex < filteredParts.length) {
+      const newPart = filteredParts[newIndex];
+      setSelectedPart(newPart);
+      setCurrentPartIndex(newIndex);
+    }
+
+    // Handle status update case
+    if (updatedPart && updatedPart.partId) {
+      // Update the part in both parts and filteredParts arrays
+      setParts(prevParts => 
+        prevParts.map(part => 
+          part.partId === updatedPart.partId ? { ...part, ...updatedPart } : part
+        )
+      );
+
+      setFilteredParts(prevFilteredParts => 
+        prevFilteredParts.map(part => 
+          part.partId === updatedPart.partId ? { ...part, ...updatedPart } : part
+        )
+      );
+
+      // Update the selected part if it's the one that was updated
+      if (selectedPart?.partId === updatedPart.partId) {
+        setSelectedPart(updatedPart);
+      }
+    }
   };
 
   const columns = [
@@ -265,7 +337,16 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                                 whiteSpace: 'nowrap'
                               }}
                             >
-                              🔧 {part.name}
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                {getStatusIndicator(part)}
+                                <Link 
+                                  to={`/part/${part.partId}`}
+                                  onClick={(e) => handlePartClick(part, idx, e)}
+                                  style={{ textDecoration: 'none', color: '#333', cursor: 'pointer' }}
+                                >
+                                  🔧 {part.name}
+                                </Link>
+                              </div>
                             </td>
                             <td 
                               className="ic-small"
@@ -485,6 +566,19 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
           </Card>
         </Col>
       </Row>
+
+      {/* Part Details Modal */}
+      <PartModal 
+        show={showPartModal} 
+        onHide={() => setShowPartModal(false)} 
+        part={selectedPart}
+        allParts={filteredParts}
+        currentPartIndex={currentPartIndex}
+        onPartChange={handlePartChange}
+        projectData={project}
+        currentLocation={selectedPart ? { boxId: selectedPart.boxId, boxName: selectedPart.boxName } : null}
+        userCanEdit={userCanEdit}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal

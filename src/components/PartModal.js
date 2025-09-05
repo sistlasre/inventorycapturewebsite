@@ -78,7 +78,8 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
   const REVIEW_STATUS_COLORS = {
     'reviewed': '#28a745',
-    'more_photos_requested': '#d5b60a',
+    'needs_further_review': '#d5b60a',
+    'more_photos_requested': '#950606',
     'never_reviewed': '#6c757d'
   }
 
@@ -299,7 +300,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
 
     return (
       <FontAwesomeIcon
-        icon={reviewStatus == 'reviewed' ? faThumbsUp : faThumbsDown}
+        icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' ? faThumbsUp : faThumbsDown}
         style={{ 
           color: color, 
           fontSize: '48px'

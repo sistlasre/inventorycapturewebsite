@@ -95,7 +95,8 @@ const ProjectVerboseView = ({ isViewOnly = false }) => {
 
   const REVIEW_STATUS_MAPPINGS = {
     'reviewed': { color: '#28a745', titleText: 'Reviewed'},
-    'more_photos_requested': { color: '#d5b60a', titleText: 'More photos requested' },
+    'needs_further_review': { color: '#d5b60a', titleText: 'Needs further review'},
+    'more_photos_requested': { color: '#950606', titleText: 'More photos requested' },
     'never_reviewed': { color: '#6c757d', titleText: 'Not reviewed' }
   }
 
@@ -204,7 +205,7 @@ const handleBoxClick = (boxId, event) => {
 
     return (
       <FontAwesomeIcon
-        icon={reviewStatus == 'reviewed' ? faThumbsUp : faThumbsDown}
+        icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' ? faThumbsUp : faThumbsDown}
         style={{
           color: color,
           fontSize: '14px',
@@ -219,36 +220,19 @@ const handleBoxClick = (boxId, event) => {
   const getStatusIndicatorForLocation = (box) => {
     const partCount = (box.partCount || 0) + (box.subLocationsPartCount || 0);
     const numReviewedParts = box.numReviewedParts || 0;
-    const numPartsRequiringMorePhotos = box.numPartsRequiringMorePhotos || 0;
-    let locationStatus = 'unreviewed';
-    let color = '';
-    let title = '';
-    let locationIcon;
-    if (partCount == numReviewedParts) {
-        locationStatus = 'reviewed';
-        color = '#28a745';
-        title = 'Reviewed';
-        locationIcon = faThumbsUp;
-    } else if (numPartsRequiringMorePhotos > 0) {
-        locationStatus = 'more_photos_needed';
-        color = '#d5b60a';
-        title = 'Needs review';
-        locationIcon = faThumbsDown;
-    }
-
-    if (locationStatus == 'unreviewed') {
+    if (partCount != numReviewedParts) {
         return '';
     }
 
     return (
       <FontAwesomeIcon 
-        icon={locationIcon}
+        icon={faThumbsUp}
         style={{ 
-          color: color, 
+          color: '#28a745',
           fontSize: '14px', 
           marginLeft: '6px' 
         }}
-        title={title}
+        title='Reviewed'
       />
     );
   };

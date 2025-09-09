@@ -758,7 +758,12 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                 <Card>
                   <Card.Body>
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h6>Part Information</h6>
+                      <div>
+                        <h6 style={{marginBottom: 0}}>Part Information</h6>
+                        {getCurrentImage() && getCurrentImage().photographerName && (
+                          <span className="ic-small text-muted">Captured by {getCurrentImage().photographerName}</span>
+                        )}
+                      </div>
                       <div>
                         {!isEditing && userCanEdit && (
                           <Button

@@ -200,6 +200,44 @@ footer {
   border-color: #E5E7EB !important;
 }
 
+/* Pricing Page Styles */
+.pricing-card {
+  transition: all 0.3s ease;
+  border: 2px solid #E5E7EB;
+}
+
+.pricing-card:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Pricing badges */
+.pricing-card .badge {
+  font-weight: 500;
+}
+
+/* Pricing feature list */
+.pricing-card ul li {
+  padding: 0.5rem 0;
+}
+
+
+/* FAQ section */
+.pricing-faq h5 {
+  color: #343a40;
+  font-weight: 600;
+}
+
+/* Responsive pricing adjustments */
+@media (max-width: 768px) {
+  .display-4 {
+    font-size: 2.5rem;
+  }
+  
+  .display-5 {
+    font-size: 2rem;
+  }
+}
+
 /* Button variants matching companion app */
 .btn-accent {
   background-color: #059669;

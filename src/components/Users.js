@@ -787,46 +787,17 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
                     </div>
                     <div className="mb-3">
                       <strong>Pricing Plan:</strong>
-                      {editingRequestingUser ? (
-                        <>
-                          <Form.Select
-                            value={requestingUserEditData.pricingPlan}
-                            onChange={(e) => setRequestingUserEditData(prev => ({...prev, pricingPlan: e.target.value}))}
-                            disabled={savingRequestingUser}
-                            className="ms-2 d-inline-block"
-                            style={{ width: 'auto', maxWidth: '200px' }}
-                          >
-                            {pricingPlans.map(plan => (
-                              <option key={plan.pricingKey} value={plan.pricingKey}>
-                                {plan.pricingLabel}
-                              </option>
-                            ))}
-                          </Form.Select>
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="ms-2"
-                            onClick={() => setShowPricingModal(true)}
-                            disabled={savingRequestingUser}
-                          >
-                            Change
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <span className="ms-2">
-                            {pricingPlans.find(p => p.pricingKey === requestingUser.pricing_plan)?.pricingLabel || 'Free'}
-                          </span>
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="ms-2"
-                            onClick={() => setShowPricingModal(true)}
-                          >
-                            Change
-                          </Button>
-                        </>
-                      )}
+                      <span className="ms-2">
+                        {pricingPlans.find(p => p.pricingKey === requestingUser.pricing_plan)?.pricingLabel || 'Free'}
+                      </span>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="ms-2"
+                        onClick={() => setShowPricingModal(true)}
+                      >
+                        Change
+                      </Button>
                     </div>
                     <div className="mb-3">
                       <strong>Password:</strong>

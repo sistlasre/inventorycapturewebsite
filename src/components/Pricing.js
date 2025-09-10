@@ -87,49 +87,6 @@ const Pricing = () => {
       </Row>
 
       {/* Additional Information Section */}
-      <div className="mt-5 pt-5 border-top">
-        <Row>
-          <Col md={12}>
-            <h3 className="text-center mb-4">Frequently Asked Questions</h3>
-          </Col>
-          <Col md={6} className="mb-4">
-            <h5>What are credits?</h5>
-            <p className="text-muted">
-              Credits are used for inventory captures and processing. Each scan or capture operation 
-              consumes one credit. Additional credits can be purchased as needed.
-            </p>
-          </Col>
-          <Col md={6} className="mb-4">
-            <h5>Can I change plans anytime?</h5>
-            <p className="text-muted">
-              Yes! You can upgrade or downgrade your plan at any time. Changes take effect at the 
-              start of your next billing cycle.
-            </p>
-          </Col>
-          <Col md={6} className="mb-4">
-            <h5>What happens if I run out of credits?</h5>
-            <p className="text-muted">
-              You can purchase additional credits at the rates shown for each plan. The per-credit 
-              price decreases with higher-tier plans.
-            </p>
-          </Col>
-          <Col md={6} className="mb-4">
-            <h5>Do unused credits roll over?</h5>
-            <p className="text-muted">
-              Credits reset each billing cycle and do not roll over. We recommend choosing a plan 
-              that matches your typical monthly usage.
-            </p>
-          </Col>
-        </Row>
-
-        {/* Contact Section */}
-        <div className="text-center mt-5 p-4 bg-light rounded">
-          <h4>Need a Custom Plan?</h4>
-          <p className="text-muted">
-            For enterprise needs or custom requirements, please contact our sales team for more information.
-          </p>
-        </div>
-      </div>
     </Container>
   );
 };

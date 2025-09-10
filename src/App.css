@@ -238,6 +238,24 @@ footer {
   }
 }
 
+/* Pricing Select Modal Cards */
+.pricing-select-card {
+  transition: all 0.3s ease;
+}
+
+.pricing-select-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-select-card.selected {
+  background-color: #f0f7ff;
+}
+
+.pricing-select-card.current-plan {
+  background-color: #f8f9fa;
+}
+
 /* Button variants matching companion app */
 .btn-accent {
   background-color: #059669;

@@ -33,6 +33,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import CreateUserModal from './CreateUserModal';
+import ChangePricingPlanModal from './ChangePricingPlanModal';
 
 const normalize = (str) => (str || "").toLowerCase().replace(/[^a-z0-9]/gi, "");
 
@@ -47,6 +48,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
   const [showToast, setShowToast] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [pricingModalLoading, setPricingModalLoading] = useState(false);
 
   // filter + sort states
   const [search, setSearch] = useState('');
@@ -291,6 +294,53 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       setShowToast(true);
     } finally {
       setSavingRequestingUser(false);
+    }
+  };
+
+  // Handle pricing plan change from modal
+  const handlePricingPlanChange = async (newPlanKey) => {
+    let creditsForLocalUpdate = null;
+
+    try {
+      setPricingModalLoading(true);
+
+      const payload = {
+        new_pricing_plan: newPlanKey
+      };
+
+      // Prepare to update credits in local state based on new plan
+      const newPlan = pricingPlans.find(p => p.pricingKey === newPlanKey);
+      if (newPlan && newPlan.numAvailableCredits) {
+        creditsForLocalUpdate = newPlan.numAvailableCredits;
+      }
+
+      await apiService.updateUser(requestingUser.user_id, payload);
+
+      // Update local state
+      setRequestingUser(prev => ({
+        ...prev,
+        pricing_plan: newPlanKey,
+        ...(creditsForLocalUpdate !== null ? { num_part_credits: creditsForLocalUpdate } : {})
+      }));
+
+      // Update edit data if currently editing
+      if (editingRequestingUser) {
+        setRequestingUserEditData(prev => ({
+          ...prev,
+          pricingPlan: newPlanKey,
+          originalPricingPlan: newPlanKey
+        }));
+      }
+
+      setToastMessage('Pricing plan updated successfully.');
+      setShowToast(true);
+      setShowPricingModal(false);
+    } catch (err) {
+      console.error('Failed to update pricing plan:', err);
+      setToastMessage('Failed to update pricing plan. Please try again.');
+      setShowToast(true);
+    } finally {
+      setPricingModalLoading(false);
     }
   };
 
@@ -738,23 +788,44 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
                     <div className="mb-3">
                       <strong>Pricing Plan:</strong>
                       {editingRequestingUser ? (
-                        <Form.Select
-                          value={requestingUserEditData.pricingPlan}
-                          onChange={(e) => setRequestingUserEditData(prev => ({...prev, pricingPlan: e.target.value}))}
-                          disabled={savingRequestingUser}
-                          className="ms-2 d-inline-block"
-                          style={{ width: 'auto', maxWidth: '200px' }}
-                        >
-                          {pricingPlans.map(plan => (
-                            <option key={plan.pricingKey} value={plan.pricingKey}>
-                              {plan.pricingLabel}
-                            </option>
-                          ))}
-                        </Form.Select>
+                        <>
+                          <Form.Select
+                            value={requestingUserEditData.pricingPlan}
+                            onChange={(e) => setRequestingUserEditData(prev => ({...prev, pricingPlan: e.target.value}))}
+                            disabled={savingRequestingUser}
+                            className="ms-2 d-inline-block"
+                            style={{ width: 'auto', maxWidth: '200px' }}
+                          >
+                            {pricingPlans.map(plan => (
+                              <option key={plan.pricingKey} value={plan.pricingKey}>
+                                {plan.pricingLabel}
+                              </option>
+                            ))}
+                          </Form.Select>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="ms-2"
+                            onClick={() => setShowPricingModal(true)}
+                            disabled={savingRequestingUser}
+                          >
+                            Change
+                          </Button>
+                        </>
                       ) : (
-                        <span className="ms-2">
-                          {pricingPlans.find(p => p.pricingKey === requestingUser.pricing_plan)?.pricingLabel || 'Free'}
-                        </span>
+                        <>
+                          <span className="ms-2">
+                            {pricingPlans.find(p => p.pricingKey === requestingUser.pricing_plan)?.pricingLabel || 'Free'}
+                          </span>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="ms-2"
+                            onClick={() => setShowPricingModal(true)}
+                          >
+                            Change
+                          </Button>
+                        </>
                       )}
                     </div>
                     <div className="mb-3">
@@ -933,6 +1004,17 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
         onHide={() => setShowCreateUserModal(false)}
         onUserCreated={handleUserCreated}
       />
+
+      {/* Change Pricing Plan Modal */}
+      {requestingUser && (
+        <ChangePricingPlanModal
+          show={showPricingModal}
+          onHide={() => setShowPricingModal(false)}
+          currentPlan={requestingUser.pricing_plan || 'free'}
+          onPlanChange={handlePricingPlanChange}
+          isLoading={pricingModalLoading}
+        />
+      )}
 
       {/* Toast */}
       <ToastContainer className="p-3" position="top-end">

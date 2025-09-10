@@ -36,6 +36,7 @@ const Header = () => {
                 {!user.sub_account_id && (
                     <Nav.Link as={Link} to={`/account/${user.user_id}`}>Account Management</Nav.Link>
                 )}
+                <Nav.Link as={Link} to="/pricing">Plans</Nav.Link>
               </>
             )}
           </Nav>
@@ -56,6 +57,7 @@ const Header = () => {
               <>
                 <Nav.Link as={Link} to="/login">Login</Nav.Link>
                 <Nav.Link as={Link} to="/register">Register</Nav.Link>
+                <Nav.Link as={Link} to="/pricing">Plans</Nav.Link>
               </>
             )}
           </Nav>

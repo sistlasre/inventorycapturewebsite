@@ -13,7 +13,8 @@ import {
   ToastContainer,
   Form,
   InputGroup,
-  Table
+  Table,
+  ProgressBar
 } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -38,6 +39,8 @@ const normalize = (str) => (str || "").toLowerCase().replace(/[^a-z0-9]/gi, "");
 const Users = ({ pageHeader, showNumCredits = false }) => {
   const { parentUser } = useParams();
   const [users, setUsers] = useState([]);
+  const [requestingUser, setRequestingUser] = useState(null);
+  const [pricingPlans, setPricingPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
@@ -53,6 +56,11 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
   // editing states - now stores multiple users being edited
   const [editingUsers, setEditingUsers] = useState(new Map());
   const [savingUsers, setSavingUsers] = useState(new Set());
+
+  // Requesting user editing state
+  const [editingRequestingUser, setEditingRequestingUser] = useState(false);
+  const [requestingUserEditData, setRequestingUserEditData] = useState({});
+  const [savingRequestingUser, setSavingRequestingUser] = useState(false);
 
   // expanded parent users
   const [expandedUsers, setExpandedUsers] = useState(new Set());
@@ -72,6 +80,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       setError('');
       const response = await apiService.getUsers(parentUser);
       setUsers(response.data?.users || []);
+      setRequestingUser(response.data?.requesting_user || null);
+      setPricingPlans(response.data?.pricing_plans || []);
     } catch (err) {
       console.error('Failed to fetch users:', err);
       setError('Failed to load users. Please try again.');
@@ -87,6 +97,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       originalStatus: user.user_status || 'active',
       credits: user.num_part_credits || 20,
       originalCredits: user.num_part_credits || 20,
+      pricingPlan: user.pricing_plan || 'free',
+      originalPricingPlan: user.pricing_plan || 'free',
       isSubAccount: isSubAccount
     };
     setEditingUsers(prev => new Map(prev).set(user.user_id, editData));
@@ -120,6 +132,9 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
     const editData = editingUsers.get(userId);
     if (!editData) return;
 
+    // Track credits for local update only
+    let creditsForLocalUpdate = null;
+
     try {
       const payload = {};
       if (editData.password.trim()) {
@@ -128,7 +143,21 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       if (editData.status !== editData.originalStatus) {
         payload.new_status = editData.status;
       }
-      // Only allow credits updates for parent accounts, not sub-accounts
+      // Check if pricing plan changed
+      if (editData.pricingPlan !== editData.originalPricingPlan) {
+        payload.new_pricing_plan = editData.pricingPlan;
+
+        // If credits weren't manually changed, prepare to update local state only
+        if (showNumCredits && !editData.isSubAccount && editData.credits === editData.originalCredits) {
+          const newPlan = pricingPlans.find(p => p.pricingKey === editData.pricingPlan);
+          if (newPlan && newPlan.numAvailableCredits) {
+            creditsForLocalUpdate = newPlan.numAvailableCredits;
+            // Don't send to backend - only update local state
+          }
+        }
+      }
+
+      // Only send manual credits updates to backend
       if (showNumCredits && !editData.isSubAccount && editData.credits !== editData.originalCredits) {
         // Validate credits is a positive integer
         // If empty, use default value of 20
@@ -157,7 +186,9 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
             return { 
               ...u, 
               ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}),
-              ...(payload.new_num_part_credits !== undefined ? { num_part_credits: payload.new_num_part_credits } : {})
+              ...(payload.new_num_part_credits !== undefined ? { num_part_credits: payload.new_num_part_credits } : {}),
+              ...(creditsForLocalUpdate !== null ? { num_part_credits: creditsForLocalUpdate } : {}),
+              ...(payload.new_pricing_plan !== undefined ? { pricing_plan: payload.new_pricing_plan } : {})
             };
           }
           if (u.subAccounts) {
@@ -167,7 +198,10 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
                 sub.user_id === userId
                   ? { 
                       ...sub, 
-                      ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {})
+                      ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}),
+                      ...(payload.new_num_part_credits !== undefined ? { num_part_credits: payload.new_num_part_credits } : {}),
+                      ...(creditsForLocalUpdate !== null ? { num_part_credits: creditsForLocalUpdate } : {}),
+                      ...(payload.new_pricing_plan !== undefined ? { pricing_plan: payload.new_pricing_plan } : {})
                     }
                   : sub
               )
@@ -176,7 +210,6 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
           return u;
         });
       });
-
       setToastMessage('User updated successfully.');
       setShowToast(true);
       cancelEditing(userId);
@@ -197,6 +230,70 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
     setUsers([newUser, ...users]);
   };
 
+  // Requesting user functions
+  const startEditingRequestingUser = () => {
+    setRequestingUserEditData({
+      password: '',
+      pricingPlan: requestingUser?.pricing_plan || 'free',
+      originalPricingPlan: requestingUser?.pricing_plan || 'free'
+    });
+    setEditingRequestingUser(true);
+  };
+
+  const cancelEditingRequestingUser = () => {
+    setEditingRequestingUser(false);
+    setRequestingUserEditData({});
+  };
+
+  const saveRequestingUserChanges = async () => {
+    // Track credits for local update only
+    let creditsForLocalUpdate = null;
+
+    try {
+      const payload = {};
+      if (requestingUserEditData.password?.trim()) {
+        payload.new_password = requestingUserEditData.password.trim();
+      }
+
+      // Check if pricing plan changed
+      if (requestingUserEditData.pricingPlan !== requestingUserEditData.originalPricingPlan) {
+        payload.new_pricing_plan = requestingUserEditData.pricingPlan;
+
+        // Prepare to update credits in local state based on new plan
+        const newPlan = pricingPlans.find(p => p.pricingKey === requestingUserEditData.pricingPlan);
+        if (newPlan && newPlan.numAvailableCredits) {
+          creditsForLocalUpdate = newPlan.numAvailableCredits;
+          // Don't send to backend - only update local state
+        }
+      }
+
+      if (Object.keys(payload).length === 0) {
+        cancelEditingRequestingUser();
+        return;
+      }
+
+      setSavingRequestingUser(true);
+      await apiService.updateUser(requestingUser.user_id, payload);
+
+      // Update local state
+      setRequestingUser(prev => ({
+        ...prev,
+        ...(payload.new_pricing_plan ? { pricing_plan: payload.new_pricing_plan } : {}),
+        ...(creditsForLocalUpdate !== null ? { num_part_credits: creditsForLocalUpdate } : {})
+      }));
+
+      setToastMessage('Your account updated successfully.');
+      setShowToast(true);
+      cancelEditingRequestingUser();
+    } catch (err) {
+      console.error('Failed to update requesting user:', err);
+      setToastMessage('Failed to update your account. Please try again.');
+      setShowToast(true);
+    } finally {
+      setSavingRequestingUser(false);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, [parentUser]);
@@ -206,7 +303,11 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
     { key: 'username', label: 'Username' },
     { key: 'created_at', label: 'Created' },
     { key: 'status', label: 'Status' },
-    ...(showNumCredits ? [{ key: 'credits', label: 'Credits' }] : []),
+    ...(showNumCredits ? [
+      { key: 'pricing_plan', label: 'Pricing Plan' },
+      { key: 'credits_used', label: 'Credits Used' },
+      { key: 'credits', label: 'Credits Available' }
+    ] : []),
     { key: 'password', label: 'Password' },
     { key: 'actions', label: 'Actions' }
   ];
@@ -251,6 +352,9 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
         } else if (sortConfig.key === 'status') {
           valA = normalize(a.user_status || 'active');
           valB = normalize(b.user_status || 'active');
+        } else if (sortConfig.key === 'pricing_plan') {
+          valA = normalize(a.pricing_plan || 'free');
+          valB = normalize(b.pricing_plan || 'free');
         } else {
           return 0;
         }
@@ -395,7 +499,58 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
             )}
           </td>
 
-          {/* Credits Column - only show if showNumCredits is true */}
+          {/* Pricing Plan Column - only show if showNumCredits is true */}
+          {showNumCredits && (
+            <td
+              className="ic-small"
+              style={{
+                borderRight: '1px solid #e9ecef',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {isEditing ? (
+                <Form.Select
+                  value={editData?.pricingPlan || 'free'}
+                  onChange={(e) => updateEditingData(user.user_id, 'pricingPlan', e.target.value)}
+                  disabled={isSaving}
+                  style={{
+                    maxWidth: '150px',
+                    fontSize: '12px'
+                  }}
+                >
+                  {pricingPlans.map(plan => (
+                    <option key={plan.pricingKey} value={plan.pricingKey}>
+                      {plan.pricingLabel}
+                    </option>
+                  ))}
+                </Form.Select>
+              ) : (
+                <span>
+                  {pricingPlans.find(p => p.pricingKey === (user.pricing_plan || 'free'))?.pricingLabel || 'Free'}
+                </span>
+              )}
+            </td>
+          )}
+
+          {/* Credits Used Column - only show if showNumCredits is true */}
+          {showNumCredits && (
+            <td
+              className="ic-small"
+              style={{
+                borderRight: '1px solid #e9ecef',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {/* Only show credits for parent accounts, not sub-accounts */}
+              {!isSubAccount ? (
+                <span>{user.num_credits_used || 0}</span>
+              ) : (
+                <span className="text-muted">—</span>
+              )}
+            </td>
+          )}
+
+          {/* Credits Available Column - only show if showNumCredits is true */}
           {showNumCredits && (
             <td
               className="ic-small"
@@ -525,10 +680,135 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
   };
 
   return (
-    <Container fluid className="py-5">
-      <Row className="mb-4">
+    <Container fluid className="py-3">
+      {/* Requesting User Section */}
+      {requestingUser && (
+        <Row className="mb-4">
+          <Col>
+            <Card className="shadow-sm">
+              <Card.Header>
+                <h5 className="mb-0">Account Information</h5>
+              </Card.Header>
+              <Card.Body>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h6 className="mb-0">
+                    <FontAwesomeIcon icon={faUser} className="me-2" />
+                    Your Account Details
+                  </h6>
+                  {!editingRequestingUser ? (
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      onClick={startEditingRequestingUser}
+                    >
+                      <FontAwesomeIcon icon={faPencil} className="me-2" />
+                      Edit
+                    </Button>
+                  ) : (
+                    <div className="d-flex gap-2">
+                      <Button
+                        variant="success"
+                        size="sm"
+                        onClick={saveRequestingUserChanges}
+                        disabled={savingRequestingUser}
+                      >
+                        {savingRequestingUser ? (
+                          <Spinner as="span" animation="border" size="sm" />
+                        ) : (
+                          <><FontAwesomeIcon icon={faCheck} className="me-1" /> Save</>
+                        )}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={cancelEditingRequestingUser}
+                        disabled={savingRequestingUser}
+                      >
+                        <FontAwesomeIcon icon={faTimes} className="me-1" /> Cancel
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <Row>
+                  <Col md={6}>
+                    <div className="mb-3">
+                      <strong>Username:</strong> <span className="ms-2">{requestingUser.username}</span>
+                    </div>
+                    <div className="mb-3">
+                      <strong>Pricing Plan:</strong>
+                      {editingRequestingUser ? (
+                        <Form.Select
+                          value={requestingUserEditData.pricingPlan}
+                          onChange={(e) => setRequestingUserEditData(prev => ({...prev, pricingPlan: e.target.value}))}
+                          disabled={savingRequestingUser}
+                          className="ms-2 d-inline-block"
+                          style={{ width: 'auto', maxWidth: '200px' }}
+                        >
+                          {pricingPlans.map(plan => (
+                            <option key={plan.pricingKey} value={plan.pricingKey}>
+                              {plan.pricingLabel}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      ) : (
+                        <span className="ms-2">
+                          {pricingPlans.find(p => p.pricingKey === requestingUser.pricing_plan)?.pricingLabel || 'Free'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mb-3">
+                      <strong>Password:</strong>
+                      {editingRequestingUser ? (
+                        <Form.Control
+                          type="password"
+                          placeholder="New password (leave blank to keep current)"
+                          value={requestingUserEditData.password || ''}
+                          onChange={(e) => setRequestingUserEditData(prev => ({...prev, password: e.target.value}))}
+                          disabled={savingRequestingUser}
+                          className="ms-2 d-inline-block"
+                          style={{ width: 'auto', maxWidth: '300px' }}
+                        />
+                      ) : (
+                        <span className="ms-2 text-muted">••••••••</span>
+                      )}
+                    </div>
+                  </Col>
+
+                  <Col md={6}>
+                    <div className="mb-3">
+                      <strong>Credits Usage:</strong>
+                      <div className="mt-2">
+                        <div className="d-flex justify-content-between mb-1">
+                          <span className="text-secondary">Used: {requestingUser.num_credits_used || 0}</span>
+                          <span className="text-success">Available: {requestingUser.num_part_credits || 0}</span>
+                        </div>
+                        <ProgressBar style={{ height: '25px' }}>
+                          <ProgressBar
+                            variant="danger"
+                            now={((requestingUser.num_credits_used || 0) / ((requestingUser.num_credits_used || 0) + (requestingUser.num_part_credits || 0))) * 100}
+                            style={{ backgroundColor: '#dc3545' }}
+                          />
+                          <ProgressBar
+                            variant="success"
+                            now={((requestingUser.num_part_credits || 0) / ((requestingUser.num_credits_used || 0) + (requestingUser.num_part_credits || 0))) * 100}
+                            style={{ backgroundColor: '#28a745' }}
+                          />
+                        </ProgressBar>
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      )}
+
+      {/* Managed Accounts Section */}
+      <Row className="mb-3">
         <Col>
-          <h1 className="text-center">{pageHeader}</h1>
+          <h4>Managed Accounts</h4>
         </Col>
       </Row>
 

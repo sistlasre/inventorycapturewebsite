@@ -184,14 +184,16 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     { key: 'coo', label: 'COO' },
     { key: 'rohsstatus', label: 'RoHS' },
     { key: 'msl', label: 'MSL' },
-    { key: 'serialnumber', label: 'Serial Number'},
+    { key: 'serialnumber', label: 'Serial No.'},
     { key: 'lotcode', label: 'Lot Code'},
     // Manually provided notes
     { key: 'notes', label: 'Notes' },
     // Fields that are derived from IPN image uploads and manual content
     { key: 'ipn', label: 'IPN'},
     { key: 'ipnquantity', label: 'Internal QTY'},
-    { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'},
+    { key: 'ipnserial', label: 'Internal Serial No.'},
+    { key: 'ipnlotcode', label: 'Internal Lot Code'},
+    { key: 'ipnbatch', label: 'Internal Batch No.'},
     // Fields that are generated from external API
     { key: 'eccn', label: 'ECCN'},
     { key: 'htsus', label: 'HTSUS'},

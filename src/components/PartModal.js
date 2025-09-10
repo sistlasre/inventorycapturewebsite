@@ -62,18 +62,14 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     { key: 'coo', label: 'COO'},
     { key: 'rohsstatus', label: 'RoHS'},
     { key: 'msl', label: 'MSL'},
-    { key: 'serialnumber', label: 'Serial Number'},
+    { key: 'serialnumber', label: 'Serial No.'},
     { key: 'lotcode', label: 'Lot Code'},
     { key: 'notes', label: 'Notes'},
     { key: 'ipn', label: 'IPN'},
     { key: 'ipnquantity', label: 'Internal QTY'},
-    { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'}
-  ];
-
-  const IPN_COLUMNS = [
-    { key: 'ipn', label: 'IPN'},
-    { key: 'ipnquantity', label: 'Internal QTY'},
-    { key: 'ipnlotserial', label: 'Internal Serial/Lot Number'}
+    { key: 'ipnserial', label: 'Internal Serial No.'},
+    { key: 'ipnlotcode', label: 'Internal Lot Code'},
+    { key: 'ipnbatch', label: 'Internal Batch No.'}
   ];
 
   const REVIEW_STATUS_COLORS = {

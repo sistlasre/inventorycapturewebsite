@@ -80,11 +80,14 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
     }
   };
 
-  const startEditing = (user) => {
+  const startEditing = (user, isSubAccount = false) => {
     const editData = {
       password: '',
       status: user.user_status || 'active',
-      originalStatus: user.user_status || 'active'
+      originalStatus: user.user_status || 'active',
+      credits: user.num_part_credits || 20,
+      originalCredits: user.num_part_credits || 20,
+      isSubAccount: isSubAccount
     };
     setEditingUsers(prev => new Map(prev).set(user.user_id, editData));
 
@@ -125,6 +128,19 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       if (editData.status !== editData.originalStatus) {
         payload.new_status = editData.status;
       }
+      // Only allow credits updates for parent accounts, not sub-accounts
+      if (showNumCredits && !editData.isSubAccount && editData.credits !== editData.originalCredits) {
+        // Validate credits is a positive integer
+        // If empty, use default value of 20
+        const creditsValue = editData.credits === '' ? 20 : editData.credits;
+        const creditsNum = parseInt(creditsValue, 10);
+        if (isNaN(creditsNum) || creditsNum < 0) {
+          setToastMessage('Credits must be a positive number.');
+          setShowToast(true);
+          return;
+        }
+        payload.new_num_part_credits = creditsNum;
+      }
 
       if (Object.keys(payload).length === 0) {
         cancelEditing(userId);
@@ -138,14 +154,21 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       setUsers(prevUsers => {
         return prevUsers.map(u => {
           if (u.user_id === userId) {
-            return { ...u, ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}) };
+            return { 
+              ...u, 
+              ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}),
+              ...(payload.new_num_part_credits !== undefined ? { num_part_credits: payload.new_num_part_credits } : {})
+            };
           }
           if (u.subAccounts) {
             return {
               ...u,
               subAccounts: u.subAccounts.map(sub =>
                 sub.user_id === userId
-                  ? { ...sub, ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}) }
+                  ? { 
+                      ...sub, 
+                      ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {})
+                    }
                   : sub
               )
             };
@@ -183,6 +206,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
     { key: 'username', label: 'Username' },
     { key: 'created_at', label: 'Created' },
     { key: 'status', label: 'Status' },
+    ...(showNumCredits ? [{ key: 'credits', label: 'Credits' }] : []),
     { key: 'password', label: 'Password' },
     { key: 'actions', label: 'Actions' }
   ];
@@ -270,6 +294,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       const paddingLeft = `${level * 1.5}rem`;
       const isEvenRow = currentRowIndex % 2 === 0;
       const hasSubAccounts = user.subAccounts && user.subAccounts.length > 0;
+      const isSubAccount = level > 0; // Sub-accounts are at level > 0
 
       rows.push(
         <tr 
@@ -370,6 +395,47 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
             )}
           </td>
 
+          {/* Credits Column - only show if showNumCredits is true */}
+          {showNumCredits && (
+            <td
+              className="ic-small"
+              style={{
+                borderRight: '1px solid #e9ecef',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {/* Only show credits for parent accounts, not sub-accounts */}
+              {!isSubAccount ? (
+                isEditing ? (
+                  <Form.Control
+                    type="text"
+                    value={editData?.credits || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow empty string or any digits
+                      if (value === '' || /^\d*$/.test(value)) {
+                        updateEditingData(user.user_id, 'credits', value);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveUserChanges(user.user_id);
+                      if (e.key === 'Escape') cancelEditing(user.user_id);
+                    }}
+                    disabled={isSaving}
+                    placeholder="20"
+                    style={{
+                      maxWidth: '100px',
+                      fontSize: '12px'
+                    }}
+                  />
+                ) : (
+                  <span>{user.num_part_credits || 20}</span>
+                )
+              ) : (
+                <span className="text-muted">—</span>
+              )}
+            </td>
+          )}
           {/* Password Column */}
           <td
             className="ic-small"
@@ -433,7 +499,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
               <Button
                 variant="link"
                 size="sm"
-                onClick={() => startEditing(user)}
+                onClick={() => startEditing(user, isSubAccount)}
                 className="text-primary p-0"
                 style={{ fontSize: '14px' }}
                 title="Edit user"

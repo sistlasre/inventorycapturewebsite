@@ -35,7 +35,7 @@ import CreateUserModal from './CreateUserModal';
 
 const normalize = (str) => (str || "").toLowerCase().replace(/[^a-z0-9]/gi, "");
 
-const Users = ({ pageHeader }) => {
+const Users = ({ pageHeader, showNumCredits = false }) => {
   const { parentUser } = useParams();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

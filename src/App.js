@@ -40,7 +40,7 @@ function App() {
                 path="/admin" 
                 element={
                   <AdminRoute>
-                    <Users pageHeader="All Accounts"/>
+                    <Users pageHeader="All Accounts" showNumCredits={true} />
                   </AdminRoute>
                 } 
               />

@@ -285,6 +285,10 @@ footer {
   cursor: pointer;
 }
 
+.ic-hidden {
+  display: none;
+}
+
 /* Dark mode support (if needed in future) */
 @media (prefers-color-scheme: dark) {
   /* Add dark mode styles here if needed */

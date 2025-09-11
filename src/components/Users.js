@@ -862,6 +862,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
         <Col>
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <InputGroup style={{ maxWidth: '400px' }}>
+              <Form.Control type="text" className="ic-hidden autocomplete-hack" />
               <Form.Select value={filterField} onChange={(e) => setFilterField(e.target.value)}>
                 <option value="all">All Fields</option>
                 <option value="username">Username</option>

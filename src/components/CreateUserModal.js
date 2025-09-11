@@ -83,6 +83,7 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
             <Form.Label>Username *</Form.Label>
             <Form.Control
               type="text"
+              autoComplete="off"
               placeholder="Enter username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -93,6 +94,7 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
             <Form.Label>Password *</Form.Label>
             <Form.Control
               type="password"
+              autoComplete="off"
               placeholder="Enter password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

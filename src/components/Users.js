@@ -614,6 +614,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
                 isEditing ? (
                   <Form.Control
                     type="text"
+                    autoComplete="off"
                     value={editData?.credits || ''}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -653,6 +654,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
               <Form.Control
                 ref={(el) => { passwordInputRefs.current[user.user_id] = el; }}
                 type="password"
+                autoComplete="off"
                 placeholder="New password"
                 value={editData?.password || ''}
                 onChange={(e) => updateEditingData(user.user_id, 'password', e.target.value)}
@@ -804,6 +806,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
                       {editingRequestingUser ? (
                         <Form.Control
                           type="password"
+                          autoComplete="off"
                           placeholder="New password (leave blank to keep current)"
                           value={requestingUserEditData.password || ''}
                           onChange={(e) => setRequestingUserEditData(prev => ({...prev, password: e.target.value}))}
@@ -867,6 +870,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
               </Form.Select>
               <Form.Control
                 type="text"
+                autoComplete="off"
                 placeholder="Filter users..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

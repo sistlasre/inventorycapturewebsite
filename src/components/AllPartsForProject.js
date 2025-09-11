@@ -266,6 +266,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
             </Form.Select>
             <Form.Control
                 type="text"
+                autoComplete="off"
                 placeholder="Filter parts..."
                 value={filterText}
                 onChange={e => setFilterText(e.target.value)}

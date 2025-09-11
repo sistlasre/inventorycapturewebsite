@@ -113,6 +113,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                     {isEditing ? (
                       <input
                         ref={(el) => { inputRefs.current[key] = el; }}
+                        autoComplete="off"
                         type="text"
                         className="form-control form-control-sm ic-small"
                         value={editingContent[key] || ''}

@@ -446,6 +446,7 @@ const handleBoxClick = (boxId, event) => {
                         <Form.Control
                           ref={(el) => { boxNameInputRefs.current[box.boxId] = el; }}
                           type="text"
+                          autoComplete="off"
                           value={tempBoxName}
                           onChange={(e) => setTempBoxName(e.target.value)}
                           onKeyDown={(e) => {
@@ -901,6 +902,7 @@ return (
             </Form.Select>
             <Form.Control
                 type="text"
+                autoComplete="off"
                 placeholder="Filter parts..."
                 value={filterText}
                 onChange={e => setFilterText(e.target.value)}

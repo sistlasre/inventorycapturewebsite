@@ -902,7 +902,8 @@ return (
             </Form.Select>
             <Form.Control
                 type="text"
-                autoComplete="off"
+                autoComplete="chrome-hack"
+                name="chrome-hack"
                 placeholder="Filter parts..."
                 value={filterText}
                 onChange={e => setFilterText(e.target.value)}

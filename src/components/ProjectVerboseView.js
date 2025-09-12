@@ -902,7 +902,7 @@ return (
             </Form.Select>
             <Form.Control
                 type="text"
-                autoComplete="chrome-hack"
+                autoComplete="new-password"
                 name="chrome-hack"
                 placeholder="Filter parts..."
                 value={filterText}

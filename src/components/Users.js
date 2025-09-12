@@ -870,7 +870,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
               </Form.Select>
               <Form.Control
                 type="text"
-                autoComplete="chrome-hack"
+                autoComplete="new-password"
                 name="chrome-hack"
                 placeholder="Filter users..."
                 value={search}

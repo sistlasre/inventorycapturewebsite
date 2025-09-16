@@ -495,7 +495,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                             >
                               {part.ipnquantity}
                             </td>
-                            <td 
+                            <td
                               className="ic-small"
                               style={{ 
                                 paddingLeft: '0.75rem',
@@ -503,11 +503,29 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                                 whiteSpace: 'nowrap'
                               }}
                             >
-                              {Array.isArray(part.ipnlotserial)
-                                ? part.ipnlotserial.join(', ')
-                                : part.ipnlotserial}
+                              {part.ipnserial}
                             </td>
-                            <td 
+                            <td
+                              className="ic-small"
+                              style={{
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.ipnlotcode}
+                            </td>
+                            <td
+                              className="ic-small"
+                              style={{
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.ipnbatch}
+                            </td>
+                            <td
                               className="ic-small"
                               style={{ 
                                 paddingLeft: '0.75rem',

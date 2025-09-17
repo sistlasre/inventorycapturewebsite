@@ -1,5 +1,13 @@
 [
     {
+        "pricingKey": "free",
+        "pricingLabel": "Free",
+        "numAvailableCredits": 20,
+        "price": "$0.00/month",
+        "numUsers": "Single user",
+        "priceAfterThreshold": "No overage credits"
+    },
+    {
         "pricingKey": "individual",
         "pricingLabel": "Individual",
         "numAvailableCredits": 500,

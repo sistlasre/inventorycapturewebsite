@@ -65,6 +65,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
   const [requestingUserEditData, setRequestingUserEditData] = useState({});
   const [savingRequestingUser, setSavingRequestingUser] = useState(false);
 
+  const [stripeSubscriptionPortals, setStripeSubscriptionPortals] = useState(null);
+
   // expanded parent users
   const [expandedUsers, setExpandedUsers] = useState(new Set());
 
@@ -85,6 +87,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       setUsers(response.data?.users || []);
       setRequestingUser(response.data?.requesting_user || null);
       setPricingPlans(response.data?.pricing_plans || []);
+      setStripeSubscriptionPortals(response.data?.subscription_portals);
     } catch (err) {
       console.error('Failed to fetch users:', err);
       setError('Failed to load users. Please try again.');
@@ -989,6 +992,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
           currentPlan={requestingUser.pricing_plan || 'free'}
           onPlanChange={handlePricingPlanChange}
           isLoading={pricingModalLoading}
+          subscriptionPages={stripeSubscriptionPortals}
         />
       )}
 

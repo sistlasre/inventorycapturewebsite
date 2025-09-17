@@ -8,10 +8,12 @@ const ChangePricingPlanModal = ({
   onHide, 
   currentPlan, 
   onPlanChange,
-  isLoading = false 
+  isLoading = false,
+  subscriptionPages = {}
 }) => {
   const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(currentPlan);
+  const [subscriptionPortals, setSubscriptionPortals] = useState(subscriptionPages);
 
   useEffect(() => {
     // Load pricing data
@@ -29,7 +31,11 @@ const ChangePricingPlanModal = ({
 
   const handleConfirm = () => {
     if (selectedPlan !== currentPlan) {
-      onPlanChange(selectedPlan);
+      if (subscriptionPortals && Object.keys(subscriptionPortals).length > 0) {
+        window.location.href = subscriptionPortals[selectedPlan];
+      } else {
+        onPlanChange(selectedPlan);
+      }
     }
   };
 
@@ -61,7 +67,7 @@ const ChangePricingPlanModal = ({
 
         <Row className="g-3">
           {plans.map((plan) => (
-            <Col key={plan.pricingKey} lg={4} md={6}>
+            <Col key={plan.pricingKey} lg={3} md={6}>
               <Card 
                 className={`h-100 pricing-select-card ${selectedPlan === plan.pricingKey ? 'selected' : ''} ${currentPlan === plan.pricingKey ? 'current-plan' : ''}`}
                 onClick={() => handlePlanSelect(plan.pricingKey)}

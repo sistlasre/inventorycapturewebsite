@@ -332,280 +332,42 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                               backgroundColor: isEvenRow ? '#f9f9f9' : '#ffffff'
                             }}
                           >
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              <Link 
-                                to="#"
-                                title={part.locationTree}
-                                style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
+                            {columns.map((column) => (
+                              <td
+                                key={column.key}
+                                className="ic-small"
+                                style={{
+                                  paddingLeft: '0.75rem',
+                                  borderRight: '1px solid #e9ecef',
+                                  whiteSpace: 'nowrap'
+                                }}
                               >
-                                📦 {part.boxName}
-                              </Link>
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center' }}>
-                                {getStatusIndicator(part)}
-                                <Link 
-                                  to={`/part/${part.partId}`}
-                                  onClick={(e) => handlePartClick(part, idx, e)}
-                                  style={{ textDecoration: 'none', color: '#333', cursor: 'pointer' }}
-                                >
-                                  🔧 {part.name}
-                                </Link>
-                              </div>
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.mpn}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.secondarypartnumber}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.quantity}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.manufacturer}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.datecode}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.coo}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.rohsstatus}
-                            </td>
-                            <td
-                              className="ic-small"
-                              style={{
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.packaging}
-                            </td>
-                            <td
-                              className="ic-small"
-                              style={{
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.msl}
-                            </td>
-                            <td
-                              className="ic-small"
-                              style={{
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.serialnumber}
-                            </td>
-                            <td
-                              className="ic-small"
-                              style={{
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.lotcode}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.notes}
-                            </td>
-                            <td
-                              className="ic-small"
-                              style={{
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.partCreatorName}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.ipn}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.ipnquantity}
-                            </td>
-                            <td
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.ipnserial}
-                            </td>
-                            <td
-                              className="ic-small"
-                              style={{
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.ipnlotcode}
-                            </td>
-                            <td
-                              className="ic-small"
-                              style={{
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.ipnbatch}
-                            </td>
-                            <td
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.eccn}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.htsus}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.price_at_my_break}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.quantity_at_my_break}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                borderRight: '1px solid #e9ecef',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.lowest_price_at_any_break}
-                            </td>
-                            <td 
-                              className="ic-small"
-                              style={{ 
-                                paddingLeft: '0.75rem',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {part.quantity_at_that_price_break}
-                            </td>
+                                {column.key == 'boxName' && (
+                                  <Link
+                                    to="#"
+                                    title={part.locationTree}
+                                    style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
+                                  >
+                                    📦 {part.boxName}
+                                  </Link>
+                                )}
+                                {column.key == 'name' && (
+                                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    {getStatusIndicator(part)}
+                                    <Link
+                                      to={`/part/${part.partId}`}
+                                      onClick={(e) => handlePartClick(part, idx, e)}
+                                      style={{ textDecoration: 'none', color: '#333', cursor: 'pointer' }}
+                                    >
+                                      🔧 {part.name}
+                                    </Link>
+                                  </div>
+                                )}
+                                {column.key != 'boxName' && column.key != 'name' && (
+                                    part[column.key]
+                                )}
+                              </td>
+                            ))}
                           </tr>
                         );
                       })

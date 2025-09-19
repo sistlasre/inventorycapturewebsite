@@ -183,11 +183,13 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     { key: 'datecode', label: 'Datecode' },
     { key: 'coo', label: 'COO' },
     { key: 'rohsstatus', label: 'RoHS' },
+    { key: 'packaging', label: 'Packaging' },
     { key: 'msl', label: 'MSL' },
     { key: 'serialnumber', label: 'Serial No.'},
     { key: 'lotcode', label: 'Lot Code'},
     // Manually provided notes
     { key: 'notes', label: 'Notes' },
+    { key: 'partCreatorName', label: 'Created by' },
     // Fields that are derived from IPN image uploads and manual content
     { key: 'ipn', label: 'IPN'},
     { key: 'ipnquantity', label: 'Internal QTY'},
@@ -435,9 +437,19 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                             >
                               {part.rohsstatus}
                             </td>
-                            <td 
+                            <td
                               className="ic-small"
-                              style={{ 
+                              style={{
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.packaging}
+                            </td>
+                            <td
+                              className="ic-small"
+                              style={{
                                 paddingLeft: '0.75rem',
                                 borderRight: '1px solid #e9ecef',
                                 whiteSpace: 'nowrap'
@@ -474,6 +486,16 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                               }}
                             >
                               {part.notes}
+                            </td>
+                            <td
+                              className="ic-small"
+                              style={{
+                                paddingLeft: '0.75rem',
+                                borderRight: '1px solid #e9ecef',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {part.partCreatorName}
                             </td>
                             <td 
                               className="ic-small"

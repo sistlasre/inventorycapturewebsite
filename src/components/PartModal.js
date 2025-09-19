@@ -61,6 +61,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     { key: 'datecode', label: 'Datecode'},
     { key: 'coo', label: 'COO'},
     { key: 'rohsstatus', label: 'RoHS'},
+    { key: 'packaging', label: 'Packaging'},
     { key: 'msl', label: 'MSL'},
     { key: 'serialnumber', label: 'Serial No.'},
     { key: 'lotcode', label: 'Lot Code'},

@@ -138,6 +138,10 @@ class ApiService {
     return this.api.post('/verify_account', { token });
   }
 
+  async getStripeSubscriptionPortals() {
+    return this.api.get('/subscription_portals');
+  }
+
   // Image upload endpoints
   async getPresignedUploadUrl(fileName, fileType) {
     return this.api.post('/presigned-upload', {

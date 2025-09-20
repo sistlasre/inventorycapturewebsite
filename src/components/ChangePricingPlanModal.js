@@ -13,7 +13,6 @@ const ChangePricingPlanModal = ({
 }) => {
   const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(currentPlan);
-  const [subscriptionPortals, setSubscriptionPortals] = useState(subscriptionPages);
 
   useEffect(() => {
     // Load pricing data
@@ -31,8 +30,8 @@ const ChangePricingPlanModal = ({
 
   const handleConfirm = () => {
     if (selectedPlan !== currentPlan) {
-      if (subscriptionPortals && Object.keys(subscriptionPortals).length > 0) {
-        window.location.href = subscriptionPortals[selectedPlan];
+      if (subscriptionPages && Object.keys(subscriptionPages).length > 0) {
+        window.location.href = subscriptionPages[selectedPlan];
       } else {
         onPlanChange(selectedPlan);
       }

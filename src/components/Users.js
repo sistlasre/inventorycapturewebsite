@@ -87,12 +87,22 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       setUsers(response.data?.users || []);
       setRequestingUser(response.data?.requesting_user || null);
       setPricingPlans(response.data?.pricing_plans || []);
-      setStripeSubscriptionPortals(response.data?.subscription_portals);
     } catch (err) {
       console.error('Failed to fetch users:', err);
       setError('Failed to load users. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStripeSubscriptionPortals = async () => {
+    try {
+      const response = await apiService.getStripeSubscriptionPortals();
+      setStripeSubscriptionPortals(response.data?.subscription_portals || response.data);
+    } catch (err) {
+      console.error('Failed to fetch Stripe subscription portals:', err);
+      // Don't show error to user as this is not critical for the main functionality
+      setStripeSubscriptionPortals(null);
     }
   };
 
@@ -349,6 +359,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
 
   useEffect(() => {
     fetchUsers();
+    fetchStripeSubscriptionPortals();
   }, [parentUser]);
 
   // Define table columns

@@ -17,6 +17,7 @@ import PartDetails from './components/PartDetails';
 import AdminRoute from './components/AdminRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import Pricing from './components/Pricing';
+import VerifyAccount from './components/VerifyAccount';
 import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/verify-account" element={<VerifyAccount />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route 
                 path="/" 

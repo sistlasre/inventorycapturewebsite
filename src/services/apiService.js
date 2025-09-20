@@ -134,6 +134,10 @@ class ApiService {
     return this.api.delete(`/part/${partId}`);
   }
 
+  async verifyUser(token) {
+    return this.api.post('/verify_account', { token });
+  }
+
   // Image upload endpoints
   async getPresignedUploadUrl(fileName, fileType) {
     return this.api.post('/presigned-upload', {

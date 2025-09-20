@@ -109,6 +109,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
   const startEditing = (user, isSubAccount = false) => {
     const editData = {
       password: '',
+      email: user.email || '',
+      originalEmail: user.email || '',
       status: user.user_status || 'active',
       originalStatus: user.user_status || 'active',
       credits: user.num_part_credits || 20,
@@ -156,6 +158,9 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       if (editData.password.trim()) {
         payload.new_password = editData.password.trim();
       }
+      if (editData.email !== editData.originalEmail) {
+        payload.new_email = editData.email.trim();
+      }
       if (editData.status !== editData.originalStatus) {
         payload.new_status = editData.status;
       }
@@ -201,6 +206,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
           if (u.user_id === userId) {
             return { 
               ...u, 
+              ...(payload.new_email !== undefined ? { email: payload.new_email } : {}),
               ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}),
               ...(payload.new_num_part_credits !== undefined ? { num_part_credits: payload.new_num_part_credits } : {}),
               ...(creditsForLocalUpdate !== null ? { num_part_credits: creditsForLocalUpdate } : {}),
@@ -214,6 +220,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
                 sub.user_id === userId
                   ? { 
                       ...sub, 
+                      ...(payload.new_email !== undefined ? { email: payload.new_email } : {}),
                       ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}),
                       ...(payload.new_num_part_credits !== undefined ? { num_part_credits: payload.new_num_part_credits } : {}),
                       ...(creditsForLocalUpdate !== null ? { num_part_credits: creditsForLocalUpdate } : {}),
@@ -250,6 +257,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
   const startEditingRequestingUser = () => {
     setRequestingUserEditData({
       password: '',
+      email: requestingUser?.email || '',
+      originalEmail: requestingUser?.email || '',
       pricingPlan: requestingUser?.pricing_plan || 'free',
       originalPricingPlan: requestingUser?.pricing_plan || 'free'
     });
@@ -269,6 +278,9 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       const payload = {};
       if (requestingUserEditData.password?.trim()) {
         payload.new_password = requestingUserEditData.password.trim();
+      }
+      if (requestingUserEditData.email !== requestingUserEditData.originalEmail) {
+        payload.new_email = requestingUserEditData.email.trim();
       }
 
       // Check if pricing plan changed
@@ -294,6 +306,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       // Update local state
       setRequestingUser(prev => ({
         ...prev,
+        ...(payload.new_email ? { email: payload.new_email } : {}),
         ...(payload.new_pricing_plan ? { pricing_plan: payload.new_pricing_plan } : {}),
         ...(creditsForLocalUpdate !== null ? { num_part_credits: creditsForLocalUpdate } : {})
       }));
@@ -365,6 +378,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
   // Define table columns
   const columns = [
     { key: 'username', label: 'Username' },
+    { key: 'email', label: 'Email' },
     { key: 'created_at', label: 'Created' },
     { key: 'status', label: 'Status' },
     ...(showNumCredits ? [
@@ -383,10 +397,13 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
 
     if (filterField === 'all') {
       return normalize(user.username).includes(normFilter) || 
+             normalize(user.email || '').includes(normFilter) ||
              normalize(user.user_status || 'active').includes(normFilter) ||
              normalize(new Date(user.created_at).toLocaleDateString()).includes(normFilter);
     } else if (filterField === 'username') {
       return normalize(user.username).includes(normFilter);
+    } else if (filterField === 'email') {
+      return normalize(user.email || '').includes(normFilter);
     } else if (filterField === 'status') {
       return normalize(user.user_status || 'active').includes(normFilter);
     } else if (filterField === 'created_at') {
@@ -410,6 +427,9 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
         if (sortConfig.key === 'username') {
           valA = normalize(a.username);
           valB = normalize(b.username);
+        } else if (sortConfig.key === 'email') {
+          valA = normalize(a.email || '');
+          valB = normalize(b.email || '');
         } else if (sortConfig.key === 'created_at') {
           valA = new Date(a.created_at).getTime();
           valB = new Date(b.created_at).getTime();
@@ -521,6 +541,33 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
                 </span>
               )}
             </div>
+          </td>
+
+          {/* Email Column */}
+          <td
+            className="ic-small"
+            style={{
+              borderRight: '1px solid #e9ecef',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {isEditing ? (
+              <Form.Control
+                type="email"
+                placeholder="Email address"
+                value={editData?.email || ''}
+                onChange={(e) => updateEditingData(user.user_id, 'email', e.target.value)}
+                disabled={isSaving}
+                style={{
+                  maxWidth: '200px',
+                  fontSize: '11px'
+                }}
+              />
+            ) : (
+              <span className={user.email ? '' : 'text-muted'}>
+                {user.email || 'Not provided'}
+              </span>
+            )}
           </td>
 
           {/* Created Date Column */}
@@ -802,6 +849,22 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
                       <strong>Username:</strong> <span className="ms-2">{requestingUser.username}</span>
                     </div>
                     <div className="mb-3">
+                      <strong>Email:</strong>
+                      {editingRequestingUser ? (
+                        <Form.Control
+                          type="email"
+                          placeholder="Email address"
+                          value={requestingUserEditData.email || ''}
+                          onChange={(e) => setRequestingUserEditData(prev => ({...prev, email: e.target.value}))}
+                          disabled={savingRequestingUser}
+                          className="ms-2 d-inline-block"
+                          style={{ width: 'auto', maxWidth: '300px' }}
+                        />
+                      ) : (
+                        <span className="ms-2">{requestingUser.email || 'Not provided'}</span>
+                      )}
+                    </div>
+                    <div className="mb-3">
                       <strong>Pricing Plan:</strong>
                       <span className="ms-2">
                         {pricingPlans.find(p => p.pricingKey === requestingUser.pricing_plan)?.pricingLabel || 'Free'}
@@ -879,6 +942,7 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
               <Form.Select value={filterField} onChange={(e) => setFilterField(e.target.value)}>
                 <option value="all">All Fields</option>
                 <option value="username">Username</option>
+                <option value="email">Email</option>
                 <option value="status">Status</option>
                 <option value="created_at">Created Date</option>
               </Form.Select>

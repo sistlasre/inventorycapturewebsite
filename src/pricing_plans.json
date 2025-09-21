@@ -19,15 +19,15 @@
         "pricingKey": "pro",
         "pricingLabel": "Pro",
         "numAvailableCredits": 2000,
-        "price": "$349/month",
+        "price": "$329/month",
         "numUsers": "Up to 5 users",
         "priceAfterThreshold": "$0.15/credit"
     },
     {
         "pricingKey": "premium",
         "pricingLabel": "Premium",
-        "numAvailableCredits": 4000,
-        "price": "$499/month",
+        "numAvailableCredits": 3000,
+        "price": "$399/month",
         "numUsers": "Unlimited users",
         "priceAfterThreshold": "$0.10/credit"
     }

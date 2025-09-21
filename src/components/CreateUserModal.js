@@ -9,12 +9,14 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
   const { user } = useAuth();
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleClose = () => {
     setPassword('');
     setUsername('');
+    setEmail('');
     setError('');
     onHide();
   };
@@ -22,8 +24,8 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!username.trim() || !password.trim()) {
-      setError('Username and password are both required');
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      setError('Username, email, and password are all required');
       return;
     }
 
@@ -33,10 +35,11 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
 
       const userData = {
         username: username.trim(),
+        email: email.trim(),
         password: password.trim()
       };
 
-      const response = await apiService.register(username.trim(), password.trim(), '', user.user_id);
+      const response = await apiService.register(username.trim(), password.trim(), email.trim(), user.user_id);
 
       const createdUser = response.data?.user;
 
@@ -44,6 +47,7 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
       const newUser = {
         user_id: createdUser.sub_account_id,
         username: createdUser.username,
+        email: createdUser.email,
         created_at: createdUser.created_at,
         updated_at: createdUser.updated_at,
         user_status: 'active'
@@ -91,6 +95,17 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
               autoFocus
               required
             />
+            <Form.Label>Email *</Form.Label>
+            <Form.Control
+              type="text"
+              autoComplete="off"
+              placeholder="Enter email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              autoFocus
+              required
+            />
             <Form.Label>Password *</Form.Label>
             <Form.Control
               type="password"
@@ -112,7 +127,7 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
           <Button 
             variant="primary" 
             type="submit" 
-            disabled={loading || !username.trim() || !password.trim()}
+            disabled={loading || !username.trim() || !email.trim() || !password.trim()}
           >
             {loading ? (
               <>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignInAlt, faUser, faLock } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,7 +14,9 @@ const Login = () => {
   const [error, setError] = useState('');
   
   const { login } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
+  const from = location.state?.from?.pathname || '/'; // default to home if no redirect
 
   const handleChange = (e) => {
     setFormData({
@@ -32,7 +34,7 @@ const Login = () => {
       const result = await login(formData.username, formData.password);
       
       if (result.success) {
-        navigate('/');
+        navigate(from, { replace: true });
       } else {
         setError(result.error);
       }

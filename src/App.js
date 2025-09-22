@@ -32,6 +32,14 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/verify-account" element={<VerifyAccount />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route
+                path="/user/pricing"
+                element={
+                  <ProtectedRoute>
+                    <Pricing getUserSpecificLinks={true} />
+                  </ProtectedRoute>
+                }
+              />
               <Route 
                 path="/" 
                 element={

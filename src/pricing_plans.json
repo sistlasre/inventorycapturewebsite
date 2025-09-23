@@ -1,13 +1,5 @@
 [
     {
-        "pricingKey": "free",
-        "pricingLabel": "Free",
-        "numAvailableCredits": 20,
-        "price": "$0.00/month",
-        "numUsers": "Single user",
-        "priceAfterThreshold": "No overage credits"
-    },
-    {
         "pricingKey": "individual",
         "pricingLabel": "Individual",
         "numAvailableCredits": 500,
@@ -19,7 +11,7 @@
         "pricingKey": "pro",
         "pricingLabel": "Pro",
         "numAvailableCredits": 2000,
-        "price": "$329/month",
+        "price": "$299/month",
         "numUsers": "Up to 5 users",
         "priceAfterThreshold": "$0.15/credit"
     },
@@ -27,7 +19,7 @@
         "pricingKey": "premium",
         "pricingLabel": "Premium",
         "numAvailableCredits": 3000,
-        "price": "$399/month",
+        "price": "$349/month",
         "numUsers": "Unlimited users",
         "priceAfterThreshold": "$0.10/credit"
     }

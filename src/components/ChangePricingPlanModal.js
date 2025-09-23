@@ -66,7 +66,7 @@ const ChangePricingPlanModal = ({
 
         <Row className="g-3">
           {plans.map((plan) => (
-            <Col key={plan.pricingKey} lg={3} md={6}>
+            <Col key={plan.pricingKey} lg={4} md={4}>
               <Card 
                 className={`h-100 pricing-select-card ${selectedPlan === plan.pricingKey ? 'selected' : ''} ${currentPlan === plan.pricingKey ? 'current-plan' : ''}`}
                 onClick={() => handlePlanSelect(plan.pricingKey)}

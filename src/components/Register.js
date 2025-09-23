@@ -90,7 +90,7 @@ const Register = () => {
                 <Form.Group className="mb-3">
                   <Form.Label>
                     <FontAwesomeIcon icon={faEnvelope} className="me-2" />
-                    Email
+                    Email <span className="fst-italic text-muted">(used to verify your account)</span>
                   </Form.Label>
                   <Form.Control
                     type="email"

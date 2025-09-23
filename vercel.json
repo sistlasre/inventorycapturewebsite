@@ -1,0 +1,12 @@
+{
+  "redirects": [
+    {
+      "source": "/ios_testflight",
+      "destination": "https://testflight.apple.com/join/tJpeWsAF"
+    },
+    {
+      "source": "/android_apk",
+      "destination": "https://expo.dev/accounts/ssistla/projects/InventoryCapture/builds/8e723205-f021-4756-afdd-c834928517a9"
+    }
+  ]
+}

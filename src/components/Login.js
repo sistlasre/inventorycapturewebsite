@@ -36,7 +36,7 @@ const Login = () => {
       if (result.success) {
         navigate(from, { replace: true });
       } else {
-        setError(result.error);
+        setError("Invalid login credentials. If you are confident the credentials are correct, please make sure you have verified your account through the registration email.");
       }
     } catch (err) {
       setError('An unexpected error occurred');

@@ -32,7 +32,7 @@ const Register = () => {
     setSuccess(false);
 
     try {
-      const result = await register(formData.username, formData.password, formData.email);
+      const result = await register(formData.username.trim() || formData.email.trim(), formData.password, formData.email.trim());
 
       if (result.success) {
         setSuccess(true);
@@ -71,21 +71,6 @@ const Register = () => {
               )}
 
               <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3">
-                  <Form.Label>
-                    <FontAwesomeIcon icon={faUser} className="me-2" />
-                    Username
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    placeholder="Enter username"
-                    required
-                    disabled={loading}
-                  />
-                </Form.Group>
 
                 <Form.Group className="mb-3">
                   <Form.Label>
@@ -99,6 +84,21 @@ const Register = () => {
                     onChange={handleChange}
                     placeholder="Enter email"
                     required
+                    disabled={loading}
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>
+                    <FontAwesomeIcon icon={faUser} className="me-2" />
+                    Username <span className="fst-italic text-muted">(optional)</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    placeholder="Enter username"
                     disabled={loading}
                   />
                 </Form.Group>

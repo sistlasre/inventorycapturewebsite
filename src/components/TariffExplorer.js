@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Form, Button, Card, Table, Spinner, Alert } from 'react-bootstrap';
 import { apiService } from '../services/apiService';
+import Select from 'react-select';
+import countryList from '../country_list.json';
 
 function TariffExplorer() {
   const [country, setCountry] = useState('');
@@ -10,6 +12,7 @@ function TariffExplorer() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const countryOptions = countryList.map((c) => ({ value: c, label: c }));
 
   const handleSearch = async (e) => {
     if (e) e.preventDefault();
@@ -25,8 +28,6 @@ function TariffExplorer() {
     const params = new URLSearchParams({ coo: country });
     if (partNumber) params.append('part_no', partNumber);
     if (tariffCode) params.append('tariff_code', tariffCode);
-
-    const url = `https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev/get_tariffs?${params.toString()}`;
 
     try {
       const response = await apiService.getTariffs(params);
@@ -44,13 +45,14 @@ function TariffExplorer() {
           <Row className="mb-4">
             <Col md={4}>
               <Form.Group controlId="country">
-                <Form.Label>Country of Origin</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="e.g., China"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                />
+                  <Form.Label>Country of Origin</Form.Label>
+                  <Select
+                    options={countryOptions}
+                    value={countryOptions.find((opt) => opt.value === country)}
+                    onChange={(selected) => setCountry(selected ? selected.value : '')}
+                    placeholder="Select a country"
+                    isClearable
+                  />
               </Form.Group>
             </Col>
             <Col md={4}>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 // Components
@@ -21,19 +21,30 @@ import Pricing from './components/Pricing';
 import VerifyAccount from './components/VerifyAccount';
 import { AuthProvider } from './contexts/AuthContext';
 
+function Layout({ children }) {
+  const location = useLocation();
+  const dontShowHeaderAndFooter = location.pathname?.includes("tariff_explorer_raw");
+  return (
+    <div className="App d-flex flex-column min-vh-100" style={{ maxWidth: '90%', margin: 'auto' }}>
+      {!dontShowHeaderAndFooter && <Header />}
+      <main className="flex-grow-1">{children}</main>
+      {!dontShowHeaderAndFooter && <Footer />}
+    </div>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="App d-flex flex-column min-vh-100" style={{maxWidth: '90%', margin: 'auto'}}>
-          <Header />
-          <main className="flex-grow-1">
+        <Layout>
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/verify-account" element={<VerifyAccount />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/tariff_explorer" element={<TariffExplorer />} />
+              <Route path="/tariff_explorer_raw" element={<TariffExplorer />} />
               <Route
                 path="/user/pricing"
                 element={
@@ -143,9 +154,7 @@ function App() {
                 } 
               />
             </Routes>
-          </main>
-          <Footer />
-        </div>
+        </Layout>
       </Router>
     </AuthProvider>
   );

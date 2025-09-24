@@ -141,6 +141,10 @@ class ApiService {
     return this.api.get('/subscription_portals');
   }
 
+  async getTariffs(params) {
+    return this.api.get('/get_tariffs', { params })
+  }
+
   // Image upload endpoints
   async getPresignedUploadUrl(fileName, fileType) {
     return this.api.post('/presigned-upload', {

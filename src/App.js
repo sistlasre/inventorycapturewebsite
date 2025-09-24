@@ -12,6 +12,7 @@ import Dashboard from './components/Dashboard';
 import ProjectDetails from './components/ProjectDetails';
 import ProjectVerboseView from './components/ProjectVerboseView';
 import AllPartsForProjectTableView from './components/AllPartsForProject';
+import TariffExplorer from './components/TariffExplorer';
 import BoxDetails from './components/BoxDetails';
 import PartDetails from './components/PartDetails';
 import AdminRoute from './components/AdminRoute';
@@ -32,6 +33,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/verify-account" element={<VerifyAccount />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/tariff_explorer" element={<TariffExplorer />} />
               <Route
                 path="/user/pricing"
                 element={

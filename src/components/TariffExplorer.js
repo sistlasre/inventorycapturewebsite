@@ -103,6 +103,7 @@ function TariffExplorer() {
                 <h5 className="mb-3">Tariff Summary</h5>
                 <p><strong>Country:</strong> {result.coo}</p>
                 <p><strong>Total Tariff:</strong> {result.total_tariff_pct}%</p>
+                <p><strong>Exempt from Reciprocal Tariff:</strong> {result.is_tariff_code_exempt ? 'Yes' : 'No'}</p>
 
                 {/* Applied Tariffs */}
                 {result.applied_tariffs && Object.keys(result.applied_tariffs).length > 0 && (

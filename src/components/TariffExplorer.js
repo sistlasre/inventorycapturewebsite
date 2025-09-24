@@ -108,7 +108,6 @@ function TariffExplorer() {
                 {/* Applied Tariffs */}
                 {result.applied_tariffs && Object.keys(result.applied_tariffs).length > 0 && (
                   <>
-                    <h6 className="mt-4 mb-2">Applied Tariffs</h6>
                     <Table bordered hover size="sm">
                       <thead className="table-light">
                         <tr>
@@ -131,7 +130,6 @@ function TariffExplorer() {
                 {/* Headings */}
                 {Array.isArray(result.headings) && result.headings.length > 0 && (
                   <>
-                    <h6 className="mt-4 mb-2">Headings</h6>
                     <Table bordered hover size="sm">
                       <thead className="table-light">
                         <tr>

@@ -132,6 +132,7 @@ function TariffExplorer() {
                 <p><strong>Country:</strong> {result.coo}</p>
                 <p><strong>Tariff Code:</strong> {result.tariff_code}</p>
                 <p><strong>Part Number:</strong> {result.part_no}</p>
+                {result.eccn && (<p><strong>ECCN:</strong> {result.eccn}</p>)}
                 <p><strong>Exempt from Reciprocal Tariff:</strong> {result.is_tariff_code_exempt ? 'Yes' : 'No'}</p>
                 <p><strong>Total Tariff:</strong> {result.total_tariff_pct}%</p>
 

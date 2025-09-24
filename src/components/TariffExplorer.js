@@ -1,4 +1,6 @@
+// TariffExplorer.js
 import React, { useState } from 'react';
+import { Container, Row, Col, Form, Button, Card, Table, Spinner, Alert } from 'react-bootstrap';
 import { apiService } from '../services/apiService';
 
 function TariffExplorer() {
@@ -9,7 +11,8 @@ function TariffExplorer() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSearch = async () => {
+  const handleSearch = async (e) => {
+    if (e) e.preventDefault();
     if (!country || (!partNumber && !tariffCode)) {
       setError('Please provide a country and at least one of part number or tariff code.');
       return;
@@ -20,9 +23,10 @@ function TariffExplorer() {
     setResult(null);
 
     const params = new URLSearchParams({ coo: country });
-
-    if (partNumber) params.append('part_number', partNumber);
+    if (partNumber) params.append('part_no', partNumber);
     if (tariffCode) params.append('tariff_code', tariffCode);
+
+    const url = `https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev/get_tariffs?${params.toString()}`;
 
     try {
       const response = await apiService.getTariffs(params);
@@ -35,62 +39,122 @@ function TariffExplorer() {
   };
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'Arial' }}>
-      <h2>Tariff Explorer</h2>
+    <Container fluid className="py-5 ic-container">
+      <Form onSubmit={(e) => handleSearch(e)}>
+          <Row className="mb-4">
+            <Col md={4}>
+              <Form.Group controlId="country">
+                <Form.Label>Country of Origin</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="e.g., China"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                />
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group controlId="partNumber">
+                <Form.Label>Part Number</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="e.g., MK10DN512VLK10"
+                  value={partNumber}
+                  onChange={(e) => setPartNumber(e.target.value)}
+                />
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group controlId="tariffCode">
+                <Form.Label>Tariff Code</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="e.g., 3926.90.99.89"
+                  value={tariffCode}
+                  onChange={(e) => setTariffCode(e.target.value)}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
 
-      <div style={{ marginBottom: '1rem' }}>
-        <label>
-          Country of Origin *:
-          <input
-            type="text"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            placeholder="e.g., China"
-            style={{ marginLeft: '1rem' }}
-          />
-        </label>
-      </div>
+          <Row className="mb-4">
+            <Col>
+              <Button variant="primary" type="submit" disabled={loading}>
+                {loading ? <Spinner animation="border" size="sm" /> : 'Search'}
+              </Button>
+            </Col>
+          </Row>
+      </Form>
 
-      <div style={{ marginBottom: '1rem' }}>
-        <label>
-          Part Number:
-          <input
-            type="text"
-            value={partNumber}
-            onChange={(e) => setPartNumber(e.target.value)}
-            placeholder="e.g., ABC123"
-            style={{ marginLeft: '2.8rem' }}
-          />
-        </label>
-      </div>
 
-      <div style={{ marginBottom: '1rem' }}>
-        <label>
-          Tariff Code:
-          <input
-            type="text"
-            value={tariffCode}
-            onChange={(e) => setTariffCode(e.target.value)}
-            placeholder="e.g., 3926.90.99.89"
-            style={{ marginLeft: '2.7rem' }}
-          />
-        </label>
-      </div>
-
-      <button onClick={handleSearch}>Calculate Tariffs</button>
-
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+      {error && (
+        <Row className="mb-4">
+          <Col>
+            <Alert variant="danger">{error}</Alert>
+          </Col>
+        </Row>
+      )}
 
       {result && (
-        <div style={{ marginTop: '2rem' }}>
-          <h3>Results:</h3>
-          <pre style={{ background: '#f4f4f4', padding: '1rem' }}>
-            {JSON.stringify(result, null, 2)}
-          </pre>
-        </div>
+        <Row>
+          <Col>
+            <Card className="shadow-sm">
+              <Card.Body>
+                <h5 className="mb-3">Tariff Summary</h5>
+                <p><strong>Country:</strong> {result.coo}</p>
+                <p><strong>Total Tariff:</strong> {result.total_tariff_pct}%</p>
+
+                {/* Applied Tariffs */}
+                {result.applied_tariffs && Object.keys(result.applied_tariffs).length > 0 && (
+                  <>
+                    <h6 className="mt-4 mb-2">Applied Tariffs</h6>
+                    <Table bordered hover size="sm">
+                      <thead className="table-light">
+                        <tr>
+                          <th style={{ whiteSpace: 'nowrap' }}>Tariff Type</th>
+                          <th style={{ whiteSpace: 'nowrap' }}>Applied Percentage</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(result.applied_tariffs).map(([key, value]) => (
+                          <tr key={key}>
+                            <td>{key}</td>
+                            <td>{value}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </>
+                )}
+
+                {/* Headings */}
+                {Array.isArray(result.headings) && result.headings.length > 0 && (
+                  <>
+                    <h6 className="mt-4 mb-2">Headings</h6>
+                    <Table bordered hover size="sm">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Heading/Sub-Heading</th>
+                          <th>Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {result.headings.map((heading, idx) => (
+                          <tr key={idx}>
+                            <td>{heading.htsno}</td>
+                            <td>{heading.description}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
       )}
-    </div>
+    </Container>
   );
 }
 

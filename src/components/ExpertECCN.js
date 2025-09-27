@@ -90,7 +90,7 @@ const ExpertECCN = () => {
     pollingRef.current = setInterval(async () => {
       setNumPoll(numPoll + 1);
       const result = await checkReportStatus();
-      if (result === true || numPoll >= 20) {
+      if (result === true || numPoll >= 30) {
         setLoadingReport(false);
         clearInterval(pollingRef.current);
         setPolling(false);

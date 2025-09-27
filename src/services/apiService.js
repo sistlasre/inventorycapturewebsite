@@ -145,20 +145,34 @@ class ApiService {
     return this.api.get('/get_tariffs', { params })
   }
 
-  // Image upload endpoints
-  async getPresignedUploadUrl(fileName, fileType) {
-    return this.api.post('/presigned-upload', {
-      fileName,
-      fileType
+  // Datasheet upload endpoints
+  async getPresignedUploadUrlForDatasheetUpload(mpn) {
+    return this.api.post('/get-presigned-url', {
+      file_extension: 'pdf',
+      content_type: 'application/pdf',
+      is_datasheet: true,
+      mpn
     });
   }
 
-  async uploadImage(presignedUrl, file) {
-    return axios.put(presignedUrl, file, {
+  async uploadPdf(presignedUrl, file) {
+    return this.api.put(presignedUrl, file, {
       headers: {
         'Content-Type': file.type
       }
     });
+  }
+
+  async requestReport(mpn, eccn) {
+    return this.api.post('/expert_eccn', {
+      mpn: mpn || '',
+      eccn: eccn || ''
+    });
+  }
+
+  async getReport(report_id) {
+    const params = new URLSearchParams({ reportId: report_id });
+    return this.api.get('/mpn_datasheet_status', { params });
   }
 
   async getImageUrl(imageId) {

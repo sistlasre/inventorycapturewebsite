@@ -13,6 +13,7 @@ import ProjectDetails from './components/ProjectDetails';
 import ProjectVerboseView from './components/ProjectVerboseView';
 import AllPartsForProjectTableView from './components/AllPartsForProject';
 import TariffExplorer from './components/TariffExplorer';
+import ExpertECCN from './components/ExpertECCN';
 import BoxDetails from './components/BoxDetails';
 import PartDetails from './components/PartDetails';
 import AdminRoute from './components/AdminRoute';
@@ -45,6 +46,7 @@ function App() {
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/tariff_explorer" element={<TariffExplorer />} />
               <Route path="/tariff_explorer_raw" element={<TariffExplorer />} />
+              <Route path="/expert_eccn" element={<ExpertECCN />} />
               <Route
                 path="/user/pricing"
                 element={

@@ -199,7 +199,14 @@ const ExpertECCN = () => {
           <Row className="mb-4">
             <Col>
               <Button variant="primary" type="submit" disabled={loadingReport} className="w-100">
-                {loadingReport ? <Spinner animation="border" size="sm" /> : 'Generate Report'}
+                {loadingReport ? (
+                  <>
+                    <Spinner animation="border" size="sm" />
+                    <span style={{ marginLeft: '8px' }}>We are working to generate a report</span>
+                  </>
+                ) : (
+                  'Generate Report'
+                )}
               </Button>
             </Col>
           </Row>

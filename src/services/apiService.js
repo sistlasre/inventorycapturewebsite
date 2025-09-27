@@ -156,11 +156,12 @@ class ApiService {
   }
 
   async uploadPdf(presignedUrl, file) {
-    return this.api.put(presignedUrl, file, {
-      headers: {
-        'Content-Type': file.type
-      }
-    });
+      // Use a clean axios instance with no interceptors
+      return axios.put(presignedUrl, file, {
+        headers: {
+          'Content-Type': file.type
+        }
+      });
   }
 
   async requestReport(mpn, eccn) {

@@ -164,12 +164,8 @@ class ApiService {
       });
   }
 
-  async requestReport(mpn, eccn, report_type = 'eccn') {
-    return this.api.post('/expert_eccn', {
-      mpn: mpn || '',
-      eccn: eccn || '',
-      report_type
-    });
+  async requestReport(params) {
+    return this.api.post('/expert_eccn', params);
   }
 
   async getReport(reportId, reportType = 'eccn') {

@@ -3,29 +3,28 @@ import { Container, Row, Col, Form, Button, Alert, Spinner, Card } from 'react-b
 import MarkdownIt from 'markdown-it';
 import html2pdf from 'html2pdf.js';
 import { apiService } from '../services/apiService';
+import Select from 'react-select';
+import countryList from '../country_list.json';
 
 const ExpertECCN = () => {
   const [markdown, setMarkdown] = useState('');
   const [htmlPreview, setHtmlPreview] = useState('');
+  const [htmlPreviewForLicensing, setHtmlPreviewForLicensing] = useState('');
   const [pdfLoading, setPdfLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [mpn, setMpn] = useState('');
   const [eccn, setEccn] = useState('');
+  const [eccnForLicensing, setEccnForLicensing] = useState('');
   const [numPoll, setNumPoll] = useState(0);
   const [loadingReport, setLoadingReport] = useState(false);
+  const [loadingLicensingReport, setLoadingLicensingReport] = useState(false);
   const [reportReady, setReportReady] = useState(false);
   const [reportRequested, setReportRequested] = useState(false);
   const [polling, setPolling] = useState(false);
   const pollingRef = useRef(null);
-
-  const handleMarkdownChange = (e) => {
-    const markdownText = e.target.value;
-    setMarkdown(markdownText);
-    const md = new MarkdownIt();
-    const htmlContent = md.render(markdownText);
-    setHtmlPreview(htmlContent);
-  };
+  const [country, setCountry] = useState('');
+  const countryOptions = countryList.map((c) => ({ value: c, label: c }));
 
   const generatePDF = () => {
     setPdfLoading(true);
@@ -101,7 +100,7 @@ const ExpertECCN = () => {
 
   const checkReportStatus = async () => {
     try {
-      const response = await apiService.getReport(mpn || eccn);
+      const response = await apiService.getReport(mpn || eccn, 'eccn');
       const { report_exists, report } = response.data;
 
       setReportRequested(true);
@@ -110,6 +109,13 @@ const ExpertECCN = () => {
         const md = new MarkdownIt();
         setHtmlPreview(md.render(report));
         setReportReady(true);
+        // We also will want to update our other input field to use the determined ECCN, if any
+        // setEccnForLicensing
+        debugger;
+        const eccnMatch = report.match(/Determined ECCN:\s*([A-Z0-9.]+)/i);
+        if (eccnMatch) {
+          setEccnForLicensing(eccnMatch[1]);
+        }
         return true;
       } else {
         setReportReady(false);
@@ -159,7 +165,13 @@ const ExpertECCN = () => {
     <Container fluid className="py-5">
       <Row className="mb-4">
         <Col className="text-center">
-          <h1>Expert ECCN</h1>
+          <h1>Expert ECCN Tool</h1>
+        </Col>
+      </Row>
+      <div className="border-bottom pb-5 mb-5">
+      <Row className="mb-4">
+        <Col className="text-center">
+          <h2>Determine ECCN</h2>
         </Col>
       </Row>
       <Form onSubmit={(e) => handleGetReport(e)}>
@@ -282,6 +294,63 @@ const ExpertECCN = () => {
           </Col>
         </Row>
       )}
+      </div>
+
+      <Row className="mt-6 mb-4">
+        <Col className="text-center">
+          <h2>Licensing Requirements</h2>
+        </Col>
+      </Row>
+      <Form onSubmit={(e) => handleGetLicensingReport(e)}>
+          <Row className="mb-4">
+            <Col md={4}>
+              <Form.Group>
+                <Form.Label className="fw-bold">
+                  ECCN <span className="text-danger">*</span>
+                </Form.Label>
+                <Row className="align-items-center text-center">
+                  <Col>
+                    <Form.Control
+                      type="text"
+                      placeholder="ECCN (e.g., EAR99)"
+                      value={eccnForLicensing}
+                      onChange={(e) => setEccnForLicensing(e.target.value)}
+                      required
+                    />
+                  </Col>
+                </Row>
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group controlId="country">
+                  <Form.Label>Shipping Country <span className="text-danger">*</span></Form.Label>
+                  <Select
+                    options={countryOptions}
+                    value={countryOptions.find((opt) => opt.value === country)}
+                    onChange={(selected) => setCountry(selected ? selected.value : '')}
+                    placeholder="Select a country"
+                    isClearable
+                    required
+                  />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row className="mb-4">
+            <Col>
+              <Button variant="primary" type="submit" disabled={loadingLicensingReport} className="w-100">
+                {loadingLicensingReport ? (
+                  <>
+                    <Spinner animation="border" size="sm" />
+                    <span style={{ marginLeft: '8px' }}>We are working to generate the requested licensing requirements report</span>
+                  </>
+                ) : (
+                  'Generate Licensing Requirements Report'
+                )}
+              </Button>
+            </Col>
+          </Row>
+      </Form>
     </Container>
   );
 };

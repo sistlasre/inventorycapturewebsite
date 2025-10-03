@@ -26,7 +26,7 @@ const ProjectHeader = ({
   const projectNameInputRef = useRef(null);
   const [uploadingPackingSlip, setUploadingPackingSlip] = useState(false);
   const fileInputRef = useRef(null);
-  const isExperimental = window.location.hostname === 'localhost' || window.location.hostname === 'new.inventorycapture.com';
+  const isExperimental = window.location.hostname === 'localhost' || window.location.hostname === 'dev.inventorycapture.com';
 
   const handleUploadPackingSlipIconClick = () => {
     fileInputRef.current.click(); // Trigger hidden file input

@@ -5,6 +5,7 @@ import LicensingRequirements from './LicensingRequirements';
 
 const ExpertECCN = () => {
   const [eccnForLicensing, setEccnForLicensing] = useState('');
+  const [countryForLicensing, setCountryForLicensing] = useState('');
 
   return (
     <Container fluid className="py-5">
@@ -14,10 +15,10 @@ const ExpertECCN = () => {
         </Col>
       </Row>
       <div className="border-bottom pb-5 mb-5">
-        <DetermineECCN setEccnForLicensing={setEccnForLicensing} />
+        <DetermineECCN setEccnForLicensing={setEccnForLicensing} setCountryForLicensing={setCountryForLicensing} />
       </div>
       <div>
-        <LicensingRequirements eccn={eccnForLicensing} setEccn={setEccnForLicensing} />
+        <LicensingRequirements eccn={eccnForLicensing} setEccn={setEccnForLicensing} country={countryForLicensing} setCountry={setCountryForLicensing} />
       </div>
     </Container>
   );

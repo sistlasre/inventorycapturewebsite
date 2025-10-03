@@ -6,7 +6,7 @@ import { apiService } from '../services/apiService';
 import Select from 'react-select';
 import countryList from '../country_list.json';
 
-const LicensingRequirements = ({eccn, setEccn}) => {
+const LicensingRequirements = ({eccn, setEccn, country, setCountry}) => {
   const [htmlPreview, setHtmlPreview] = useState('');
   const [pdfLoading, setPdfLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -16,7 +16,6 @@ const LicensingRequirements = ({eccn, setEccn}) => {
   const [reportRequested, setReportRequested] = useState(false);
   const [polling, setPolling] = useState(false);
   const pollingRef = useRef(null);
-  const [country, setCountry] = useState('');
   const countryOptions = countryList.map((c) => ({ value: c, label: c }));
 
   const generatePDF = () => {
@@ -158,9 +157,9 @@ const LicensingRequirements = ({eccn, setEccn}) => {
                 </Row>
               </Form.Group>
             </Col>
-            <Col md={4}>
+            <Col md={4} className="pt-xs-2">
               <Form.Group controlId="country">
-                  <Form.Label>Shipping Country <span className="text-danger">*</span></Form.Label>
+                  <Form.Label className="fw-bold">Shipping Country <span className="text-danger">*</span></Form.Label>
                   <Select
                     options={countryOptions}
                     value={countryOptions.find((opt) => opt.value === country)}

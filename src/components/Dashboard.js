@@ -138,7 +138,6 @@ const Dashboard = () => {
       try {
         setLoading(true);
         setError('');
-        console.log('Fetching projects for user:', user);
         
         const response = await apiService.getUserProjects();
         console.log('Projects response:', response);

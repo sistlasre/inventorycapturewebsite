@@ -4,8 +4,9 @@ import MarkdownIt from 'markdown-it';
 import html2pdf from 'html2pdf.js';
 import { apiService } from '../services/apiService';
 import countryList from '../country_list.json';
+import Select from 'react-select';
 
-const DetermineECCN = ({setEccnForLicensing}) => {
+const DetermineECCN = ({setEccnForLicensing, setCountryForLicensing}) => {
   const [htmlPreview, setHtmlPreview] = useState('');
   const [pdfLoading, setPdfLoading] = useState(false);
   const [file, setFile] = useState(null);
@@ -18,6 +19,7 @@ const DetermineECCN = ({setEccnForLicensing}) => {
   const [reportRequested, setReportRequested] = useState(false);
   const [polling, setPolling] = useState(false);
   const pollingRef = useRef(null);
+  const countryOptions = countryList.map((c) => ({ value: c, label: c }));
 
   const generatePDF = () => {
     setPdfLoading(true);
@@ -56,7 +58,7 @@ const DetermineECCN = ({setEccnForLicensing}) => {
     try {
       const presignedUrlResponse = await apiService.getPresignedUploadUrlForDatasheetUpload(mpn);
       const presignedUrl = presignedUrlResponse.data.presigned_url;
-      await apiService.uploadPdf(presignedUrl, file);
+      await apiService.uploadFile(presignedUrl, file);
       setUploading(false);
       await requestReportAfterUpload();
     } catch (error) {
@@ -167,7 +169,7 @@ const DetermineECCN = ({setEccnForLicensing}) => {
       </Row>
       <Form onSubmit={(e) => handleGetReport(e)}>
           <Row className="mb-4">
-            <Col>
+            <Col md={9}>
               <Form.Group>
                 <div className="text-center mb-0">
                 <Form.Label className="fw-bold">
@@ -195,6 +197,17 @@ const DetermineECCN = ({setEccnForLicensing}) => {
                     />
                   </Col>
                 </Row>
+              </Form.Group>
+            </Col>
+            <Col md={3} className="pt-xs-2">
+              <Form.Group controlId="country">
+                  <Form.Label className="fw-bold">Shipping Country</Form.Label>
+                  <Select
+                    options={countryOptions}
+                    onChange={(selected) => setCountryForLicensing(selected ? selected.value : '')}
+                    placeholder="Select a country"
+                    isClearable
+                  />
               </Form.Group>
             </Col>
           </Row>

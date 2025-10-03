@@ -146,6 +146,25 @@ class ApiService {
   }
 
   // Datasheet upload endpoints
+  async getPresignedUploadUrlForPackingSlip(file, projectId) {
+    return this.api.post('/get-presigned-url', {
+      file_extension: file.type.split("/")[1],
+      content_type: file.type,
+      isPackingSlip: true,
+      projectId
+    });
+  }
+
+  async uploadFile(presignedUrl, file) {
+      // Use a clean axios instance with no interceptors
+      return axios.put(presignedUrl, file, {
+        headers: {
+          'Content-Type': file.type
+        }
+      });
+  }
+
+  // Datasheet upload endpoints
   async getPresignedUploadUrlForDatasheetUpload(mpn) {
     return this.api.post('/get-presigned-url', {
       file_extension: 'pdf',
@@ -153,15 +172,6 @@ class ApiService {
       is_datasheet: true,
       mpn
     });
-  }
-
-  async uploadPdf(presignedUrl, file) {
-      // Use a clean axios instance with no interceptors
-      return axios.put(presignedUrl, file, {
-        headers: {
-          'Content-Type': file.type
-        }
-      });
   }
 
   async requestReport(params) {

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Button, Form } from 'react-bootstrap';
+import { Button, Form, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShareAlt, faPencil, faCheck, faTimes, faDownload, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faShareAlt, faPencil, faCheck, faTimes, faDownload, faTrash, faPlus, faBoxesPacking, faReceipt } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -24,6 +24,20 @@ const ProjectHeader = ({
   const [tempProjectName, setTempProjectName] = useState('');
   const [savingName, setSavingName] = useState(false);
   const projectNameInputRef = useRef(null);
+  const [uploadingPackingSlip, setUploadingPackingSlip] = useState(false);
+  const fileInputRef = useRef(null);
+  const isExperimental = window.location.hostname === 'localhost' || window.location.hostname === 'new.inventorycapture.com';
+
+  const handleUploadPackingSlipIconClick = () => {
+    fileInputRef.current.click(); // Trigger hidden file input
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      uploadFile(selectedFile); // Immediately upload
+    }
+  };
 
   const startEditingProjectName = () => {
     setTempProjectName(project.projectName);
@@ -76,6 +90,20 @@ const ProjectHeader = ({
     e.stopPropagation();
     e.preventDefault();
     window.location.href = `${API_BASE_URL}/project/${projectId}/export`;
+  };
+
+  const uploadFile = async (file) => {
+    if (!file) return;
+    setUploadingPackingSlip(true);
+    try {
+      const presignedUrlResponse = await apiService.getPresignedUploadUrlForPackingSlip(file, projectId);
+      const presignedUrl = presignedUrlResponse.data.presigned_url;
+      await apiService.uploadFile(presignedUrl, file);
+      setUploadingPackingSlip(false);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setUploadingPackingSlip(false);
+    }
   };
 
   return (
@@ -163,6 +191,40 @@ const ProjectHeader = ({
             <FontAwesomeIcon icon={faPlus} className="me-1" />
             Add Location
           </Button>
+        )}
+        {isExperimental && project.packingSlipUrl && (
+          <Button
+            variant="outline-primary"
+            onClick={() => window.open(project.packingSlipUrl, "_blank")}
+            size="sm"
+            title="View Packing Slip for Project"
+          >
+            <FontAwesomeIcon icon={faReceipt} />
+          </Button>
+        )}
+        {isExperimental && userCanEdit && (
+          <>
+            <Form.Control
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              disabled={uploadingPackingSlip}
+              style={{ display: 'none' }}
+            />
+            <Button
+              variant="outline-primary"
+              onClick={handleUploadPackingSlipIconClick}
+              size="sm"
+              disabled={uploadingPackingSlip}
+              title="Upload packing slip for project"
+            >
+              {uploadingPackingSlip ? (
+                <Spinner animation="border" size="sm" />
+              ) : (
+                <FontAwesomeIcon icon={faBoxesPacking} />
+              )}
+            </Button>
+          </>
         )}
         <Button
           variant="outline-primary"

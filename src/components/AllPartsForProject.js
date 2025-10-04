@@ -86,9 +86,11 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
         });
         setParts(parts);
         setFilteredParts(parts);
+        console.log(response.data);
         setProject({
           projectId: projectId,
-          projectName: response.data.projectName
+          projectName: response.data.projectName,
+          packingSlipUrl: response.data.packingSlipUrl || ''
         });
 
         setUserCanEdit(userCanEdit && !(response.data?.projectOwnerId !== user?.user_id));

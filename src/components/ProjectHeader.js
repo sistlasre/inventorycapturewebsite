@@ -192,7 +192,7 @@ const ProjectHeader = ({
             Add Location
           </Button>
         )}
-        {isExperimental && project.packingSlipUrl && (
+        {isExperimental && project?.packingSlipUrl && (
           <Button
             variant="outline-primary"
             onClick={() => window.open(project.packingSlipUrl, "_blank")}

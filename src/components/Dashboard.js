@@ -140,8 +140,6 @@ const Dashboard = () => {
         setError('');
         
         const response = await apiService.getUserProjects();
-        console.log('Projects response:', response);
-        
         // Handle different response formats
         const projectsData = response.data?.projects || response.data?.items || response.data || [];
         

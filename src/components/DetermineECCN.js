@@ -17,6 +17,7 @@ const DetermineECCN = ({setEccnForLicensing, setCountryForLicensing}) => {
   const [loadingReport, setLoadingReport] = useState(false);
   const [reportReady, setReportReady] = useState(false);
   const [reportRequested, setReportRequested] = useState(false);
+  const [datasheetLink, setDatasheetLink] = useState('');
   const [polling, setPolling] = useState(false);
   const pollingRef = useRef(null);
   const countryOptions = countryList.map((c) => ({ value: c, label: c }));
@@ -90,7 +91,7 @@ const DetermineECCN = ({setEccnForLicensing, setCountryForLicensing}) => {
     pollingRef.current = setInterval(async () => {
       setNumPoll(numPoll + 1);
       const result = await checkReportStatus();
-      if (result === true || numPoll >= 30) {
+      if (result.exists || numPoll >= 30) {
         setLoadingReport(false);
         clearInterval(pollingRef.current);
         setPolling(false);
@@ -102,28 +103,28 @@ const DetermineECCN = ({setEccnForLicensing, setCountryForLicensing}) => {
   const checkReportStatus = async () => {
     try {
       const response = await apiService.getReport(mpn || eccn, 'eccn');
-      const { report_exists, report } = response.data;
+      const { report_exists, report, datasheet_link } = response.data;
+      setDatasheetLink(datasheet_link || '');
 
       setReportRequested(true);
       if (report_exists) {
-        //setMarkdown(report);
         const md = new MarkdownIt();
         setHtmlPreview(md.render(report));
         setReportReady(true);
         // We also will want to update our other input field to use the determined ECCN, if any
-        const eccnMatch = report.match(/ECCN:\s*([A-Z0-9.]+)/i);
+        const eccnMatch = report.match(/ECCN:[\s\*]*([A-Z0-9.]+)/i);
         if (eccnMatch) {
           setEccnForLicensing(eccnMatch[1]);
         }
-        return true;
+        return { exists: true, datasheetLink: datasheet_link };
       } else {
         setReportReady(false);
-        return false;
+        return { exists: false, datasheetLink: datasheet_link };
       }
     } catch (err) {
       console.error('Error fetching report:', err);
       setReportReady(false);
-      return false;
+      return { exists: false, datasheetLink: null };
     }
   };
 
@@ -139,8 +140,8 @@ const DetermineECCN = ({setEccnForLicensing, setCountryForLicensing}) => {
     setLoadingReport(true);
     const result = await checkReportStatus();
 
-    if (!result) {
-      if (mpn) {
+    if (!result.exists) {
+      if (mpn && !result.datasheetLink) {
         alert('Report not available. Please upload a datasheet PDF.');
         setLoadingReport(false);
       } else {
@@ -158,7 +159,7 @@ const DetermineECCN = ({setEccnForLicensing, setCountryForLicensing}) => {
   }, []);
 
   // Conditional rendering logic
-  const showUploadSection = mpn && reportRequested && !reportReady;
+  const showUploadSection = mpn && reportRequested && !reportReady && !datasheetLink;
 
   return (
     <>

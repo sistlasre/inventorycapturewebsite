@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, Form, Badge, Alert, Toast, ToastContainer } from 'react-bootstrap';
+import { Container, Row, Col, Button, Form, Badge, Alert, Toast, ToastContainer, InputGroup } from 'react-bootstrap';
 import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import { apiService } from '../services/apiService';
@@ -27,6 +27,7 @@ function PartsComparisonTool() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [actualPartsFilter, setActualPartsFilter] = useState('all'); // 'all', 'matched', 'unmatched'
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [partNumberFilter, setPartNumberFilter] = useState(''); // Filter for MPN/IPN/Secondary PN
 
   // Fetch project data with expected line items
   useEffect(() => {
@@ -39,7 +40,7 @@ function PartsComparisonTool() {
         const projectResponse = await apiService.api.get(`/project/${projectId}`, {
           params: { fetchExpected: true }
         });
-        
+
         const projectData = projectResponse.data;
         setProject({
           projectId: projectData.projectId,
@@ -63,7 +64,7 @@ function PartsComparisonTool() {
               };
             });
             setExpectedLineItems(itemsWithIds);
-            
+
             // Initialize matched items from existing data
             const initialMatches = {};
             itemsWithIds.forEach(item => {
@@ -142,7 +143,7 @@ function PartsComparisonTool() {
 
     // Create the match
     const newMatches = { ...matchedItems };
-    
+
     // Remove selected parts from any existing matches
     Object.keys(newMatches).forEach(expectedId => {
       if (newMatches[expectedId]) {
@@ -160,7 +161,7 @@ function PartsComparisonTool() {
     if (!newMatches[selectedExpectedItem]) {
       newMatches[selectedExpectedItem] = [];
     }
-    
+
     // Ensure we're adding part IDs as strings
     const partIdsToAdd = Array.from(selectedActualParts).map(id => String(id));
     newMatches[selectedExpectedItem] = [
@@ -173,7 +174,7 @@ function PartsComparisonTool() {
     setSelectedActualParts(new Set());
     setSelectedExpectedItem(null);
     setHasUnsavedChanges(true);
-    
+
     setToastMessage(`Matched ${partIdsToAdd.length} part(s) successfully`);
     setShowToast(true);
   };
@@ -181,7 +182,7 @@ function PartsComparisonTool() {
   // Remove a match
   const handleUnmatch = (expectedId, partId = null) => {
     const newMatches = { ...matchedItems };
-    
+
     if (partId) {
       // Remove specific part from match
       newMatches[expectedId] = newMatches[expectedId].filter(id => id !== partId);
@@ -192,7 +193,7 @@ function PartsComparisonTool() {
       // Remove all matches for this expected item
       delete newMatches[expectedId];
     }
-    
+
     setMatchedItems(newMatches);
     setHasUnsavedChanges(true);
     setToastMessage('Match removed');
@@ -234,23 +235,23 @@ function PartsComparisonTool() {
   const handleSave = async () => {
     try {
       setSaveLoading(true);
-      
+
       console.log('Saving matches:', {
         expectedLineItems,
         matchedItems,
         actualParts: actualParts.map(p => ({ id: p.partId, name: p.name }))
       });
-      
+
       // Prepare the updated expected line items with proper matched parts
       const expectedLineItemsPayload = {
         lineItems: expectedLineItems.map(item => {
           const matchedPartIds = matchedItems[item.id] || [];
-          
+
           // Ensure matchedPartIds are strings and valid
           const validMatchedParts = matchedPartIds
             .map(id => String(id))
             .filter(id => actualParts.some(part => part.partId === id));
-          
+
           const lineItem = {
             partData: {
               mpn: item.partData?.mpn || '',
@@ -267,24 +268,24 @@ function PartsComparisonTool() {
             lineItemId: item.lineItemId || item.id,
             matchedParts: validMatchedParts // Array of valid part IDs
           };
-          
+
           console.log(`Line item ${item.id}:`, {
             originalMatched: item.matchedParts,
             newMatched: validMatchedParts
           });
-          
+
           return lineItem;
         })
       };
-      
+
       console.log('Payload to save:', expectedLineItemsPayload);
-      
+
       // Update project with new expected line items
       await apiService.updateProject(projectId, {
         expectedLineItems: JSON.stringify(expectedLineItemsPayload)
       });
       console.log(expectedLineItems);
-      
+
       setHasUnsavedChanges(false);
       setToastMessage('Matches saved successfully!');
       setShowToast(true);
@@ -297,16 +298,55 @@ function PartsComparisonTool() {
     }
   };
 
-  // Filter actual parts based on matched status
-  const getFilteredActualParts = () => {
-    if (actualPartsFilter === 'matched') {
-      return actualParts.filter(part => isPartMatched(part.partId));
-    } else if (actualPartsFilter === 'unmatched') {
-      return actualParts.filter(part => !isPartMatched(part.partId));
-    }
-    return actualParts;
+  // Helper function to normalize strings for filtering
+  const normalize = (val) => {
+    return (val || '').toString().toLowerCase().replace(/[^a-z0-9]/gi, '');
   };
 
+  // Filter parts based on part number filter
+  const filterByPartNumber = (part) => {
+    if (!partNumberFilter) return true;
+    const normFilter = normalize(partNumberFilter);
+    return (
+      normalize(part.mpn).includes(normFilter) ||
+      normalize(part.ipn).includes(normFilter) ||
+      normalize(part.secondarypartnumber).includes(normFilter)
+    );
+  };
+
+  // Filter expected items based on part number filter
+  const filterExpectedByPartNumber = (item) => {
+    if (!partNumberFilter) return true;
+    const normFilter = normalize(partNumberFilter);
+    return (
+      normalize(item.partData?.mpn).includes(normFilter) ||
+      normalize(item.partData?.secondarypartnumber).includes(normFilter)
+    );
+  };
+
+  // Get filtered expected items
+  const getFilteredExpectedItems = () => {
+    return expectedLineItems.filter(filterExpectedByPartNumber);
+  };
+
+  // Filter actual parts based on matched status and part number
+  const getFilteredActualParts = () => {
+    let filtered = actualParts;
+
+    // Apply matched/unmatched filter
+    if (actualPartsFilter === 'matched') {
+      filtered = filtered.filter(part => isPartMatched(part.partId));
+    } else if (actualPartsFilter === 'unmatched') {
+      filtered = filtered.filter(part => !isPartMatched(part.partId));
+    }
+
+    // Apply part number filter
+    filtered = filtered.filter(filterByPartNumber);
+
+    return filtered;
+  };
+
+  const filteredExpectedItems = getFilteredExpectedItems();
   const filteredActualParts = getFilteredActualParts();
   const stats = getMatchStats();
 
@@ -350,38 +390,56 @@ function PartsComparisonTool() {
         userCanEdit={userCanEdit}
       />
 
-      {/* Match Statistics */}
+      {/* Match Statistics and Filter */}
       <Row className="mb-3">
-        <Col>
-          <Card className="bg-light">
+        <Col md={4}>
+          <Card className="bg-light h-100">
             <Card.Body className="py-2">
-              <Row>
-                <Col md={6}>
-                  <strong>Expected Items:</strong>{' '}
-                  <Badge bg={stats.expectedMatched === stats.expectedTotal ? 'success' : 'warning'}>
-                    {stats.expectedMatched} / {stats.expectedTotal} matched
-                  </Badge>
-                </Col>
-                <Col md={6}>
-                  <strong>Actual Parts:</strong>{' '}
-                  <Badge bg={stats.actualMatched === stats.actualTotal ? 'success' : 'info'}>
-                    {stats.actualMatched} / {stats.actualTotal} matched
-                  </Badge>
-                </Col>
-              </Row>
+              <div><strong>Expected:</strong> <Badge bg={stats.expectedMatched === stats.expectedTotal ? 'success' : 'warning'}>
+                {stats.expectedMatched} / {stats.expectedTotal} matched
+              </Badge></div>
+              <div><strong>Actual:</strong> <Badge bg={stats.actualMatched === stats.actualTotal ? 'success' : 'info'}>
+                {stats.actualMatched} / {stats.actualTotal} matched
+              </Badge></div>
             </Card.Body>
           </Card>
         </Col>
+        <Col md={4}>
+          <InputGroup>
+            <InputGroup.Text>
+              <FontAwesomeIcon icon={faFilter} />
+            </InputGroup.Text>
+            <Form.Control
+              type="text"
+              placeholder="Filter by MPN, IPN, or Secondary PN..."
+              value={partNumberFilter}
+              onChange={(e) => setPartNumberFilter(e.target.value)}
+            />
+          </InputGroup>
+        </Col>
+        <Col md={4} className="text-end">
+          {hasUnsavedChanges && (
+            <Badge bg="warning" className="me-2">Unsaved changes</Badge>
+          )}
+        </Col>
       </Row>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - Centered */}
       <Row className="mb-3">
-        <Col md={6} className="text-start">
+        <Col className="text-center">
+          <Button
+            variant="primary"
+            onClick={handleMatch}
+            disabled={!selectedExpectedItem || selectedActualParts.size === 0}
+            className="me-2"
+          >
+            <FontAwesomeIcon icon={faLink} className="me-2" />
+            Match Selected Parts
+          </Button>
           <Button
             variant="success"
             onClick={handleSave}
             disabled={saveLoading || !hasUnsavedChanges}
-            className="me-2"
           >
             {saveLoading ? (
               <>
@@ -395,31 +453,13 @@ function PartsComparisonTool() {
               </>
             )}
           </Button>
-          {hasUnsavedChanges && (
-            <Badge bg="warning" className="ms-2">Unsaved changes</Badge>
+          {selectedExpectedItem && selectedActualParts.size > 0 && (
+            <div className="mt-2 text-muted small">
+              Ready to match {selectedActualParts.size} part(s) to selected expected item
+            </div>
           )}
         </Col>
-        <Col md={6} className="text-end">
-          <Button 
-            variant="primary" 
-            onClick={handleMatch}
-            disabled={!selectedExpectedItem || selectedActualParts.size === 0}
-          >
-            <FontAwesomeIcon icon={faLink} className="me-2" />
-            Match Selected Parts
-          </Button>
-        </Col>
       </Row>
-      
-      {selectedExpectedItem && selectedActualParts.size > 0 && (
-        <Row className="mb-2">
-          <Col className="text-center">
-            <div className="text-muted">
-              Matching {selectedActualParts.size} part(s) to selected expected item
-            </div>
-          </Col>
-        </Row>
-      )}
 
       <Row>
         {/* Expected Items (Left Side) */}
@@ -429,27 +469,37 @@ function PartsComparisonTool() {
               <h5 className="mb-0">Expected Line Items</h5>
             </Card.Header>
             <Card.Body style={{ padding: 0, maxHeight: '70vh', overflowY: 'auto' }}>
-              {expectedLineItems.length === 0 ? (
+              {filteredExpectedItems.length === 0 ? (
                 <div className="text-center text-muted p-4">
-                  No expected line items available
+                  {partNumberFilter 
+                    ? 'No expected items match your filter'
+                    : 'No expected line items available'}
                 </div>
               ) : (
-                <Table hover className="mb-0">
-                  <thead className="table-light sticky-top">
-                    <tr>
-                      <th width="40">Select</th>
-                      <th>MPN</th>
-                      <th>Qty</th>
-                      <th>Manufacturer</th>
-                      <th>Matched</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expectedLineItems.map((item) => {
+                <div style={{ overflowX: 'auto' }}>
+                  <Table hover className="mb-0" size="sm" style={{ minWidth: '1000px' }}>
+                    <thead className="table-light" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                      <tr>
+                        <th width="40">Select</th>
+                        <th>MPN</th>
+                        <th>Secondary PN</th>
+                        <th>Qty</th>
+                        <th>MFR</th>
+                        <th>Date Code</th>
+                        <th>Lot Code</th>
+                        <th>Serial No.</th>
+                        <th>COO</th>
+                        <th>RoHS</th>
+                        <th>MSL</th>
+                        <th>Matched</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredExpectedItems.map((item) => {
                       const matchedParts = getMatchedPartsForExpected(item.id);
                       const isSelected = selectedExpectedItem === item.id;
                       const hasMatch = matchedParts.length > 0;
-                      
+
                       return (
                         <React.Fragment key={item.id}>
                           <tr 
@@ -465,16 +515,22 @@ function PartsComparisonTool() {
                                 onClick={(e) => e.stopPropagation()}
                               />
                             </td>
-                            <td>
+                            <td style={{ whiteSpace: 'nowrap', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.partData?.mpn}>
                               <strong>{item.partData?.mpn || 'N/A'}</strong>
-                              {item.partData?.secondarypartnumber && (
-                                <div className="text-muted small">
-                                  {item.partData.secondarypartnumber}
-                                </div>
-                              )}
                             </td>
-                            <td>{item.partData?.quantity || 'N/A'}</td>
-                            <td>{item.partData?.manufacturer || 'N/A'}</td>
+                            <td style={{ whiteSpace: 'nowrap', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.partData?.secondarypartnumber}>
+                              {item.partData?.secondarypartnumber || '-'}
+                            </td>
+                            <td>{item.partData?.quantity || '-'}</td>
+                            <td style={{ whiteSpace: 'nowrap', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.partData?.manufacturer}>
+                              {item.partData?.manufacturer || '-'}
+                            </td>
+                            <td>{item.partData?.datecode || '-'}</td>
+                            <td>{item.partData?.lotcode || '-'}</td>
+                            <td>{item.partData?.serialnumber || '-'}</td>
+                            <td>{item.partData?.coo || '-'}</td>
+                            <td>{item.partData?.rohsstatus || '-'}</td>
+                            <td>{item.partData?.msl || '-'}</td>
                             <td>
                               {hasMatch ? (
                                 <Badge bg="success">
@@ -490,12 +546,14 @@ function PartsComparisonTool() {
                           {/* Show matched parts as sub-rows */}
                           {hasMatch && matchedParts.map(part => (
                             <tr key={`match-${part.partId}`} className="table-light">
-                              <td colSpan="5" style={{ paddingLeft: '40px' }}>
+                              <td colSpan="12" style={{ paddingLeft: '40px' }}>
                                 <div className="d-flex justify-content-between align-items-center">
-                                  <span>
+                                  <span style={{ fontSize: '0.85rem' }}>
                                     <FontAwesomeIcon icon={faArrowRight} className="text-success me-2" />
-                                    <strong>{part.mpn || part.name}</strong> - 
+                                    <strong>{part.mpn || part.name}</strong>
+                                    {part.secondarypartnumber && ` (${part.secondarypartnumber})`} - 
                                     Qty: {part.quantity}, 
+                                    MFR: {part.manufacturer || '-'},
                                     Location: {part.boxName}
                                   </span>
                                   <Button
@@ -515,8 +573,9 @@ function PartsComparisonTool() {
                         </React.Fragment>
                       );
                     })}
-                  </tbody>
-                </Table>
+                    </tbody>
+                  </Table>
+                </div>
               )}
             </Card.Body>
           </Card>
@@ -553,22 +612,29 @@ function PartsComparisonTool() {
                     : `No ${actualPartsFilter} parts found`}
                 </div>
               ) : (
-                <Table hover className="mb-0">
-                  <thead className="table-light sticky-top">
-                    <tr>
-                      <th width="40">Select</th>
-                      <th>MPN/Name</th>
-                      <th>Qty</th>
-                      <th>Manufacturer</th>
-                      <th>Location</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <div style={{ overflowX: 'auto' }}>
+                  <Table hover className="mb-0" size="sm" style={{ minWidth: '1000px' }}>
+                    <thead className="table-light" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                      <tr>
+                        <th width="40">Select</th>
+                        <th>Location</th>
+                        <th>MPN</th>
+                        <th>Secondary PN</th>
+                        <th>IPN</th>
+                        <th>Qty</th>
+                        <th>MFR</th>
+                        <th>Date Code</th>
+                        <th>COO</th>
+                        <th>RoHS</th>
+                        <th>MSL</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                     {filteredActualParts.map((part) => {
                       const isSelected = selectedActualParts.has(part.partId);
                       const isMatched = isPartMatched(part.partId);
-                      
+
                       return (
                         <tr 
                           key={part.partId}
@@ -585,79 +651,45 @@ function PartsComparisonTool() {
                               onClick={(e) => e.stopPropagation()}
                             />
                           </td>
-                          <td>
-                            <strong>{part.mpn || part.name}</strong>
-                            {part.secondarypartnumber && (
-                              <div className="text-muted small">
-                                {part.secondarypartnumber}
-                              </div>
-                            )}
+                          <td style={{ whiteSpace: 'nowrap', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={part.locationTree}>
+                            📦 {part.boxName}
                           </td>
-                          <td>{part.quantity || 'N/A'}</td>
-                          <td>{part.manufacturer || 'N/A'}</td>
-                          <td>
-                            <span title={part.locationTree}>
-                              📦 {part.boxName}
-                            </span>
+                          <td style={{ whiteSpace: 'nowrap', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={part.mpn || part.name}>
+                            <strong>{part.mpn || part.name || '-'}</strong>
                           </td>
+                          <td style={{ whiteSpace: 'nowrap', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={part.secondarypartnumber}>
+                            {part.secondarypartnumber || '-'}
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={part.ipn}>
+                            {part.ipn || '-'}
+                          </td>
+                          <td>{part.quantity || '-'}</td>
+                          <td style={{ whiteSpace: 'nowrap', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={part.manufacturer}>
+                            {part.manufacturer || '-'}
+                          </td>
+                          <td>{part.datecode || '-'}</td>
+                          <td>{part.coo || '-'}</td>
+                          <td>{part.rohsstatus || '-'}</td>
+                          <td>{part.msl || '-'}</td>
                           <td>
                             {isMatched ? (
-                              <Badge bg="warning">Matched</Badge>
+                              <Badge bg="warning" size="sm">Matched</Badge>
                             ) : (
-                              <Badge bg="secondary">Available</Badge>
+                              <Badge bg="secondary" size="sm">Available</Badge>
                             )}
                           </td>
                         </tr>
                       );
                     })}
-                  </tbody>
-                </Table>
+                    </tbody>
+                  </Table>
+                </div>
               )}
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      {/* Additional Details Card */}
-      {expectedLineItems.length > 0 && (
-        <Row className="mt-3">
-          <Col>
-            <Card>
-              <Card.Header>
-                <h6 className="mb-0">Expected Item Details</h6>
-              </Card.Header>
-              <Card.Body>
-                <Table size="sm" className="mb-0">
-                  <thead>
-                    <tr>
-                      <th>MPN</th>
-                      <th>Date Code</th>
-                      <th>Lot Code</th>
-                      <th>COO</th>
-                      <th>RoHS</th>
-                      <th>MSL</th>
-                      <th>Serial Number</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expectedLineItems.map(item => (
-                      <tr key={item.id}>
-                        <td>{item.partData?.mpn || '-'}</td>
-                        <td>{item.partData?.datecode || '-'}</td>
-                        <td>{item.partData?.lotcode || '-'}</td>
-                        <td>{item.partData?.coo || '-'}</td>
-                        <td>{item.partData?.rohsstatus || '-'}</td>
-                        <td>{item.partData?.msl || '-'}</td>
-                        <td>{item.partData?.serialnumber || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      )}
 
       {/* Toast for notifications */}
       <ToastContainer className="p-3" position="top-end">

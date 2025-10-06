@@ -5,7 +5,7 @@ import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import { apiService } from '../services/apiService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSort, faSortAsc, faSortDesc, faThumbTack, faThumbsUp, faThumbsDown, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faSortAsc, faSortDesc, faThumbTack, faThumbsUp, faThumbsDown, faCircleCheck, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
 import ProjectHeader from './ProjectHeader';
 import ConfirmationModal from './ConfirmationModal';
 import PartModal from './PartModal';
@@ -30,6 +30,8 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
   const [selectedPart, setSelectedPart] = useState(null);
   const [showPartModal, setShowPartModal] = useState(false);
   const [currentPartIndex, setCurrentPartIndex] = useState(-1);
+  // Experimental features
+  const isExperimental = window.location.hostname === 'localhost' || window.location.hostname === 'dev.inventorycapture.com';
 
   const REVIEW_STATUS_MAPPINGS = {
     'reviewed': { color: '#28a745', titleText: 'Reviewed'},
@@ -260,7 +262,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
       />
 
       <Row className="mb-3">
-        <Col>
+        <Col md={8}>
           <InputGroup style={{ maxWidth: '400px' }}>
             <Form.Select value={filterField} onChange={e => setFilterField(e.target.value)}>
                 <option value="all">All Fields</option>
@@ -279,6 +281,18 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
             />
           </InputGroup>
         </Col>
+        {isExperimental && (
+            <Col md={4} className="text-end">
+              <button
+                className="btn btn-outline-primary"
+                onClick={() => navigate(`/project/${projectId}/compare`)}
+                title="Compare with expected parts"
+              >
+                <FontAwesomeIcon icon={faExchangeAlt} className="me-2" />
+                Compare Parts
+              </button>
+            </Col>
+        )}
       </Row>
 
       <Row>

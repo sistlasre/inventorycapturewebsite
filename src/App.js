@@ -12,6 +12,7 @@ import Dashboard from './components/Dashboard';
 import ProjectDetails from './components/ProjectDetails';
 import ProjectVerboseView from './components/ProjectVerboseView';
 import AllPartsForProjectTableView from './components/AllPartsForProject';
+import PartsComparisonTool from './components/PartsComparisonTool';
 import TariffExplorer from './components/TariffExplorer';
 import ExpertECCN from './components/ExpertECCN';
 import BoxDetails from './components/BoxDetails';
@@ -137,6 +138,14 @@ function App() {
                 path="/project/:projectId/allparts/view"
                 element={
                     <AllPartsForProjectTableView isViewOnly={true} />
+                }
+              />
+              <Route
+                path="/project/:projectId/compare"
+                element={
+                  <ProtectedRoute>
+                    <PartsComparisonTool />
+                  </ProtectedRoute>
                 }
               />
               <Route 

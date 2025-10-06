@@ -2,6 +2,14 @@ import axios from 'axios';
 
 // Base API URL - update this with your actual API Gateway URL
 const API_BASE_URL = 'https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev';
+const STUPID_MSFT_TYPES_TO_EXTENSION = {
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+    "application/vnd.ms-excel": "xls",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/vnd.ms-powerpoint": "ppt",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx"
+}
 
 class ApiService {
   constructor() {
@@ -147,8 +155,9 @@ class ApiService {
 
   // Datasheet upload endpoints
   async getPresignedUploadUrlForPackingSlip(file, projectId) {
+    const correctFileExtension = STUPID_MSFT_TYPES_TO_EXTENSION[file.type] || file.type.split("/")[1];
     return this.api.post('/get-presigned-url', {
-      file_extension: file.type.split("/")[1],
+      file_extension: correctFileExtension,
       content_type: file.type,
       isPackingSlip: true,
       projectId

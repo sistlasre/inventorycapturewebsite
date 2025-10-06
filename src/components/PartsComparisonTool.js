@@ -44,7 +44,8 @@ function PartsComparisonTool() {
         const projectData = projectResponse.data;
         setProject({
           projectId: projectData.projectId,
-          projectName: projectData.projectName
+          projectName: projectData.projectName,
+          packingSlipUrl: projectData.packingSlipUrl
         });
 
         // Parse expected line items if they exist

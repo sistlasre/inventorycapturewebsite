@@ -547,7 +547,18 @@ function PartsComparisonTool() {
                           {hasMatch && matchedParts.map(part => (
                             <tr key={`match-${part.partId}`} className="table-light">
                               <td colSpan="12" style={{ paddingLeft: '40px' }}>
-                                <div className="d-flex justify-content-between align-items-center">
+                                <div className="d-flex align-items-center">
+                                  <Button
+                                    size="sm"
+                                    variant="outline-danger"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUnmatch(item.id, part.partId);
+                                    }}
+                                    className="me-2"
+                                  >
+                                    <FontAwesomeIcon icon={faUnlink} />
+                                  </Button>
                                   <span style={{ fontSize: '0.85rem' }}>
                                     <FontAwesomeIcon icon={faArrowRight} className="text-success me-2" />
                                     <strong>{part.mpn || part.name}</strong>
@@ -556,16 +567,6 @@ function PartsComparisonTool() {
                                     MFR: {part.manufacturer || '-'},
                                     Location: {part.boxName}
                                   </span>
-                                  <Button
-                                    size="sm"
-                                    variant="outline-danger"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleUnmatch(item.id, part.partId);
-                                    }}
-                                  >
-                                    <FontAwesomeIcon icon={faUnlink} />
-                                  </Button>
                                 </div>
                               </td>
                             </tr>

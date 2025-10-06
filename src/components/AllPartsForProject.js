@@ -281,7 +281,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
             />
           </InputGroup>
         </Col>
-        {isExperimental && (
+        {isExperimental && !isViewOnly && (
             <Col md={4} className="text-end">
               <button
                 className="btn btn-outline-primary"

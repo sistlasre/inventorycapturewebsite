@@ -482,7 +482,6 @@ function PartsComparisonTool() {
                   <Table hover className="mb-0" size="sm" style={{ minWidth: '1000px' }}>
                     <thead className="table-light" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                       <tr>
-                        <th width="40">Select</th>
                         <th>MPN</th>
                         <th>Secondary PN</th>
                         <th>Qty</th>
@@ -509,14 +508,6 @@ function PartsComparisonTool() {
                             style={{ cursor: 'pointer' }}
                             onClick={() => handleExpectedItemSelection(item.id)}
                           >
-                            <td>
-                              <Form.Check
-                                type="radio"
-                                checked={isSelected}
-                                onChange={() => handleExpectedItemSelection(item.id)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </td>
                             <td style={{ whiteSpace: 'nowrap', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.partData?.mpn}>
                               <strong>{item.partData?.mpn || 'N/A'}</strong>
                             </td>

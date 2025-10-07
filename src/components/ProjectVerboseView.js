@@ -6,7 +6,7 @@ import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faThumbsDown, faPencil, faCheck, faTimes, faSort, faSortAsc, faSortDesc, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { faExchange, faImage, faGlobe, faTrash, faChevronDown, faChevronRight, faThumbsUp, faThumbsDown, faPencil, faCheck, faTimes, faSort, faSortAsc, faSortDesc, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
 import PartModal from './PartModal';
@@ -875,12 +875,21 @@ return (
       <ProjectHeader
         project={project}
         projectId={projectId}
-        leftButton={{
-          text: 'All Parts Search',
-          icon: faGlobe,
-          destinationUrl: `/project/${projectId}/allparts/${userCanEdit ? 'edit' : 'view'}`,
-          title: 'Go to all parts search'
-        }}
+        leftButtons={[
+            {
+              text: 'All Parts Search',
+              icon: faGlobe,
+              destinationUrl: `/project/${projectId}/allparts/${userCanEdit ? 'edit' : 'view'}`,
+              title: 'Go to all parts search'
+            },
+            {
+              text: 'Part Comparison Tool',
+              icon: faExchange,
+              destinationUrl: `/project/${projectId}/compare`,
+              title: 'Go to part comparsion',
+              dontShow: !userCanEdit
+            },
+        ]}
         showAddLocation={true}
         onAddLocation={() => setShowCreateBoxModal(true)}
         onProjectUpdate={setProject}

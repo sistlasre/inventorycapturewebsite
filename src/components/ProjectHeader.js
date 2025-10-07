@@ -10,7 +10,7 @@ const API_BASE_URL = 'https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev
 const ProjectHeader = ({ 
   project, 
   projectId,
-  leftButton = null, // { text, icon, onClick, title }
+  leftButtons = [], // { text, icon, onClick, title }
   showAddLocation = false,
   onAddLocation,
   onProjectUpdate,
@@ -26,7 +26,6 @@ const ProjectHeader = ({
   const projectNameInputRef = useRef(null);
   const [uploadingPackingSlip, setUploadingPackingSlip] = useState(false);
   const fileInputRef = useRef(null);
-  const isExperimental = window.location.hostname === 'localhost' || window.location.hostname === 'dev.inventorycapture.com';
 
   const handleUploadPackingSlipIconClick = () => {
     fileInputRef.current.click(); // Trigger hidden file input
@@ -100,6 +99,12 @@ const ProjectHeader = ({
       const presignedUrl = presignedUrlResponse.data.presigned_url;
       await apiService.uploadFile(presignedUrl, file);
       setUploadingPackingSlip(false);
+      if (onShowToast) {
+        onShowToast('Successfully uploaded packing slip. Redirecting to compare page');
+      }
+      setTimeout(() => {
+        window.location.href = `/project/${projectId}/compare`;
+      }, 3000);
     } catch (error) {
       console.error('Error uploading file:', error);
       setUploadingPackingSlip(false);
@@ -110,7 +115,7 @@ const ProjectHeader = ({
     <div className="d-flex justify-content-between align-items-center mb-4">
       {/* Left Button */}
       <div className="d-flex gap-2">
-        {leftButton && (
+        {leftButtons && leftButtons.map(leftButton => (!leftButton.dontShow && (
           <Button
             variant="primary"
             href={leftButton.destinationUrl}
@@ -122,7 +127,7 @@ const ProjectHeader = ({
             )}
             {leftButton.text}
           </Button>
-        )}
+        )))}
       </div>
 
       {/* Center - Editable Project Name */}
@@ -192,17 +197,7 @@ const ProjectHeader = ({
             Add Location
           </Button>
         )}
-        {isExperimental && project?.packingSlipUrl && (
-          <Button
-            variant="outline-primary"
-            onClick={() => window.open(project.packingSlipUrl, "_blank")}
-            size="sm"
-            title="View Packing Slip for Project"
-          >
-            <FontAwesomeIcon icon={faReceipt} />
-          </Button>
-        )}
-        {isExperimental && userCanEdit && (
+        {userCanEdit && !project?.packingSlipUrl && (
           <>
             <Form.Control
               type="file"

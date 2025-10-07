@@ -376,12 +376,12 @@ function PartsComparisonTool() {
       <ProjectHeader
         project={project}
         projectId={projectId}
-        leftButton={{
+        leftButtons={[{
           text: 'Back to Parts List',
           icon: faArrowLeft,
           destinationUrl: `/project/${projectId}/allparts`,
           title: 'Go back to parts list'
-        }}
+        }]}
         showAddLocation={false}
         onProjectUpdate={setProject}
         onShowToast={(message) => {

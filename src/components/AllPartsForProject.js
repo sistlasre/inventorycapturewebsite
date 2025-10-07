@@ -5,7 +5,7 @@ import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import { apiService } from '../services/apiService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSort, faSortAsc, faSortDesc, faThumbTack, faThumbsUp, faThumbsDown, faCircleCheck, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
+import { faExchange, faSort, faSortAsc, faSortDesc, faThumbTack, faThumbsUp, faThumbsDown, faCircleCheck, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
 import ProjectHeader from './ProjectHeader';
 import ConfirmationModal from './ConfirmationModal';
 import PartModal from './PartModal';
@@ -30,8 +30,6 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
   const [selectedPart, setSelectedPart] = useState(null);
   const [showPartModal, setShowPartModal] = useState(false);
   const [currentPartIndex, setCurrentPartIndex] = useState(-1);
-  // Experimental features
-  const isExperimental = window.location.hostname === 'localhost' || window.location.hostname === 'dev.inventorycapture.com';
 
   const REVIEW_STATUS_MAPPINGS = {
     'reviewed': { color: '#28a745', titleText: 'Reviewed'},
@@ -244,12 +242,21 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
       <ProjectHeader
         project={project}
         projectId={projectId}
-        leftButton={{
-          text: 'Location View',
-          icon: faThumbTack,
-          destinationUrl: `/project/${projectId}/${userCanEdit ? 'edit' : 'view'}`,
-          title: 'Go to location view'
-        }}
+        leftButtons={[
+            {
+              text: 'Location View',
+              icon: faThumbTack,
+              destinationUrl: `/project/${projectId}/${userCanEdit ? 'edit' : 'view'}`,
+              title: 'Go to location view'
+            },
+            {
+              text: 'Part Comparison Tool',
+              icon: faExchange,
+              destinationUrl: `/project/${projectId}/compare`,
+              title: 'Go to part comparsion',
+              dontShow: !userCanEdit
+            },
+        ]}
         showAddLocation={false}
         onProjectUpdate={setProject}
         onDeleteProject={handleDeleteProject}
@@ -281,7 +288,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
             />
           </InputGroup>
         </Col>
-        {isExperimental && !isViewOnly && (
+        {!isViewOnly && (
             <Col md={4} className="text-end">
               <button
                 className="btn btn-outline-primary"

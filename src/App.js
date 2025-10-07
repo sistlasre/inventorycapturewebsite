@@ -72,7 +72,7 @@ function App() {
                 path="/admin" 
                 element={
                   <AdminRoute>
-                    <Users pageHeader="All Accounts" showNumCredits={true} />
+                    <Users pageHeader="All Accounts" showNumCredits={true} showAffiliates={true} />
                   </AdminRoute>
                 } 
               />

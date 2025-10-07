@@ -37,7 +37,7 @@ import ChangePricingPlanModal from './ChangePricingPlanModal';
 
 const normalize = (str) => (str || "").toLowerCase().replace(/[^a-z0-9]/gi, "");
 
-const Users = ({ pageHeader, showNumCredits = false }) => {
+const Users = ({ pageHeader, showNumCredits = false, showAffiliates = false }) => {
   const { parentUser } = useParams();
   const [users, setUsers] = useState([]);
   const [requestingUser, setRequestingUser] = useState(null);
@@ -111,6 +111,10 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       password: '',
       email: user.email || '',
       originalEmail: user.email || '',
+      firstName: user.first_name || '',
+      originalFirstName: user.first_name || '',
+      lastName: user.last_name || '',
+      originalLastName: user.last_name || '',
       status: user.user_status || 'active',
       originalStatus: user.user_status || 'active',
       credits: user.num_part_credits || 20,
@@ -161,6 +165,12 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       if (editData.email !== editData.originalEmail) {
         payload.new_email = editData.email.trim();
       }
+      if (editData.firstName !== editData.originalFirstName) {
+        payload.new_first_name = editData.firstName.trim();
+      }
+      if (editData.lastName !== editData.originalLastName) {
+        payload.new_last_name = editData.lastName.trim();
+      }
       if (editData.status !== editData.originalStatus) {
         payload.new_status = editData.status;
       }
@@ -207,6 +217,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
             return { 
               ...u, 
               ...(payload.new_email !== undefined ? { email: payload.new_email } : {}),
+              ...(payload.new_first_name !== undefined ? { first_name: payload.new_first_name } : {}),
+              ...(payload.new_last_name !== undefined ? { last_name: payload.new_last_name } : {}),
               ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}),
               ...(payload.new_num_part_credits !== undefined ? { num_part_credits: payload.new_num_part_credits } : {}),
               ...(creditsForLocalUpdate !== null ? { num_part_credits: creditsForLocalUpdate } : {}),
@@ -221,6 +233,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
                   ? { 
                       ...sub, 
                       ...(payload.new_email !== undefined ? { email: payload.new_email } : {}),
+                      ...(payload.new_first_name !== undefined ? { first_name: payload.new_first_name } : {}),
+                      ...(payload.new_last_name !== undefined ? { last_name: payload.new_last_name } : {}),
                       ...(payload.new_status !== undefined ? { user_status: payload.new_status } : {}),
                       ...(payload.new_num_part_credits !== undefined ? { num_part_credits: payload.new_num_part_credits } : {}),
                       ...(creditsForLocalUpdate !== null ? { num_part_credits: creditsForLocalUpdate } : {}),
@@ -259,6 +273,10 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       password: '',
       email: requestingUser?.email || '',
       originalEmail: requestingUser?.email || '',
+      firstName: requestingUser?.first_name || '',
+      originalFirstName: requestingUser?.first_name || '',
+      lastName: requestingUser?.last_name || '',
+      originalLastName: requestingUser?.last_name || '',
       pricingPlan: requestingUser?.pricing_plan || 'free',
       originalPricingPlan: requestingUser?.pricing_plan || 'free'
     });
@@ -281,6 +299,12 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       }
       if (requestingUserEditData.email !== requestingUserEditData.originalEmail) {
         payload.new_email = requestingUserEditData.email.trim();
+      }
+      if (requestingUserEditData.firstName !== requestingUserEditData.originalFirstName) {
+        payload.new_first_name = requestingUserEditData.firstName.trim();
+      }
+      if (requestingUserEditData.lastName !== requestingUserEditData.originalLastName) {
+        payload.new_last_name = requestingUserEditData.lastName.trim();
       }
 
       // Check if pricing plan changed
@@ -307,6 +331,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
       setRequestingUser(prev => ({
         ...prev,
         ...(payload.new_email ? { email: payload.new_email } : {}),
+        ...(payload.new_first_name ? { first_name: payload.new_first_name } : {}),
+        ...(payload.new_last_name ? { last_name: payload.new_last_name } : {}),
         ...(payload.new_pricing_plan ? { pricing_plan: payload.new_pricing_plan } : {}),
         ...(creditsForLocalUpdate !== null ? { num_part_credits: creditsForLocalUpdate } : {})
       }));
@@ -378,6 +404,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
   // Define table columns
   const columns = [
     { key: 'username', label: 'Username' },
+    { key: 'name', label: 'Name' },
+    ...(showAffiliates ? [{ key: 'affiliate', label: 'Affiliate' }] : []),
     { key: 'email', label: 'Email' },
     { key: 'created_at', label: 'Created' },
     { key: 'status', label: 'Status' },
@@ -398,10 +426,17 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
     if (filterField === 'all') {
       return normalize(user.username).includes(normFilter) || 
              normalize(user.email || '').includes(normFilter) ||
+             normalize(user.first_name || '').includes(normFilter) ||
+             normalize(user.last_name || '').includes(normFilter) ||
              normalize(user.user_status || 'active').includes(normFilter) ||
              normalize(new Date(user.created_at).toLocaleDateString()).includes(normFilter);
     } else if (filterField === 'username') {
       return normalize(user.username).includes(normFilter);
+    } else if (filterField === 'name') {
+      return normalize(user.first_name || '').includes(normFilter) ||
+             normalize(user.last_name || '').includes(normFilter);
+    } else if (filterField === 'affiliate') {
+      return normalize(user.affiliate_username || '').includes(normFilter);
     } else if (filterField === 'email') {
       return normalize(user.email || '').includes(normFilter);
     } else if (filterField === 'status') {
@@ -427,6 +462,14 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
         if (sortConfig.key === 'username') {
           valA = normalize(a.username);
           valB = normalize(b.username);
+        } else if (sortConfig.key === 'name') {
+          const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim();
+          const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim();
+          valA = normalize(nameA);
+          valB = normalize(nameB);
+        } else if (sortConfig.key === 'affiliate') {
+          valA = normalize(a.affiliate_username || '');
+          valB = normalize(b.affiliate_username || '');
         } else if (sortConfig.key === 'email') {
           valA = normalize(a.email || '');
           valB = normalize(b.email || '');
@@ -542,6 +585,63 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
               )}
             </div>
           </td>
+
+          {/* Name Column */}
+          <td
+            className="ic-small"
+            style={{
+              borderRight: '1px solid #e9ecef',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {isEditing ? (
+              <div className="d-flex gap-1">
+                <Form.Control
+                  type="text"
+                  placeholder="First name"
+                  value={editData?.firstName || ''}
+                  onChange={(e) => updateEditingData(user.user_id, 'firstName', e.target.value)}
+                  disabled={isSaving}
+                  style={{
+                    maxWidth: '100px',
+                    fontSize: '11px'
+                  }}
+                />
+                <Form.Control
+                  type="text"
+                  placeholder="Last name"
+                  value={editData?.lastName || ''}
+                  onChange={(e) => updateEditingData(user.user_id, 'lastName', e.target.value)}
+                  disabled={isSaving}
+                  style={{
+                    maxWidth: '100px',
+                    fontSize: '11px'
+                  }}
+                />
+              </div>
+            ) : (
+              <span className={user.first_name || user.last_name ? '' : 'text-muted'}>
+                {user.first_name || user.last_name 
+                  ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
+                  : 'Not provided'}
+              </span>
+            )}
+          </td>
+
+          {/* Affiliate Column */}
+          {showAffiliates && (
+              <td
+                className="ic-small"
+                style={{
+                  borderRight: '1px solid #e9ecef',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <span className={user.affiliate_username ? '' : 'text-muted'}>
+                  {user.affiliate_username || '—'}
+                </span>
+              </td>
+          )}
 
           {/* Email Column */}
           <td
@@ -849,6 +949,40 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
                       <strong>Username:</strong> <span className="ms-2">{requestingUser.username}</span>
                     </div>
                     <div className="mb-3">
+                      <strong>Name:</strong>
+                      {editingRequestingUser ? (
+                        <div className="d-inline-flex gap-2 ms-2">
+                          <Form.Control
+                            type="text"
+                            placeholder="First name"
+                            value={requestingUserEditData.firstName || ''}
+                            onChange={(e) => setRequestingUserEditData(prev => ({...prev, firstName: e.target.value}))}
+                            disabled={savingRequestingUser}
+                            style={{ width: '140px' }}
+                          />
+                          <Form.Control
+                            type="text"
+                            placeholder="Last name"
+                            value={requestingUserEditData.lastName || ''}
+                            onChange={(e) => setRequestingUserEditData(prev => ({...prev, lastName: e.target.value}))}
+                            disabled={savingRequestingUser}
+                            style={{ width: '140px' }}
+                          />
+                        </div>
+                      ) : (
+                        <span className="ms-2">
+                          {requestingUser.first_name || requestingUser.last_name
+                            ? `${requestingUser.first_name || ''} ${requestingUser.last_name || ''}`.trim()
+                            : 'Not provided'}
+                        </span>
+                      )}
+                    </div>
+                    {requestingUser.affiliate_username && (
+                      <div className="mb-3">
+                        <strong>Affiliate:</strong> <span className="ms-2">{requestingUser.affiliate_username}</span>
+                      </div>
+                    )}
+                    <div className="mb-3">
                       <strong>Email:</strong>
                       {editingRequestingUser ? (
                         <Form.Control
@@ -942,6 +1076,8 @@ const Users = ({ pageHeader, showNumCredits = false }) => {
               <Form.Select value={filterField} onChange={(e) => setFilterField(e.target.value)}>
                 <option value="all">All Fields</option>
                 <option value="username">Username</option>
+                <option value="name">Name</option>
+                {showAffiliates && (<option value="affiliate">Affiliate</option>)}
                 <option value="email">Email</option>
                 <option value="status">Status</option>
                 <option value="created_at">Created Date</option>

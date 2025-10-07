@@ -5,7 +5,7 @@ import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import { apiService } from '../services/apiService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExchange, faSort, faSortAsc, faSortDesc, faThumbTack, faThumbsUp, faThumbsDown, faCircleCheck, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
+import { faExchange, faSort, faSortAsc, faSortDesc, faThumbTack, faThumbsUp, faThumbsDown, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import ProjectHeader from './ProjectHeader';
 import ConfirmationModal from './ConfirmationModal';
 import PartModal from './PartModal';
@@ -288,18 +288,6 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
             />
           </InputGroup>
         </Col>
-        {!isViewOnly && (
-            <Col md={4} className="text-end">
-              <button
-                className="btn btn-outline-primary"
-                onClick={() => navigate(`/project/${projectId}/compare`)}
-                title="Compare with expected parts"
-              >
-                <FontAwesomeIcon icon={faExchangeAlt} className="me-2" />
-                Compare Parts
-              </button>
-            </Col>
-        )}
       </Row>
 
       <Row>

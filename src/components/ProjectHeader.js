@@ -17,7 +17,8 @@ const ProjectHeader = ({
   onDeleteProject,
   onShowToast,
   userCanEdit = true,
-  onCopyPublicProjectUrl = null
+  onCopyPublicProjectUrl = null,
+  isPartComparisonPage = false
 }) => {
   const { user } = useAuth();
   const [editingProjectName, setEditingProjectName] = useState(false);
@@ -197,7 +198,17 @@ const ProjectHeader = ({
             Add Location
           </Button>
         )}
-        {userCanEdit && !project?.packingSlipUrl && (
+        {project?.packingSlipUrl && isPartComparisonPage && (
+          <Button
+            variant="outline-primary"
+            onClick={() => window.open(project.packingSlipUrl, "_blank")}
+            size="sm"
+            title="View Packing Slip for Project"
+          >
+            View Packing Slip
+          </Button>
+        )}
+        {userCanEdit && (!project?.packingSlipUrl || isPartComparisonPage) && (
           <>
             <Form.Control
               type="file"
@@ -216,7 +227,7 @@ const ProjectHeader = ({
               {uploadingPackingSlip ? (
                 <Spinner animation="border" size="sm" />
               ) : (
-                <FontAwesomeIcon icon={faBoxesPacking} />
+                project?.packingSlipUrl ? 'Upload New Packing Slip' : 'Upload Packing Slip'
               )}
             </Button>
           </>

@@ -389,6 +389,7 @@ function PartsComparisonTool() {
           setShowToast(true);
         }}
         userCanEdit={userCanEdit}
+        isPartComparisonPage={true}
       />
 
       {/* Match Statistics and Filter */}

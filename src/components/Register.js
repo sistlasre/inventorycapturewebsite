@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus, faUser, faLock, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,6 +19,7 @@ const Register = () => {
 
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleChange = (e) => {
     setFormData({
@@ -34,7 +35,7 @@ const Register = () => {
     setSuccess(false);
 
     try {
-      const result = await register(formData.username.trim() || formData.email.trim(), formData.password, formData.email.trim(), formData.firstName.trim(), formData.lastName.trim());
+      const result = await register(formData.username.trim() || formData.email.trim(), formData.password, formData.email.trim(), formData.firstName.trim(), formData.lastName.trim(), searchParams.get('affiliate_id'));
 
       if (result.success) {
         setSuccess(true);

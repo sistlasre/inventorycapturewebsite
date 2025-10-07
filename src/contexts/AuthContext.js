@@ -102,9 +102,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, password, email, firstName='', lastName='') => {
+  const register = async (username, password, email, firstName='', lastName='', affiliateId='') => {
     try {
-      const response = await apiService.register(username, password, email, firstName, lastName);
+      const response = await apiService.register(username, password, email, firstName, lastName, '', affiliateId);
       return { success: true, data: response.data };
     } catch (error) {
       return { 

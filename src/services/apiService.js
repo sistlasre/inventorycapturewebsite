@@ -59,14 +59,15 @@ class ApiService {
     return this.api.post('/user/signin', { username, password });
   }
 
-  async register(username, password, email='', firstName='', lastName='', parent_user_id='') {
+  async register(username, password, email='', firstName='', lastName='', parent_user_id='', affiliate_id='') {
     return this.api.post('/user', { 
       username, 
       password, 
       email,
       firstName,
       lastName,
-      parent_user_id
+      parent_user_id,
+      affiliate_id
     });
   }
 

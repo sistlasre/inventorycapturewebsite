@@ -102,14 +102,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, password, email) => {
+  const register = async (username, password, email, firstName='', lastName='') => {
     try {
-      const response = await apiService.register(username, password, email);
+      const response = await apiService.register(username, password, email, firstName, lastName);
       return { success: true, data: response.data };
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Registration failed' 
+        error: error.response?.data?.error || 'Registration failed'
       };
     }
   };

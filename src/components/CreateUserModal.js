@@ -39,7 +39,7 @@ const CreateUserModal = ({ show, onHide, onUserCreated }) => {
         password: password.trim()
       };
 
-      const response = await apiService.register(username.trim(), password.trim(), email.trim(), user.user_id);
+      const response = await apiService.register(username.trim(), password.trim(), email.trim(), '', '', user.user_id);
 
       const createdUser = response.data?.user;
 

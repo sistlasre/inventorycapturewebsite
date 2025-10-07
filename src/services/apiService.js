@@ -59,11 +59,13 @@ class ApiService {
     return this.api.post('/user/signin', { username, password });
   }
 
-  async register(username, password, email='', parent_user_id='') {
+  async register(username, password, email='', firstName='', lastName='', parent_user_id='') {
     return this.api.post('/user', { 
       username, 
       password, 
       email,
+      firstName,
+      lastName,
       parent_user_id
     });
   }
@@ -143,6 +145,21 @@ class ApiService {
 
   async verifyUser(token) {
     return this.api.post('/verify_account', { token });
+  }
+
+  async requestPasswordReset(username) {
+    return this.api.post('/reset_password', { 
+      username, 
+      requestType: 'request' 
+    });
+  }
+
+  async resetPassword(token, password) {
+    return this.api.post('/reset_password', { 
+      token, 
+      password, 
+      requestType: 'update' 
+    });
   }
 
   async getStripeSubscriptionPortals() {

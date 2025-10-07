@@ -9,6 +9,8 @@ const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
+    firstName: '',
+    lastName: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -32,7 +34,7 @@ const Register = () => {
     setSuccess(false);
 
     try {
-      const result = await register(formData.username.trim() || formData.email.trim(), formData.password, formData.email.trim());
+      const result = await register(formData.username.trim() || formData.email.trim(), formData.password, formData.email.trim(), formData.firstName.trim(), formData.lastName.trim());
 
       if (result.success) {
         setSuccess(true);
@@ -83,6 +85,38 @@ const Register = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter email"
+                    required
+                    disabled={loading}
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>
+                    <FontAwesomeIcon icon={faUser} className="me-2" />
+                    First Name
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    placeholder="Enter first name"
+                    required
+                    disabled={loading}
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>
+                    <FontAwesomeIcon icon={faUser} className="me-2" />
+                    Last Name
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Enter last name"
                     required
                     disabled={loading}
                   />

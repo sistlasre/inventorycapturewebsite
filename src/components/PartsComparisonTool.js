@@ -61,7 +61,8 @@ function PartsComparisonTool() {
                 id: lineItemId,
                 lineItemId: lineItemId,
                 partData: item.partData || {},
-                matchedParts: item.matchedParts || []
+                matchedParts: item.matchedParts || [],
+                totalActualQuantity: item.totalActualQuantity || 0
               };
             });
             setExpectedLineItems(itemsWithIds);
@@ -128,8 +129,18 @@ function PartsComparisonTool() {
     setSelectedExpectedItem(itemId === selectedExpectedItem ? null : itemId);
   };
 
-  // Match selected actual parts to selected expected item
-  const handleMatch = () => {
+  // Calculate total actual quantity for an expected item
+  const getTotalActualQuantity = (expectedId) => {
+    const matchedPartIds = matchedItems[expectedId] || [];
+    return matchedPartIds.reduce((sum, partId) => {
+      const part = actualParts.find(p => p.partId === partId);
+      const quantity = part ? (parseInt(part.quantity) || 0) : 0;
+      return sum + quantity;
+    }, 0);
+  };
+
+  // Match selected actual parts to selected expected item and save immediately
+  const handleMatchAndSave = async () => {
     if (!selectedExpectedItem || selectedActualParts.size === 0) {
       setToastMessage('Please select an expected item and at least one actual part to match');
       setShowToast(true);
@@ -176,12 +187,15 @@ function PartsComparisonTool() {
     setSelectedExpectedItem(null);
     setHasUnsavedChanges(true);
 
-    setToastMessage(`Matched ${partIdsToAdd.length} part(s) successfully`);
+    setToastMessage(`Matched ${partIdsToAdd.length} part(s) successfully. Saving...`);
     setShowToast(true);
+
+    // Save immediately after matching
+    await handleSave(newMatches);
   };
 
-  // Remove a match
-  const handleUnmatch = (expectedId, partId = null) => {
+  // Remove a match and save immediately
+  const handleUnmatch = async (expectedId, partId = null) => {
     const newMatches = { ...matchedItems };
 
     if (partId) {
@@ -197,8 +211,11 @@ function PartsComparisonTool() {
 
     setMatchedItems(newMatches);
     setHasUnsavedChanges(true);
-    setToastMessage('Match removed');
+    setToastMessage('Match removed. Saving...');
     setShowToast(true);
+
+    // Save immediately after unmatching
+    await handleSave(newMatches);
   };
 
   // Check if a part is already matched
@@ -233,25 +250,34 @@ function PartsComparisonTool() {
   };
 
   // Save matches to server
-  const handleSave = async () => {
+  const handleSave = async (matchesToSave = null) => {
     try {
       setSaveLoading(true);
 
+      const currentMatches = matchesToSave || matchedItems;
+
       console.log('Saving matches:', {
         expectedLineItems,
-        matchedItems,
+        matchedItems: currentMatches,
         actualParts: actualParts.map(p => ({ id: p.partId, name: p.name }))
       });
 
-      // Prepare the updated expected line items with proper matched parts
+      // Prepare the updated expected line items with proper matched parts and totalActualQuantity
       const expectedLineItemsPayload = {
         lineItems: expectedLineItems.map(item => {
-          const matchedPartIds = matchedItems[item.id] || [];
+          const matchedPartIds = currentMatches[item.id] || [];
 
           // Ensure matchedPartIds are strings and valid
           const validMatchedParts = matchedPartIds
             .map(id => String(id))
             .filter(id => actualParts.some(part => part.partId === id));
+
+          // Calculate total actual quantity for this line item
+          const totalActualQuantity = validMatchedParts.reduce((sum, partId) => {
+            const part = actualParts.find(p => p.partId === partId);
+            const quantity = part ? (parseInt(part.quantity) || 0) : 0;
+            return sum + quantity;
+          }, 0);
 
           const lineItem = {
             partData: {
@@ -267,12 +293,14 @@ function PartsComparisonTool() {
               msl: item.partData?.msl || ''
             },
             lineItemId: item.lineItemId || item.id,
-            matchedParts: validMatchedParts // Array of valid part IDs
+            matchedParts: validMatchedParts, // Array of valid part IDs
+            totalActualQuantity: totalActualQuantity // Store total actual quantity
           };
 
           console.log(`Line item ${item.id}:`, {
             originalMatched: item.matchedParts,
-            newMatched: validMatchedParts
+            newMatched: validMatchedParts,
+            totalActualQuantity: totalActualQuantity
           });
 
           return lineItem;
@@ -430,18 +458,9 @@ function PartsComparisonTool() {
       <Row className="mb-3">
         <Col className="text-center">
           <Button
-            variant="primary"
-            onClick={handleMatch}
-            disabled={!selectedExpectedItem || selectedActualParts.size === 0}
-            className="me-2"
-          >
-            <FontAwesomeIcon icon={faLink} className="me-2" />
-            Match Selected Parts
-          </Button>
-          <Button
             variant="success"
-            onClick={handleSave}
-            disabled={saveLoading || !hasUnsavedChanges}
+            onClick={handleMatchAndSave}
+            disabled={!selectedExpectedItem || selectedActualParts.size === 0 || saveLoading}
           >
             {saveLoading ? (
               <>
@@ -479,12 +498,13 @@ function PartsComparisonTool() {
                 </div>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
-                  <Table hover className="mb-0" size="sm" style={{ minWidth: '1000px' }}>
+                  <Table hover className="mb-0" size="sm" style={{ minWidth: '1100px' }}>
                     <thead className="table-light" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                       <tr>
                         <th>MPN</th>
                         <th>Secondary PN</th>
                         <th>Qty</th>
+                        <th>Actual Qty</th>
                         <th>MFR</th>
                         <th>Date Code</th>
                         <th>Lot Code</th>
@@ -500,12 +520,28 @@ function PartsComparisonTool() {
                       const matchedParts = getMatchedPartsForExpected(item.id);
                       const isSelected = selectedExpectedItem === item.id;
                       const hasMatch = matchedParts.length > 0;
+                      const actualQuantity = getTotalActualQuantity(item.id);
+                      const expectedQuantity = parseInt(item.partData?.quantity) || 0;
+
+                      // Determine row highlight color
+                      let rowStyle = { cursor: 'pointer' };
+                      let rowClass = '';
+
+                      if (isSelected) {
+                        rowClass = 'table-primary';
+                      } else if (hasMatch) {
+                        if (actualQuantity >= expectedQuantity && expectedQuantity > 0) {
+                          rowStyle.backgroundColor = '#d4edda'; // Light green
+                        } else {
+                          rowStyle.backgroundColor = '#f8d7da'; // Light red
+                        }
+                      }
 
                       return (
                         <React.Fragment key={item.id}>
                           <tr 
-                            className={`${isSelected ? 'table-primary' : ''} ${hasMatch ? 'table-success' : ''}`}
-                            style={{ cursor: 'pointer' }}
+                            className={rowClass}
+                            style={rowStyle}
                             onClick={() => handleExpectedItemSelection(item.id)}
                           >
                             <td style={{ whiteSpace: 'nowrap', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.partData?.mpn}>
@@ -515,6 +551,9 @@ function PartsComparisonTool() {
                               {item.partData?.secondarypartnumber || '-'}
                             </td>
                             <td>{item.partData?.quantity || '-'}</td>
+                            <td>
+                              <strong>{actualQuantity || 0}</strong>
+                            </td>
                             <td style={{ whiteSpace: 'nowrap', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.partData?.manufacturer}>
                               {item.partData?.manufacturer || '-'}
                             </td>
@@ -539,7 +578,7 @@ function PartsComparisonTool() {
                           {/* Show matched parts as sub-rows */}
                           {hasMatch && matchedParts.map(part => (
                             <tr key={`match-${part.partId}`} className="table-light">
-                              <td colSpan="12" style={{ paddingLeft: '40px' }}>
+                              <td colSpan="13" style={{ paddingLeft: '40px' }}>
                                 <div className="d-flex align-items-center">
                                   <Button
                                     size="sm"

@@ -27,7 +27,7 @@ import { AuthProvider } from './contexts/AuthContext';
 
 function Layout({ children }) {
   const location = useLocation();
-  const dontShowHeaderAndFooter = location.pathname?.includes("tariff_explorer_raw");
+  const dontShowHeaderAndFooter = location.pathname?.includes("raw");
   return (
     <div className="App d-flex flex-column min-vh-100" style={{ maxWidth: '90%', margin: 'auto' }}>
       {!dontShowHeaderAndFooter && <Header />}
@@ -52,6 +52,7 @@ function App() {
               <Route path="/tariff_explorer" element={<TariffExplorer />} />
               <Route path="/tariff_explorer_raw" element={<TariffExplorer />} />
               <Route path="/expert_eccn" element={<ExpertECCN />} />
+              <Route path="/expert_eccn_raw" element={<ExpertECCN />} />
               <Route
                 path="/user/pricing"
                 element={

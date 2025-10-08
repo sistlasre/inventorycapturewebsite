@@ -202,7 +202,7 @@ const DetermineECCN = ({setEccnForLicensing, setCountryForLicensing}) => {
             </Col>
             <Col md={3} className="pt-xs-2">
               <Form.Group controlId="country">
-                  <Form.Label className="fw-bold">Shipping Country</Form.Label>
+                  <Form.Label className="fw-bold">Ship to Country</Form.Label>
                   <Select
                     options={countryOptions}
                     onChange={(selected) => setCountryForLicensing(selected ? selected.value : '')}

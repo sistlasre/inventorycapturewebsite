@@ -159,7 +159,7 @@ const LicensingRequirements = ({eccn, setEccn, country, setCountry}) => {
             </Col>
             <Col md={4} className="pt-xs-2">
               <Form.Group controlId="country">
-                  <Form.Label className="fw-bold">Shipping Country <span className="text-danger">*</span></Form.Label>
+                  <Form.Label className="fw-bold">Ship to Country <span className="text-danger">*</span></Form.Label>
                   <Select
                     options={countryOptions}
                     value={countryOptions.find((opt) => opt.value === country)}

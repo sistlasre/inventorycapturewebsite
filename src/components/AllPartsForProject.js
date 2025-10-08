@@ -192,6 +192,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     // Manually provided notes
     { key: 'notes', label: 'Notes' },
     { key: 'partCreatorName', label: 'Created by' },
+    { key: 'dateCreated', label: 'Captured' },
     // Fields that are derived from IPN image uploads and manual content
     { key: 'ipn', label: 'IPN'},
     { key: 'ipnquantity', label: 'Internal QTY'},
@@ -374,7 +375,10 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                                     </Link>
                                   </div>
                                 )}
-                                {column.key != 'boxName' && column.key != 'name' && (
+                                {column.key == 'dateCreated' && (
+                                    new Date(part.dateCreated).toLocaleDateString() + ' at ' + new Date(part.dateCreated).toLocaleTimeString()
+                                )}
+                                {column.key != 'boxName' && column.key != 'name' && column.key != 'dateCreated' && (
                                     part[column.key]
                                 )}
                               </td>

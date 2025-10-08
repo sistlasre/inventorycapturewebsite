@@ -84,6 +84,7 @@ const ProjectVerboseView = ({ isViewOnly = false }) => {
     { key: 'lotcode', label: 'Lot Code'},
     { key: 'notes', label: 'Notes' },
     { key: 'partCreatorName', label: 'Created by' },
+    { key: 'dateCreated', label: 'Captured' },
     { key: 'ipn', label: 'IPN'},
     { key: 'ipnquantity', label: 'Internal QTY'},
     { key: 'ipnserial', label: 'Internal Serial No.'},
@@ -198,6 +199,9 @@ const handleBoxClick = (boxId, event) => {
   const getFieldValue = (item, field) => {
     // For parts, try to get values from generated or manual content as fallback
     const fieldValue = item[field] || item.manualContent?.[field] || item.generatedContent?.[field] || '';
+    if (field === 'dateCreated') {
+      return new Date(item.dateCreated).toLocaleDateString() + ' at ' + new Date(item.dateCreated).toLocaleTimeString();
+    }
     return Array.isArray(fieldValue) ? fieldValue.join(', ') : fieldValue;
   };
 

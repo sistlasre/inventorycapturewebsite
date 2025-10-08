@@ -526,14 +526,15 @@ function PartsComparisonTool() {
                       // Determine row highlight color
                       let rowStyle = { cursor: 'pointer' };
                       let rowClass = '';
+                      let quantityStyle = {};
 
                       if (isSelected) {
                         rowClass = 'table-primary';
                       } else if (hasMatch) {
                         if (actualQuantity >= expectedQuantity && expectedQuantity > 0) {
-                          rowStyle.backgroundColor = '#d4edda'; // Light green
+                          quantityStyle.backgroundColor = '#3bb143'; // Light green
                         } else {
-                          rowStyle.backgroundColor = '#f8d7da'; // Light red
+                          quantityStyle.backgroundColor = '#ff634f'; // Light red
                         }
                       }
 
@@ -550,8 +551,8 @@ function PartsComparisonTool() {
                             <td style={{ whiteSpace: 'nowrap', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.partData?.secondarypartnumber}>
                               {item.partData?.secondarypartnumber || '-'}
                             </td>
-                            <td>{item.partData?.quantity || '-'}</td>
-                            <td>
+                            <td style={quantityStyle}>{item.partData?.quantity || '-'}</td>
+                            <td style={quantityStyle}>
                               <strong>{actualQuantity || 0}</strong>
                             </td>
                             <td style={{ whiteSpace: 'nowrap', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.partData?.manufacturer}>

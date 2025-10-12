@@ -200,8 +200,10 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     { key: 'ipnlotcode', label: 'Internal Lot Code'},
     { key: 'ipnbatch', label: 'Internal Batch No.'},
     // Fields that are generated from external API
+    { key: 'category', label: 'Category'},
     { key: 'eccn', label: 'ECCN'},
     { key: 'htsus', label: 'HTSUS'},
+    { key: 'taric', label: 'TARIC'},
     { key: 'price_at_my_break', label: 'Price at my break'},
     { key: 'quantity_at_my_break', label: 'Quantity at my break'},
     { key: 'lowest_price_at_any_break', label: 'Lowest price at any break'},

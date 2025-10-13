@@ -349,6 +349,14 @@ const Users = ({ pageHeader, showNumCredits = false, showAffiliates = false }) =
     }
   };
 
+  const onCopyAffiliateUrl = (share_id) => {
+    const link = `${window.location.origin}/register?affiliate_id=${share_id}`;
+    navigator.clipboard.writeText(link)
+        .then(() => setToastMessage("Successfully copied link to clipboard"))
+        .catch(() => setToastMessage("Failed to copy link"));
+    setShowToast(true);
+  };
+
   // Handle pricing plan change from modal
   const handlePricingPlanChange = async (newPlanKey) => {
     let creditsForLocalUpdate = null;
@@ -977,9 +985,21 @@ const Users = ({ pageHeader, showNumCredits = false, showAffiliates = false }) =
                         </span>
                       )}
                     </div>
+                    {requestingUser.share_id && (
+                        <div className="mb-3">
+                          <strong>Affiliate Link:</strong>
+                          <Button
+                            variant="link"
+                            className="p-0 ms-1"
+                            onClick={() => onCopyAffiliateUrl(requestingUser.share_id)}
+                          >
+                            Share Affiliate URL
+                          </Button>
+                        </div>
+                    )}
                     {requestingUser.affiliate_username && (
                       <div className="mb-3">
-                        <strong>Affiliate:</strong> <span className="ms-2">{requestingUser.affiliate_username}</span>
+                        <strong>Referrer User:</strong> <span className="ms-2">{requestingUser.affiliate_username}</span>
                       </div>
                     )}
                     <div className="mb-3">
@@ -1214,11 +1234,11 @@ const Users = ({ pageHeader, showNumCredits = false, showAffiliates = false }) =
           onClose={() => setShowToast(false)}
           delay={4000}
           autohide
-          bg={toastMessage?.includes('successfully') ? "success" : "danger"}
+          bg={toastMessage?.toLowerCase()?.includes('successfully') ? "success" : "danger"}
         >
           <Toast.Header>
             <strong className="me-auto">
-              {toastMessage?.includes('successfully') ? 'Success' : 'Error'}
+              {toastMessage?.toLowerCase()?.includes('successfully') ? 'Success' : 'Error'}
             </strong>
           </Toast.Header>
           <Toast.Body className="text-white">{toastMessage}</Toast.Body>

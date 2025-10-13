@@ -23,9 +23,20 @@ class ApiService {
     // Request interceptor to add auth token
     this.api.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        // Skip authorization header when on the register page
+        const isOnRegisterPage = window.location.pathname === '/register';
+
+        // Only add token if we're not on the register page
+        if (!isOnRegisterPage) {
+          const token = localStorage.getItem('token');
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+        } else {
+          // Remove the Authorization header if it already exists
+          if (config.headers.Authorization) {
+            delete config.headers.Authorization;
+          }
         }
         return config;
       },

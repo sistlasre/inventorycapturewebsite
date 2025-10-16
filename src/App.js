@@ -23,6 +23,8 @@ import AdminRoute from './components/AdminRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import Pricing from './components/Pricing';
 import VerifyAccount from './components/VerifyAccount';
+import ComponentLocator from './components/ComponentLocator';
+import ComponentSearchResults from './components/ComponentSearchResults';
 import { AuthProvider } from './contexts/AuthContext';
 
 function Layout({ children }) {
@@ -53,6 +55,8 @@ function App() {
               <Route path="/tariff_explorer_raw" element={<TariffExplorer />} />
               <Route path="/expert_eccn" element={<ExpertECCN />} />
               <Route path="/expert_eccn_raw" element={<ExpertECCN />} />
+              <Route path="/component_locator" element={<ComponentLocator />} />
+              <Route path="/component_locator/search" element={<ComponentSearchResults />} />
               <Route
                 path="/user/pricing"
                 element={

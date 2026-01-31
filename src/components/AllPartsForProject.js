@@ -121,16 +121,25 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
 
   // Sorting
   const handleSort = key => {
-    const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
-    const sorted = [...filteredParts].sort((a, b) => {
-      const valA = normalize(a[key]) || '';
-      const valB = normalize(b[key]) || '';
-      if (valA < valB) return direction === 'asc' ? -1 : 1;
-      if (valA > valB) return direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-    setSortConfig({ key, direction });
-    setFilteredParts(sorted);
+      const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+      const sorted = [...filteredParts].sort((a, b) => {
+        const valA = normalize(a[key]) || '';
+        const valB = normalize(b[key]) || '';
+        // Special handling for "name"
+        if (key === 'name') {
+          const nameCompareResult = valA.localeCompare(valB, undefined, {
+            numeric: true,
+            sensitivity: 'base'
+          });
+          return direction == 'asc' ? nameCompareResult : -nameCompareResult;
+        }
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      setSortConfig({ key, direction });
+      setFilteredParts(sorted);
   };
 
   // Function to handle part modal opening with navigation context

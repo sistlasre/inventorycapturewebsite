@@ -576,6 +576,14 @@ const handleBoxClick = (boxId, event) => {
             filteredParts = [...filteredParts].sort((a, b) => {
                 const valA = normalize(a[sortConfig.key]);
                 const valB = normalize(b[sortConfig.key]);
+                // Special handling for "name"
+                if (sortConfig.key === 'name') {
+                  const nameCompareResult = valA.localeCompare(valB, undefined, {
+                    numeric: true,
+                    sensitivity: 'base'
+                  });
+                  return sortConfig.direction == 'asc' ? nameCompareResult : -nameCompareResult;
+                }
                 if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
                 if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
                 return 0;

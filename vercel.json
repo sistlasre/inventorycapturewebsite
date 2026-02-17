@@ -8,5 +8,11 @@
       "source": "/android_apk",
       "destination": "https://expo.dev/accounts/ssistla/projects/InventoryCapture/builds/69d76479-6a90-4f69-9252-a2532207a312"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/project/:projectId/full",
+      "destination": "https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev/project/:projectId/full"
+    }
   ]
 }

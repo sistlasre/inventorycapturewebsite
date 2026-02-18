@@ -11,7 +11,7 @@
   ],
   "rewrites": [
     {
-      "source": "/project/:projectId/full",
+      "source": "/api/project/:projectId",
       "destination": "https://eadlroekyg.execute-api.us-east-1.amazonaws.com/dev/project/:projectId/full"
     }
   ]

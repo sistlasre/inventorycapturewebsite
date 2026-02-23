@@ -1,41 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Row, Col, Form, Button, Alert, Spinner, Card } from 'react-bootstrap';
+import { Row, Col, Form, Button, Alert, Spinner, Card } from 'react-bootstrap';
 import MarkdownIt from 'markdown-it';
 import html2pdf from 'html2pdf.js';
 import { apiService } from '../services/apiService';
 import countryList from '../country_list.json';
 import Select from 'react-select';
 
-const DetermineECCN = ({setEccnForLicensing, setCountryForLicensing}) => {
+const DetermineECCN = () => {
   const [htmlPreview, setHtmlPreview] = useState('');
   const [pdfLoading, setPdfLoading] = useState(false);
-  const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
   const [mpn, setMpn] = useState('');
   const [eccn, setEccn] = useState('');
-  const [numPoll, setNumPoll] = useState(0);
+  const [shipTo, setShipTo] = useState(null);
+  const [shipFrom, setShipFrom] = useState(null);
+  const [eucFile, setEucFile] = useState(null);
+
   const [loadingReport, setLoadingReport] = useState(false);
   const [reportReady, setReportReady] = useState(false);
-  const [reportRequested, setReportRequested] = useState(false);
-  const [datasheetLink, setDatasheetLink] = useState('');
-  const [polling, setPolling] = useState(false);
+  const [numPoll, setNumPoll] = useState(0);
   const pollingRef = useRef(null);
+
   const countryOptions = countryList.map((c) => ({ value: c, label: c }));
 
+  // Helper to handle PDF Generation
   const generatePDF = () => {
     setPdfLoading(true);
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlPreview;
-
-    const style = `
-      .page-break { page-break-before: always; }
-      .page-break-after { page-break-after: always; }
-      .no-page-break { page-break-inside: avoid; }
-    `;
-    const styleElement = document.createElement('style');
-    styleElement.innerHTML = style;
-    tempDiv.appendChild(styleElement);
-    const fileName = (mpn || eccn) + '_report.pdf';
+    const fileName = (mpn || eccn) + '_compliance_report.pdf';
 
     html2pdf()
       .from(tempDiv)
@@ -45,261 +37,154 @@ const DetermineECCN = ({setEccnForLicensing, setCountryForLicensing}) => {
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       })
-      .toPdf()
-      .get('pdf')
-      .then((pdf) => {
-        pdf.save(fileName);
-        setPdfLoading(false);
-      });
+      .save()
+      .then(() => setPdfLoading(false));
   };
 
-  const uploadFile = async (file) => {
-    if (!file || !mpn) return;
-    setUploading(true);
-    try {
-      const presignedUrlResponse = await apiService.getPresignedUploadUrlForDatasheetUpload(mpn);
-      const presignedUrl = presignedUrlResponse.data.presigned_url;
-      await apiService.uploadFile(presignedUrl, file);
-      setUploading(false);
-      await requestReportAfterUpload();
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      setUploading(false);
-    }
-  };
-
-  const requestReportAfterUpload = async () => {
-    try {
-      setLoadingReport(true);
-      const params = {report_type: 'eccn'};
-      if (mpn) {
-        params.mpn = mpn;
-      } else if (eccn) {
-        params.eccn = eccn;
-      }
-      const response = await apiService.requestReport(params);
-      if (response.status === 200) {
-        startPolling();
-      }
-    } catch (error) {
-      console.error('Error requesting report:', error);
-    }
-  };
-
-  const startPolling = () => {
-    setPolling(true);
-    pollingRef.current = setInterval(async () => {
-      setNumPoll(numPoll + 1);
-      const result = await checkReportStatus();
-      if (result.exists || numPoll >= 30) {
-        setLoadingReport(false);
-        clearInterval(pollingRef.current);
-        setPolling(false);
-        setNumPoll(0);
-      }
-    }, 5000);
-  };
-
-  const checkReportStatus = async () => {
-    try {
-      const response = await apiService.getReport(mpn || eccn, 'eccn');
-      const { report_exists, report, datasheet_link } = response.data;
-      setDatasheetLink(datasheet_link || '');
-
-      setReportRequested(true);
-      if (report_exists) {
-        const md = new MarkdownIt();
-        setHtmlPreview(md.render(report));
-        setReportReady(true);
-        // We also will want to update our other input field to use the determined ECCN, if any
-        const eccnMatch = report.match(/ECCN:[\s\*]*([A-Z0-9.]+)/i);
-        if (eccnMatch) {
-          setEccnForLicensing(eccnMatch[1]);
-        }
-        return { exists: true, datasheetLink: datasheet_link };
-      } else {
-        setReportReady(false);
-        return { exists: false, datasheetLink: datasheet_link };
-      }
-    } catch (err) {
-      console.error('Error fetching report:', err);
-      setReportReady(false);
-      return { exists: false, datasheetLink: null };
-    }
-  };
-
-  const handleGetReport = async (event) => {
-    if (event) {
-      event.preventDefault();
-    }
-    if (!mpn && !eccn) {
-      alert('Please enter an MPN or an ECCN');
-      return;
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!mpn && !eccn) return alert('Please enter an MPN or an ECCN');
+    if (!shipTo || !shipFrom) return alert('Please select both Ship To and Ship From countries');
+    if (!eucFile) return alert('Please upload the End User Compliance (EUC) file');
 
     setLoadingReport(true);
-    const result = await checkReportStatus();
+    setReportReady(false);
 
-    if (!result.exists) {
-      if (mpn && !result.datasheetLink) {
-        alert('Report not available. Please upload a datasheet PDF.');
-        setLoadingReport(false);
-      } else {
-        await requestReportAfterUpload();
+    try {
+      // 1. Get Presigned URL for EUC
+      const presignedResp = await apiService.getPresignedUploadUrlForEucUpload();
+      const { presigned_url, euc_s3_key, when } = presignedResp.data;
+
+      // 2. Upload EUC file to S3
+      await apiService.uploadFile(presigned_url, eucFile);
+
+      // 3. Request the Expert ECCN Report with all parameters
+      const reportParams = {
+        mpn: mpn || null,
+        eccn: eccn || null,
+        ship_to_country: shipTo.value,
+        ship_from_country: shipFrom.value,
+        euc_s3_key: euc_s3_key,
+        when: when, // Acting as report ID
+      };
+
+      const requestResp = await apiService.requestReport(reportParams);
+
+      if (requestResp.status === 200) {
+        startPolling(when); // Use 'when' as the identifier for polling
       }
-    } else {
+    } catch (error) {
+      console.error('Process failed:', error);
+      alert('Failed to initiate report generation.');
       setLoadingReport(false);
     }
   };
 
+  const startPolling = (reportId) => {
+    let attempts = 0;
+    pollingRef.current = setInterval(async () => {
+      attempts++;
+      try {
+        const response = await apiService.getReport(reportId, 'eccn');
+        if (response.data.report_exists) {
+          const md = new MarkdownIt();
+          setHtmlPreview(md.render(response.data.report));
+          setReportReady(true);
+          setLoadingReport(false);
+          clearInterval(pollingRef.current);
+        } else if (attempts >= 30) {
+          clearInterval(pollingRef.current);
+          setLoadingReport(false);
+          alert('Report generation timed out. Please try again later.');
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    }, 5000);
+  };
+
   useEffect(() => {
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
+    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
   }, []);
 
-  // Conditional rendering logic
-  const showUploadSection = mpn && reportRequested && !reportReady && !datasheetLink;
-
   return (
-    <>
-      <Row className="mb-4">
-        <Col className="text-center">
-          <h2>Determine ECCN</h2>
-        </Col>
-      </Row>
-      <Form onSubmit={(e) => handleGetReport(e)}>
-          <Row className="mb-4">
-            <Col md={9}>
-              <Form.Group>
-                <div className="text-center mb-0">
-                <Form.Label className="fw-bold">
-                  MPN <span className="text-muted">or</span> ECCN <span className="text-danger">*</span>
-                </Form.Label>
-                </div>
-                <Row className="align-items-center text-center">
-                  <Col xs={12} md={5}>
-                    <Form.Control
-                      type="text"
-                      placeholder="MPN (e.g., MK10DN512VLK10)"
-                      value={mpn}
-                      onChange={(e) => setMpn(e.target.value)}
-                    />
-                  </Col>
-                  <Col xs={12} md={1} className="my-2 my-md-0">
-                    <strong>OR</strong>
-                  </Col>
-                  <Col xs={12} md={5}>
-                    <Form.Control
-                      type="text"
-                      placeholder="ECCN (e.g., EAR99)"
-                      value={eccn}
-                      onChange={(e) => setEccn(e.target.value)}
-                    />
-                  </Col>
-                </Row>
-              </Form.Group>
-            </Col>
-            <Col md={3} className="pt-xs-2">
-              <Form.Group controlId="country">
-                  <Form.Label className="fw-bold">Ship to Country</Form.Label>
-                  <Select
-                    options={countryOptions}
-                    onChange={(selected) => setCountryForLicensing(selected ? selected.value : '')}
-                    placeholder="Select a country"
-                    isClearable
-                  />
-              </Form.Group>
-            </Col>
-          </Row>
+    <Card className="p-4 shadow-sm">
+      <h2 className="text-center mb-4">Expert ECCN Determination</h2>
 
-          <Row className="mb-4">
-            <Col>
-              <Button variant="primary" type="submit" disabled={loadingReport} className="w-100">
-                {loadingReport ? (
-                  <>
-                    <Spinner animation="border" size="sm" />
-                    <span style={{ marginLeft: '8px' }}>We are working to generate a report</span>
-                  </>
-                ) : (
-                  'Generate Report'
-                )}
-              </Button>
-            </Col>
-          </Row>
-      </Form>
-
-      {reportReady && (
-        <>
-          <Row className="mb-4">
-            <Col>
-              <Card>
-                <Card.Body>
-                  <h5>Preview</h5>
-                  <div
-                    style={{
-                      border: '1px solid #ddd',
-                      padding: '10px',
-                      minHeight: '200px',
-                      maxHeight: '400px',
-                      overflowY: 'auto',
-                    }}
-                    dangerouslySetInnerHTML={{ __html: htmlPreview }}
-                  />
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col>
-              <Button
-                variant="secondary"
-                onClick={generatePDF}
-                disabled={pdfLoading || !htmlPreview}
-                className="w-100"
-              >
-                {pdfLoading ? <Spinner animation="border" size="sm" /> : 'Download PDF'}
-              </Button>
-            </Col>
-          </Row>
-        </>
-      )}
-
-      {/* Conditional Upload Datasheet PDF Section */}
-      {showUploadSection && (
-        <Row className="mt-4">
+      <Form onSubmit={handleSubmit}>
+        {/* Row 1: MPN/ECCN and EUC Upload */}
+        <Row className="mb-3">
           <Col md={6}>
-            <h5>Upload Datasheet PDF</h5>
+            <Form.Label className="fw-bold">Part Identification (MPN or ECCN) <span className="text-danger">*</span></Form.Label>
+            <div className="d-flex gap-2 align-items-center">
+              <Form.Control
+                placeholder="MPN"
+                value={mpn}
+                onChange={(e) => setMpn(e.target.value)}
+              />
+              <span className="text-muted small">OR</span>
+              <Form.Control
+                placeholder="ECCN"
+                value={eccn}
+                onChange={(e) => setEccn(e.target.value)}
+              />
+            </div>
+          </Col>
+          <Col md={6}>
+            <Form.Label className="fw-bold">End User Compliance (EUC) <span className="text-danger">*</span></Form.Label>
             <Form.Control
               type="file"
-              accept="application/pdf"
-              onChange={(e) => setFile(e.target.files[0])}
-              disabled={uploading}
+              onChange={(e) => setEucFile(e.target.files[0])}
+              accept=".pdf,.doc,.docx"
             />
-            <Button
-              variant="secondary"
-              onClick={() => uploadFile(file)}
-              disabled={uploading || !file}
-              className="mt-3 w-100"
-            >
-              {uploading ? <Spinner animation="border" size="sm" /> : 'Upload PDF and Generate Report'}
-            </Button>
           </Col>
         </Row>
-      )}
 
-      {/* Disclaimer or Error Message */}
-      {(mpn && reportRequested && !reportReady && !uploading && !loadingReport && !pdfLoading) && (
-        <Row className="mt-4">
-          <Col>
-            <Alert variant="warning">
-              Please upload a datasheet PDF to generate the report.
-            </Alert>
+        {/* Row 2: Ship To and Ship From */}
+        <Row className="mb-4">
+          <Col md={6}>
+            <Form.Label className="fw-bold">Ship From Country <span className="text-danger">*</span></Form.Label>
+            <Select
+              options={countryOptions}
+              value={shipFrom}
+              onChange={setShipFrom}
+              placeholder="Origin..."
+            />
+          </Col>
+          <Col md={6}>
+            <Form.Label className="fw-bold">Ship To Country <span className="text-danger">*</span></Form.Label>
+            <Select
+              options={countryOptions}
+              value={shipTo}
+              onChange={setShipTo}
+              placeholder="Destination..."
+            />
           </Col>
         </Row>
+
+        <Button variant="primary" type="submit" disabled={loadingReport} className="w-100 py-2">
+          {loadingReport ? (
+            <><Spinner animation="border" size="sm" className="me-2" /> Analyzing Compliance Data...</>
+          ) : 'Request Expert Analysis'}
+        </Button>
+      </Form>
+
+      {/* Report Preview Section */}
+      {reportReady && (
+        <div className="mt-5">
+          <hr />
+          <h5>Determination Preview</h5>
+          <div
+            className="bg-light p-3 border rounded mb-3"
+            style={{ maxHeight: '400px', overflowY: 'auto' }}
+            dangerouslySetInnerHTML={{ __html: htmlPreview }}
+          />
+          <Button variant="success" onClick={generatePDF} disabled={pdfLoading} className="w-100">
+            {pdfLoading ? <Spinner animation="border" size="sm" /> : 'Download Official Report (PDF)'}
+          </Button>
+        </div>
       )}
-    </>
+    </Card>
   );
 };
 

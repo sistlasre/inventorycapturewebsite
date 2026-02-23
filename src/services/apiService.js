@@ -71,9 +71,9 @@ class ApiService {
   }
 
   async register(username, password, email='', firstName='', lastName='', parent_user_id='', affiliate_id='') {
-    return this.api.post('/user', { 
-      username, 
-      password, 
+    return this.api.post('/user', {
+      username,
+      password,
       email,
       firstName,
       lastName,
@@ -160,17 +160,17 @@ class ApiService {
   }
 
   async requestPasswordReset(username) {
-    return this.api.post('/reset_password', { 
-      username, 
-      requestType: 'request' 
+    return this.api.post('/reset_password', {
+      username,
+      requestType: 'request'
     });
   }
 
   async resetPassword(token, password) {
-    return this.api.post('/reset_password', { 
-      token, 
-      password, 
-      requestType: 'update' 
+    return this.api.post('/reset_password', {
+      token,
+      password,
+      requestType: 'update'
     });
   }
 
@@ -209,6 +209,15 @@ class ApiService {
       content_type: 'application/pdf',
       is_datasheet: true,
       mpn
+    });
+  }
+
+  // Euc upload endpoints
+  async getPresignedUploadUrlForEucUpload() {
+    return this.api.post('/get-presigned-url', {
+      file_extension: 'pdf',
+      content_type: 'application/pdf',
+      is_euc: true
     });
   }
 

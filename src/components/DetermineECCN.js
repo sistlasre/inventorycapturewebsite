@@ -19,22 +19,33 @@ const DetermineECCN = () => {
   const [reportReady, setReportReady] = useState(false);
   const [numPoll, setNumPoll] = useState(0);
   const pollingRef = useRef(null);
+  const reportRef = useRef(null);
 
   const countryOptions = countryList.map((c) => ({ value: c, label: c }));
 
   // Helper to handle PDF Generation
   const generatePDF = () => {
+    if (!reportRef.current) return;
     setPdfLoading(true);
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlPreview;
+    // 1. Clone the preview element
+    const pdfElement = reportRef.current.cloneNode(true);
+    // 2. Remove the scroll restrictions so all content is "visible" to the canvas
+    pdfElement.style.maxHeight = 'none';
+    pdfElement.style.overflow = 'visible';
+    pdfElement.style.height = 'auto';
+
     const fileName = (mpn || eccn) + '_compliance_report.pdf';
 
     html2pdf()
-      .from(tempDiv)
+      .from(pdfElement)
       .set({
         margin: 10,
         filename: fileName,
-        html2canvas: { scale: 2 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       })
       .save()
@@ -67,7 +78,6 @@ const DetermineECCN = () => {
         euc_s3_key: euc_s3_key,
         when: when, // Acting as report ID
       };
-
       const requestResp = await apiService.requestReport(reportParams);
 
       if (requestResp.status === 200) {
@@ -179,8 +189,9 @@ const DetermineECCN = () => {
           <hr />
           <h5>Determination Preview</h5>
           <div
-            className="bg-light p-3 border rounded mb-3"
-            style={{ maxHeight: '400px', overflowY: 'auto' }}
+            ref={reportRef}
+            className="bg-white p-4 border rounded mb-3"
+            style={{ maxHeight: '400px', overflowY: 'auto', color: '#000' }}
             dangerouslySetInnerHTML={{ __html: htmlPreview }}
           />
           <Button variant="success" onClick={generatePDF} disabled={pdfLoading} className="w-100">

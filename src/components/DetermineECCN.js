@@ -87,7 +87,11 @@ const DetermineECCN = () => {
       try {
         const response = await apiService.getReport(reportId, 'eccn');
         if (response.data.report_exists) {
-          const md = new MarkdownIt();
+          const md = new MarkdownIt({
+            html: true,
+            linkify: true,
+            typographer: true
+          });
           setHtmlPreview(md.render(response.data.report));
           setReportReady(true);
           setLoadingReport(false);

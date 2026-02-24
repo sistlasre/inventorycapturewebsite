@@ -92,7 +92,7 @@ const DetermineECCN = () => {
           setReportReady(true);
           setLoadingReport(false);
           clearInterval(pollingRef.current);
-        } else if (attempts >= 30) {
+        } else if (attempts >= 120) {
           clearInterval(pollingRef.current);
           setLoadingReport(false);
           alert('Report generation timed out. Please try again later.');

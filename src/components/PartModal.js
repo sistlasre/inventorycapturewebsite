@@ -544,11 +544,31 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     return { variant, text };
   };
 
+  const getNetComponentsUrl = (mpn) => {
+    const baseUrl = "https://www.netcomponents.com/search/result?l=Begins&sb=Quantity&t=0&f=false&ps=true&pn1=";
+    // encodeURIComponent handles characters like '/', '&', '+', etc.
+    const encodedMpn = encodeURIComponent(mpn);
+    return `${baseUrl}${encodedMpn}`;
+  };
+
+  const getFindChipsUrl = (mpn) => {
+    const baseUrl = "https://www.findchips.com/search/";
+    // encodeURIComponent handles characters like '/', '&', '+', etc.
+    const encodedMpn = encodeURIComponent(mpn);
+    return `${baseUrl}${encodedMpn}`;
+  };
+
   return (
     <Modal show={show} onHide={handleHide} size="lg" scrollable dialogClassName="custom-modal-width ic-modal">
       <Modal.Header closeButton>
-        <div className="position-absolute" style={{ left: '16px', top: '16px', zIndex: 1060 }}>
+        <div className="position-absolute d-flex align-items-center gap-2" style={{ left: '16px', top: '16px', zIndex: 1060 }}>
           {part && getStatusIndicator(part)}
+          {part && part.mpn && (
+            <>
+              <a href={getFindChipsUrl(part.mpn)} target="_blank" rel="noreferrer" className="btn btn-sm btn-primary text-nowrap">Findchips</a>
+              <a href={getNetComponentsUrl(part.mpn)} target="_blank" rel="noreferrer" className="btn btn-sm btn-primary text-nowrap">netCOMPONENTS</a>
+            </>
+          )}
         </div>
         <Modal.Title className="d-flex align-items-center justify-content-center w-100 me-4">
           <div className="d-flex align-items-center flex-column">

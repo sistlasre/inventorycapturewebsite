@@ -110,7 +110,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
       parts.filter(part => {
         // 1. Check Review Status Filter (Thumbs Up)
         // 2. Check External Data Filter (Green Check)
-        if ((filterReviewed && part.reviewStatus !== 'reviewed') || (filterExternalHit && !part.gotExternalHit)) {
+        if ((filterReviewed && part.reviewStatus == 'reviewed') || (filterExternalHit && part.gotExternalHit)) {
             return false;
         }
         // 3. Filter other fields
@@ -313,14 +313,22 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
             <Form.Check
               type="checkbox"
               id="filter-reviewed"
-              label={<><FontAwesomeIcon icon={faThumbsUp} className="text-success me-1"/></>}
+              label={
+                <>
+                  <FontAwesomeIcon icon={faThumbsDown} className="me-1" style={{color: "#6c757d"}} />
+                </>
+              }
               checked={filterReviewed}
               onChange={(e) => setFilterReviewed(e.target.checked)}
             />
             <Form.Check
               type="checkbox"
               id="filter-external"
-              label={<><FontAwesomeIcon icon={faCircleCheck} className="text-success me-1"/></>}
+              label={
+                <>
+                  <FontAwesomeIcon icon={faCircleCheck} className="me-1" style={{color: "#6c757d"}} />
+                </>
+              }
               checked={filterExternalHit}
               onChange={(e) => setFilterExternalHit(e.target.checked)}
             />

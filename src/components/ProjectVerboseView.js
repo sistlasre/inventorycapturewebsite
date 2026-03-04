@@ -48,12 +48,21 @@ const ProjectVerboseView = ({ isViewOnly = false }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [filterText, setFilterText] = useState('');
   const [filterField, setFilterField] = useState('all');
+  // More filters
+  const [filterReviewed, setFilterReviewed] = useState(false);
+  const [filterExternalHit, setFilterExternalHit] = useState(false);
 
   const normalize = (val) => {
     return (val || '').toString().toLowerCase().replace(/[^a-z0-9]/gi, '');
   };
 
   const matchesFilter = (part) => {
+    // 1. Check Review Status Filter (Thumbs Up)
+    // 2. Check External Data Filter (Green Check)
+    if ((filterReviewed && part.status !== 'reviewed') || (filterExternalHit && !part.gotExternalHit)) {
+        return false;
+    }
+    // Now, check the filter text
     const normFilter = normalize(filterText);
     if (!normFilter) {
         return true;
@@ -917,7 +926,7 @@ return (
       />
 
       <Row>
-        <Col className="mb-3">
+        <Col className="mb-0">
           <InputGroup style={{ maxWidth: '400px' }}>
             <Form.Select value={filterField} onChange={e => setFilterField(e.target.value)}>
                 <option value="all">All Fields</option>
@@ -935,6 +944,24 @@ return (
                 className="filter-input"
             />
           </InputGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col className="mb-0 d-flex gap-3">
+            <Form.Check
+              type="checkbox"
+              id="filter-reviewed"
+              label={<><FontAwesomeIcon icon={faThumbsUp} className="text-success me-1"/></>}
+              checked={filterReviewed}
+              onChange={(e) => setFilterReviewed(e.target.checked)}
+            />
+            <Form.Check
+              type="checkbox"
+              id="filter-external"
+              label={<><FontAwesomeIcon icon={faCircleCheck} className="text-success me-1"/></>}
+              checked={filterExternalHit}
+              onChange={(e) => setFilterExternalHit(e.target.checked)}
+            />
         </Col>
       </Row>
       <Row>

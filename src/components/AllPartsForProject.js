@@ -30,6 +30,9 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
   const [selectedPart, setSelectedPart] = useState(null);
   const [showPartModal, setShowPartModal] = useState(false);
   const [currentPartIndex, setCurrentPartIndex] = useState(-1);
+  // More filters
+  const [filterReviewed, setFilterReviewed] = useState(false);
+  const [filterExternalHit, setFilterExternalHit] = useState(false);
 
   const REVIEW_STATUS_MAPPINGS = {
     'reviewed': { color: '#28a745', titleText: 'Reviewed'},
@@ -46,7 +49,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
 
   // Function to get status indicator for parts
   const getStatusIndicator = (part) => {
-    const reviewStatus = part.status || 'never_reviewed';
+    const reviewStatus = part.reviewStatus || 'never_reviewed';
     const color = REVIEW_STATUS_MAPPINGS[reviewStatus]?.color || '#6c757d';
     const title = REVIEW_STATUS_MAPPINGS[reviewStatus]?.titleText || 'Needs further review';
 
@@ -105,6 +108,12 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     const normFilter = normalize(filterText);
     setFilteredParts(
       parts.filter(part => {
+        // 1. Check Review Status Filter (Thumbs Up)
+        // 2. Check External Data Filter (Green Check)
+        if ((filterReviewed && part.reviewStatus !== 'reviewed') || (filterExternalHit && !part.gotExternalHit)) {
+            return false;
+        }
+        // 3. Filter other fields
         if (filterField === 'all') {
             return Object.values(part).some(value =>
                 Array.isArray(value)
@@ -117,7 +126,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
         }
       })
     );
-  },[filterText, filterField, parts]);
+  },[filterText, filterField, parts, filterReviewed, filterExternalHit]);
 
   // Sorting
   const handleSort = key => {
@@ -300,6 +309,22 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
             />
           </InputGroup>
         </Col>
+        <Col md={6} className="d-flex gap-3">
+            <Form.Check
+              type="checkbox"
+              id="filter-reviewed"
+              label={<><FontAwesomeIcon icon={faThumbsUp} className="text-success me-1"/></>}
+              checked={filterReviewed}
+              onChange={(e) => setFilterReviewed(e.target.checked)}
+            />
+            <Form.Check
+              type="checkbox"
+              id="filter-external"
+              label={<><FontAwesomeIcon icon={faCircleCheck} className="text-success me-1"/></>}
+              checked={filterExternalHit}
+              onChange={(e) => setFilterExternalHit(e.target.checked)}
+            />
+        </Col>
       </Row>
 
       <Row>
@@ -455,4 +480,3 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
 }
 
 export default AllPartsForProjectTableView;
-

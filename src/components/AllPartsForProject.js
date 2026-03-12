@@ -228,6 +228,10 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     { key: 'quantity_at_that_price_break', label: 'Quantity at that price break'}
   ];
 
+  const getFieldValueForPart = (part, field) => {
+    return part?.manualContent?.[field] || part?.generatedContent?.[field] || part?.[field] || '';
+  }
+
   const onCopyPublicProjectUrl = () => {
     const link = `${window.location.origin}/project/${projectId}/allparts/view`;
     navigator.clipboard.writeText(link)
@@ -423,7 +427,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                                     new Date(part.dateCreated).toLocaleDateString() + ' at ' + new Date(part.dateCreated).toLocaleTimeString()
                                 )}
                                 {column.key != 'boxName' && column.key != 'name' && column.key != 'dateCreated' && (
-                                    part[column.key]
+                                    getFieldValueForPart(part, column.key)
                                 )}
                               </td>
                             ))}

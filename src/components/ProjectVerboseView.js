@@ -209,7 +209,7 @@ const handleBoxClick = (boxId, event) => {
 
   const getFieldValue = (item, field) => {
     // For parts, try to get values from generated or manual content as fallback
-    const fieldValue = item[field] || item.manualContent?.[field] || item.generatedContent?.[field] || '';
+    const fieldValue = item.manualContent?.[field] || item.generatedContent?.[field] || item[field] || '';
     if (field === 'dateCreated') {
       return new Date(item.dateCreated).toLocaleDateString() + ' at ' + new Date(item.dateCreated).toLocaleTimeString();
     }

@@ -259,11 +259,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
         COLUMNS.forEach(column => {
             const newManualFieldValue = editingContent[column.key];
             const fieldValue = newManualFieldValue?.trim() || generatedContent[column.key] || '';
-            if (column.key != 'mpn') {
-                contentFields[column.key] = fieldValue;
-            } else if (fieldValue && typeof fieldValue === "string") {
-                contentFields[column.key] = fieldValue;
-            }
+            contentFields[column.key] = fieldValue;
         });
         await apiService.updatePart(part.partId, {
             manualContent: editingContent,

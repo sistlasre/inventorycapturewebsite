@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, Toast, ToastContainer, Form, InputGroup } from 'react-bootstrap';
+import { Container, Row, Col, Button, Toast, ToastContainer, Form, InputGroup, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import Spinner from 'react-bootstrap/Spinner';
@@ -948,28 +948,34 @@ return (
       </Row>
       <Row>
         <Col className="mb-0 d-flex gap-3">
-            <Form.Check
-              type="checkbox"
-              id="filter-reviewed"
-              label={
-                <>
-                  <FontAwesomeIcon icon={faThumbsDown} className="me-1" style={{color: "#6c757d"}} />
-                </>
-              }
-              checked={filterReviewed}
-              onChange={(e) => setFilterReviewed(e.target.checked)}
-            />
-            <Form.Check
-              type="checkbox"
-              id="filter-external"
-              label={
-                <>
-                  <FontAwesomeIcon icon={faCircleCheck} className="me-1" style={{color: "#6c757d"}} />
-                </>
-              }
-              checked={filterExternalHit}
-              onChange={(e) => setFilterExternalHit(e.target.checked)}
-            />
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="tooltip-reviewed">Unreviewed parts</Tooltip>}
+            >
+              <span className="d-inline-block">
+                <Form.Check
+                  type="checkbox"
+                  id="filter-reviewed"
+                  label={<FontAwesomeIcon icon={faThumbsDown} style={{color: "#6c757d"}} />}
+                  checked={filterReviewed}
+                  onChange={(e) => setFilterReviewed(e.target.checked)}
+                />
+              </span>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="tooltip-external">Parts with no external data</Tooltip>}
+            >
+              <span className="d-inline-block ms-3">
+                <Form.Check
+                  type="checkbox"
+                  id="filter-external"
+                  label={<FontAwesomeIcon icon={faCircleCheck} style={{color: "#6c757d"}} />}
+                  checked={filterExternalHit}
+                  onChange={(e) => setFilterExternalHit(e.target.checked)}
+                />
+              </span>
+            </OverlayTrigger>
         </Col>
       </Row>
       <Row>

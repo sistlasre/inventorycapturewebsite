@@ -343,7 +343,7 @@ const handleBoxClick = (boxId, event) => {
     return (
       <>
         {part.gotExternalHit && (
-          <span title="Has external data">
+          <span class="custom-tooltip" data-tooltip="Has external data">
            <FontAwesomeIcon
             icon={faCircleCheck}
             style={{
@@ -354,7 +354,7 @@ const handleBoxClick = (boxId, event) => {
            />
           </span>
         )}
-        <span title={title}>
+        <span class="custom-tooltip" data-tooltip={title}>
          <FontAwesomeIcon
           icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' ? faThumbsUp : faThumbsDown}
           style={{

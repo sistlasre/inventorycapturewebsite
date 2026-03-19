@@ -60,25 +60,27 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     return (
       <>
         {part.gotExternalHit && (
-          <FontAwesomeIcon
+          <span title="Has external data">
+           <FontAwesomeIcon
             icon={faCircleCheck}
             style={{
               color: '#28a745',
               fontSize: '14px',
               marginRight: '6px'
             }}
-            title="Has external data"
-          />
+           />
+          </span>
         )}
-        <FontAwesomeIcon
+        <span title={title}>
+         <FontAwesomeIcon
           icon={reviewStatus == 'reviewed' || reviewStatus == 'needs_further_review' ? faThumbsUp : faThumbsDown}
           style={{
             color: color,
             fontSize: '14px',
             marginRight: '6px'
           }}
-          title={title}
-        />
+         />
+        </span>
       </>
     );
   };

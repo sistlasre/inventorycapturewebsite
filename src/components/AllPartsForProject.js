@@ -533,13 +533,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                                 }}
                               >
                                 {column.key == 'boxName' && (
-                                  <Link
-                                    to="#"
-                                    title={part.locationTree}
-                                    style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
-                                  >
-                                    📦 {part.boxName}
-                                  </Link>
+                                    <>📦 {part.boxName}</>
                                 )}
                                 {column.key == 'name' && (
                                   <div style={{ display: 'flex', alignItems: 'center' }}>

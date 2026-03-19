@@ -52,6 +52,10 @@ const ProjectVerboseView = ({ isViewOnly = false }) => {
   const [filterReviewed, setFilterReviewed] = useState(false);
   const [filterExternalHit, setFilterExternalHit] = useState(false);
 
+  const [isBulkEditing, setIsBulkEditing] = useState(false);
+  const [editedParts, setEditedParts] = useState({}); // Stores { partId: { field: value } }
+  const [saveLoading, setSaveLoading] = useState(false);
+
   const normalize = (val) => {
     return (val || '').toString().toLowerCase().replace(/[^a-z0-9]/gi, '');
   };
@@ -108,6 +112,68 @@ const ProjectVerboseView = ({ isViewOnly = false }) => {
     { key: 'lowest_price_at_any_break', label: 'Lowest price at any break'},
     { key: 'quantity_at_that_price_break', label: 'Quantity at that price break'}
   ];
+
+  const EDITABLE_COLUMNS = new Set([
+    'mpn',
+    'secondarypartnumber',
+    'quantity',
+    'manufacturer',
+    'datecode',
+    'coo',
+    'rohsstatus',
+    'packaging',
+    'msl',
+    'serialnumber',
+    'lotcode',
+    'notes',
+    'ipn',
+    'ipnquantity',
+    'ipnserial',
+    'ipnlotcode',
+    'ipnbatch'
+  ]);
+
+  const handleInputChange = (partId, field, value) => {
+    setEditedParts(prev => ({
+      ...prev,
+      [partId]: {
+        ...(prev[partId] || {}),
+        [field]: value
+      }
+    }));
+  };
+
+  // Save function: Only sends updates for parts that were actually modified
+  const handleBulkSave = async () => {
+    const partIdsToUpdate = Object.keys(editedParts);
+    if (partIdsToUpdate.length === 0) {
+      setIsBulkEditing(false);
+      return;
+    }
+    setSaveLoading(true);
+    try {
+      const updatePromises = partIdsToUpdate.map(partId => {
+        const updates = editedParts[partId];
+        // Syncing with PartModal's logic: update top-level and manualContent
+        return apiService.updatePart(partId, {
+          ...updates,
+          manualContent: { ...updates },
+          reviewStatus: 'reviewed'
+        });
+      });
+      await Promise.all(updatePromises);
+      setToastMessage(`Successfully updated ${partIdsToUpdate.length} parts.`);
+      setShowToast(true);
+      setIsBulkEditing(false);
+      setEditedParts({});
+      if (typeof fetchAllPartsForProject === 'function') fetchAllPartsForProject();
+    } catch (err) {
+      setToastMessage("Failed to save updates.");
+      setShowToast(true);
+    } finally {
+      setSaveLoading(false);
+    }
+  };
 
   const REVIEW_STATUS_MAPPINGS = {
     'reviewed': { color: '#28a745', titleText: 'Reviewed'},
@@ -658,7 +724,20 @@ const handleBoxClick = (boxId, event) => {
                         )}
                       </div>
                     )}
-                    {column.key !== 'name' && getFieldValue(part, column.key)}
+                    {column.key != 'name' && (
+                      isBulkEditing && EDITABLE_COLUMNS.has(column.key) ? (
+                        <Form.Control
+                          size="sm"
+                          type="text"
+                          className="py-0 px-1"
+                          style={{ fontSize: '11px', height: '24px' }}
+                          value={editedParts[part.partId]?.[column.key] ?? getFieldValue(part, column.key) ?? ''}
+                          onChange={(e) => handleInputChange(part.partId, column.key, e.target.value)}
+                        />
+                      ) : (
+                        getFieldValue(part, column.key)
+                      )
+                    )}
                   </td>
                 ))}
               </tr>
@@ -925,16 +1004,19 @@ return (
         onCopyPublicProjectUrl={onCopyPublicProjectUrl}
       />
 
-      <Row>
-        <Col className="mb-0">
-          <InputGroup style={{ maxWidth: '400px' }}>
-            <Form.Select value={filterField} onChange={e => setFilterField(e.target.value)}>
-                <option value="all">All Fields</option>
-                {columns.filter(c => c.key !== 'name').map(col => (
-                    <option key={col.key} value={col.key}>{col.label}</option>
-                ))}
-            </Form.Select>
-            <Form.Control
+      <Row className="mb-3 align-items-start">
+          {/* Left Column: Vertical stack of Filter and Checkboxes */}
+          <Col className="d-flex flex-column gap-0">
+
+            {/* Filter Field Row */}
+            <InputGroup style={{ maxWidth: '400px' }}>
+              <Form.Select value={filterField} onChange={e => setFilterField(e.target.value)}>
+                  <option value="all">All Fields</option>
+                  {columns.filter(c => c.key !== 'name').map(col => (
+                      <option key={col.key} value={col.key}>{col.label}</option>
+                  ))}
+              </Form.Select>
+              <Form.Control
                 type="text"
                 autoComplete="new-password"
                 name="chrome-hack"
@@ -942,41 +1024,80 @@ return (
                 value={filterText}
                 onChange={e => setFilterText(e.target.value)}
                 className="filter-input"
-            />
-          </InputGroup>
-        </Col>
-      </Row>
-      <Row>
-        <Col className="mb-0 d-flex gap-3">
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="tooltip-reviewed">Unreviewed parts</Tooltip>}
-            >
-              <span className="d-inline-block">
-                <Form.Check
-                  type="checkbox"
-                  id="filter-reviewed"
-                  label={<FontAwesomeIcon icon={faThumbsDown} style={{color: "#6c757d"}} />}
-                  checked={filterReviewed}
-                  onChange={(e) => setFilterReviewed(e.target.checked)}
-                />
-              </span>
-            </OverlayTrigger>
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="tooltip-external">Parts with no external data</Tooltip>}
-            >
-              <span className="d-inline-block ms-3">
-                <Form.Check
-                  type="checkbox"
-                  id="filter-external"
-                  label={<FontAwesomeIcon icon={faCircleCheck} style={{color: "#6c757d"}} />}
-                  checked={filterExternalHit}
-                  onChange={(e) => setFilterExternalHit(e.target.checked)}
-                />
-              </span>
-            </OverlayTrigger>
-        </Col>
+              />
+            </InputGroup>
+
+            {/* Checkbox Row (aligned under filter) */}
+            <div className="d-flex align-items-center">
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip id="tooltip-reviewed">Unreviewed parts</Tooltip>}
+              >
+                <span className="d-inline-block">
+                  <Form.Check
+                    type="checkbox"
+                    id="filter-reviewed"
+                    label={<FontAwesomeIcon icon={faThumbsDown} style={{color: "#6c757d"}} />}
+                    checked={filterReviewed}
+                    onChange={(e) => setFilterReviewed(e.target.checked)}
+                  />
+                </span>
+              </OverlayTrigger>
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip id="tooltip-external">Parts with no external data</Tooltip>}
+              >
+                <span className="d-inline-block ms-3">
+                  <Form.Check
+                    type="checkbox"
+                    id="filter-external"
+                    label={<FontAwesomeIcon icon={faCircleCheck} style={{color: "#6c757d"}} />}
+                    checked={filterExternalHit}
+                    onChange={(e) => setFilterExternalHit(e.target.checked)}
+                  />
+                </span>
+              </OverlayTrigger>
+            </div>
+          </Col>
+          {/* Right Column: Edit/Save/Cancel Buttons */}
+          <Col xs="auto" className="ms-auto d-flex align-items-start pt-1">
+            <div className="d-flex gap-2">
+              {userCanEdit && !isBulkEditing && (
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => setIsBulkEditing(true)}
+                >
+                  <FontAwesomeIcon icon={faPencil} className="me-1" /> Edit Information
+                </Button>
+              )}
+
+              {isBulkEditing && (
+                <>
+                  {Object.keys(editedParts).length > 0 && (
+                    <span className="text-muted small align-self-center me-2">
+                      {Object.keys(editedParts).length} parts changed
+                    </span>
+                  )}
+                  <Button
+                    variant="success"
+                    size="sm"
+                    onClick={handleBulkSave}
+                    disabled={saveLoading}
+                  >
+                    {saveLoading ? <Spinner size="sm" /> : <><FontAwesomeIcon icon={faCheck} className="me-1" /> Save</>}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => { setIsBulkEditing(false); setEditedParts({}); }}
+                  >
+                    <FontAwesomeIcon icon={faTimes} className="me-1" /> Cancel
+                  </Button>
+                </>
+              )}
+            </div>
+          </Col>
       </Row>
       <Row>
         <Col>

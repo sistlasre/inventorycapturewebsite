@@ -1120,7 +1120,7 @@ return (
                   size="sm"
                   onClick={() => setIsBulkEditing(true)}
                 >
-                  <FontAwesomeIcon icon={faPencil} className="me-1" /> Edit Information
+                  <FontAwesomeIcon icon={faPencil} className="me-1" /> Edit Parts Information
                 </Button>
               )}
 

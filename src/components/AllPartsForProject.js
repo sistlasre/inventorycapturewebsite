@@ -273,19 +273,29 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
     try {
       const updatePromises = partIdsToUpdate.map(partId => {
         const updates = editedParts[partId];
+        const originalPart = parts.find((p) => p.partId === partId);
         // Syncing with PartModal's logic: update top-level and manualContent
-        return apiService.updatePart(partId, {
+        const updatedPart = {
           ...updates,
-          manualContent: { ...updates },
-          reviewStatus: 'reviewed'
+          manualContent: {
+            ...(originalPart.manualContent || {}),
+            ...updates
+          },
+          reviewStatus: 'reviewed',
+          status: 'reviewed'
+        };
+        return apiService.updatePart(partId, updatedPart).then(response => {
+          // Update local state for each modified part using handlePartChange
+          handlePartChange(null, { partId, ...updatedPart });
+          return response;
         });
       });
       await Promise.all(updatePromises);
+      // Update and clear
       setToastMessage(`Successfully updated ${partIdsToUpdate.length} parts.`);
       setShowToast(true);
       setIsBulkEditing(false);
       setEditedParts({});
-      if (typeof fetchAllPartsForProject === 'function') fetchAllPartsForProject();
     } catch (err) {
       setToastMessage("Failed to save updates.");
       setShowToast(true);
@@ -425,7 +435,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                   size="sm"
                   onClick={() => setIsBulkEditing(true)}
                 >
-                  <FontAwesomeIcon icon={faPencil} className="me-1" /> Edit Information
+                  <FontAwesomeIcon icon={faPencil} className="me-1" /> Edit Parts Information
                 </Button>
               )}
 

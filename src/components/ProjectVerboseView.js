@@ -152,21 +152,73 @@ const ProjectVerboseView = ({ isViewOnly = false }) => {
     }
     setSaveLoading(true);
     try {
+      // --- STEP 1: Flatten the tree into a lookup map once ---
+      const originalParts = new Map();
+      const findPartsRecursive = (boxes) => {
+        boxes.forEach(box => {
+          (box.parts || []).forEach(part => {
+            if (editedParts[part.partId]) {
+              originalParts.set(part.partId, part);
+            }
+          });
+          if (box.childBoxes) findPartsRecursive(box.childBoxes);
+        });
+      };
+      findPartsRecursive(project.boxes);
+      // --- STEP 2: Make API calls
       const updatePromises = partIdsToUpdate.map(partId => {
+        const originalPart = originalParts.get(partId);
         const updates = editedParts[partId];
         // Syncing with PartModal's logic: update top-level and manualContent
         return apiService.updatePart(partId, {
           ...updates,
-          manualContent: { ...updates },
-          reviewStatus: 'reviewed'
+          manualContent: { ...(originalPart.manualContent || {}), ...updates },
+          reviewStatus: 'reviewed',
+          status: 'reviewed'
         });
       });
       await Promise.all(updatePromises);
+      // --- STEP 3: Update Frontend State (Single Pass) ---
+      setProject((prevProject) => {
+        if (!prevProject) return prevProject;
+        const updateTree = (boxes) => {
+          return boxes.map((box) => {
+            // Update parts in this box
+            const updatedParts = (box.parts || []).map((part) => {
+              const updates = editedParts[part.partId];
+              if (updates) {
+                return {
+                  ...part,
+                  ...updates,
+                  manualContent: {
+                    ...(part.manualContent || {}),
+                    ...updates
+                  },
+                  status: 'reviewed',
+                  reviewStatus: 'reviewed'
+                };
+              }
+              return part;
+            });
+
+            return {
+              ...box,
+              parts: updatedParts,
+              childBoxes: box.childBoxes ? updateTree(box.childBoxes) : []
+            };
+          });
+        };
+
+        return {
+          ...prevProject,
+          boxes: updateTree(prevProject.boxes)
+        };
+      });
+      // Update and clear
       setToastMessage(`Successfully updated ${partIdsToUpdate.length} parts.`);
       setShowToast(true);
       setIsBulkEditing(false);
       setEditedParts({});
-      if (typeof fetchAllPartsForProject === 'function') fetchAllPartsForProject();
     } catch (err) {
       setToastMessage("Failed to save updates.");
       setShowToast(true);

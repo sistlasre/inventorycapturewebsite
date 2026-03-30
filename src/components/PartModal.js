@@ -726,7 +726,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
                       {/* Image Display */}
                       <div className='text-center position-relative' onClick={handleImageClick} style={{
                             width: "100%",
-                            maxHeight: "65vh",   // limit modal body height
+                            maxHeight: "80vh",   // limit modal body height
                             display: "flex",
                             justifyContent: "center",
                             alignItems: "center",

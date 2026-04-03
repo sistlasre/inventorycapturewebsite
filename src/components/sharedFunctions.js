@@ -4,14 +4,17 @@ export const getHeaderForPart = (localPart) => {
     }
 
     let partHeader = localPart.name;
-    if (localPart.mpn) {
+    const mpn = localPart.manualContent?.mpn || localPart.generatedContent?.mpn || localPart.mpn;
+    if (mpn) {
         partHeader = partHeader.replace("Part ", "");
-        partHeader += `: ${localPart.mpn}`;
-        if (localPart.quantity) {
-            partHeader += ` (${localPart.quantity})`
+        partHeader += `: ${mpn}`;
+        const quantity = localPart.manualContent?.quantity || localPart.generatedContent?.quantity || localPart.quantity;
+        if (quantity) {
+            partHeader += ` (${quantity})`
         }
-        if (localPart.manufacturer) {
-            partHeader += ` [${localPart.manufacturer}]`
+        const manufacturer = localPart.manualContent?.manufacturer || localPart.generatedContent?.manufacturer || localPart.manufacturer;
+        if (manufacturer) {
+            partHeader += ` [${manufacturer}]`
         }
     }
     return partHeader || localPart.partName || localPart.name || 'Part Details';

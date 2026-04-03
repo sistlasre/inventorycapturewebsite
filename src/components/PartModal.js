@@ -31,7 +31,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   const [savingRotation, setSavingRotation] = useState(false);
   const [currentTimestamp, setCurrentTimestamp] = useState(Date.now());
   const [isZoomed, setIsZoomed] = useState(false);
-  const [zoomScale, setZoomScale] = useState(1.5); // Default zoom scale
+  const [zoomScale, setZoomScale] = useState(0.5); // Default zoom scale
 
   // Update timestamp whenever the modal is shown
   useEffect(() => {
@@ -475,16 +475,24 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
     return imageRotation !== savedRotation;
   };
 
+  // Clear the parameters in the state so that we can properly display the new part being shown
+  const clearPartState = () => {
+    setIsZoomed(false);
+    setZoomScale(0.5);
+    setIsEditing(false);
+    setEditingContent({});
+  };
+
   // Part navigation functions
   const goToNextPart = () => {
-    setIsZoomed(false);
+    clearPartState();
     if (allParts.length > 1 && currentPartIndex < allParts.length - 1 && onPartChange) {
       onPartChange(currentPartIndex + 1);
     }
   };
 
   const goToPreviousPart = () => {
-    setIsZoomed(false);
+    clearPartState();
     if (allParts.length > 1 && currentPartIndex > 0 && onPartChange) {
       onPartChange(currentPartIndex - 1);
     }

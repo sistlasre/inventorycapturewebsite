@@ -45,7 +45,7 @@ const PartModal = ({ show, onHide, part: initialPart, allParts = [], currentPart
   };
 
   const handleHide = () => {
-    setIsZoomed(false);
+    clearPartState();
     if (onHide) {
       onHide();
     }

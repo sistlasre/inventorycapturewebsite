@@ -1,0 +1,10 @@
+{
+  "android": {
+    "buildNumber": "4",
+    "downloadUrl": "https://expo.dev/accounts/ssistla/projects/InventoryCapture/builds/f0cbb582-455f-4612-bc6a-f5fdbedb660a"
+  },
+  "ios": {
+    "version": "1.2.5",
+    "appStoreUrl": "https://apps.apple.com/us/app/inventory-capture/id6749094411"
+  }
+}

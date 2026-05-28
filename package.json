@@ -20,6 +20,7 @@
     "jspdf": "^3.0.3",
     "jwt-decode": "^3.1.2",
     "markdown-it": "^14.1.0",
+    "papaparse": "^5.5.3",
     "react": "^18.2.0",
     "react-bootstrap": "^2.7.0",
     "react-bootstrap-icons": "^1.11.6",
@@ -27,7 +28,8 @@
     "react-inner-image-zoom": "^4.0.1",
     "react-router-dom": "^6.8.0",
     "react-scripts": "5.0.1",
-    "react-select": "^5.10.2"
+    "react-select": "^5.10.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/jwt-decode": "^3.1.0"

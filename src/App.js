@@ -26,6 +26,7 @@ import VerifyAccount from './components/VerifyAccount';
 import ComponentLocator from './components/ComponentLocator';
 import ComponentSearchResults from './components/ComponentSearchResults';
 import { AuthProvider } from './contexts/AuthContext';
+import UploadPricing from './components/UploadPricing';
 
 function Layout({ children }) {
   const location = useLocation();
@@ -51,6 +52,7 @@ function App() {
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/verify-account" element={<VerifyAccount />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/upload-pricing" element={<UploadPricing />} />
               <Route path="/tariff_explorer" element={<TariffExplorer />} />
               <Route path="/tariff_explorer_raw" element={<TariffExplorer />} />
               <Route path="/expert_eccn" element={<ExpertECCN />} />

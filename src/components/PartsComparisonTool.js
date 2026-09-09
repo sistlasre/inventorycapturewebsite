@@ -5,7 +5,7 @@ import Table from 'react-bootstrap/Table';
 import Card from 'react-bootstrap/Card';
 import { apiService } from '../services/apiService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faCheckCircle, faTimesCircle, faLink, faUnlink, faSave, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faCheckCircle, faTimesCircle, faLink, faUnlink, faSave, faFilter, faMagic, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import ProjectHeader from './ProjectHeader';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -27,7 +27,9 @@ function PartsComparisonTool() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [actualPartsFilter, setActualPartsFilter] = useState('all'); // 'all', 'matched', 'unmatched'
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [partNumberFilter, setPartNumberFilter] = useState(''); // Filter for MPN/IPN/Secondary PN
+  const [expectedSearchFilter, setExpectedSearchFilter] = useState(''); // Search filter for Expected panel (MPN/Secondary PN)
+  const [actualSearchFilter, setActualSearchFilter] = useState(''); // Search filter for Actual panel (MPN/IPN/Secondary PN)
+  const [autoMatchLoading, setAutoMatchLoading] = useState(false);
 
   // Fetch project data with expected line items
   useEffect(() => {
@@ -332,10 +334,193 @@ function PartsComparisonTool() {
     return (val || '').toString().toLowerCase().replace(/[^a-z0-9]/gi, '');
   };
 
-  // Filter parts based on part number filter
-  const filterByPartNumber = (part) => {
-    if (!partNumberFilter) return true;
-    const normFilter = normalize(partNumberFilter);
+  // Get the set of normalized, non-empty part number values for an expected item or actual part
+  const getNormalizedPartNumbers = (entity, isExpected) => {
+    const values = isExpected
+      ? [entity.partData?.mpn, entity.partData?.secondarypartnumber]
+      : [entity.mpn, entity.secondarypartnumber, entity.ipn];
+    return new Set(values.map(normalize).filter(val => val.length > 0));
+  };
+
+  // Determine whether an expected item and an actual part share a part number,
+  // checking MPN, Secondary PN, and IPN in any combination
+  const doPartNumbersMatch = (expectedItem, actualPart) => {
+    const expectedNumbers = getNormalizedPartNumbers(expectedItem, true);
+    if (expectedNumbers.size === 0) return false;
+    const actualNumbers = getNormalizedPartNumbers(actualPart, false);
+    for (const num of actualNumbers) {
+      if (expectedNumbers.has(num)) return true;
+    }
+    return false;
+  };
+
+  // Get the IDs of all actual parts currently matched to any expected item
+  const getAllMatchedPartIds = (matches) => {
+    const ids = new Set();
+    Object.values(matches).forEach(parts => (parts || []).forEach(id => ids.add(id)));
+    return ids;
+  };
+
+  // Find the smallest subset of candidate parts { partId, quantity } whose quantities sum
+  // exactly to targetQuantity. Bounded backtracking search; returns an array of partIds,
+  // or null if no exact subset exists.
+  const findExactQuantitySubset = (candidates, targetQuantity) => {
+    if (targetQuantity <= 0 || candidates.length === 0) return null;
+
+    // Sort descending by quantity to find larger, fewer-item combinations first
+    const sorted = [...candidates].sort((a, b) => b.quantity - a.quantity);
+    let best = null;
+
+    const search = (startIndex, remaining, chosen) => {
+      if (remaining === 0) {
+        if (!best || chosen.length < best.length) {
+          best = [...chosen];
+        }
+        return;
+      }
+      if (remaining < 0 || startIndex >= sorted.length) return;
+      // Prune: further additions can't beat an already-found smaller subset
+      if (best && chosen.length + 1 >= best.length) return;
+
+      for (let i = startIndex; i < sorted.length; i++) {
+        chosen.push(sorted[i].partId);
+        search(i + 1, remaining - sorted[i].quantity, chosen);
+        chosen.pop();
+      }
+    };
+
+    search(0, targetQuantity, []);
+    return best;
+  };
+
+  // Compute automatic matches for expected items that currently have no matched parts.
+  // Never touches expected items that already have at least one manual/existing match.
+  // Returns { newMatches, matchedExpectedCount, matchedActualCount }
+  const computeAutoMatches = () => {
+    const newMatches = { ...matchedItems };
+    const alreadyMatchedActualIds = getAllMatchedPartIds(matchedItems);
+
+    // Pool of actual parts eligible for auto-matching
+    let pool = actualParts.filter(part => !alreadyMatchedActualIds.has(part.partId));
+
+    // Only consider expected items with no existing matches
+    const unmatchedExpectedItems = expectedLineItems.filter(
+      item => !newMatches[item.id] || newMatches[item.id].length === 0
+    );
+
+    let matchedExpectedCount = 0;
+    let matchedActualCount = 0;
+
+    const getCandidates = (item) => pool.filter(part => doPartNumbersMatch(item, part));
+
+    // Pass 1: exact 1:1 matches, least ambiguous items first
+    const pass1Order = [...unmatchedExpectedItems].sort(
+      (a, b) => getCandidates(a).length - getCandidates(b).length
+    );
+    const stillUnmatched = [];
+
+    pass1Order.forEach(item => {
+      const expectedQty = parseInt(item.partData?.quantity) || 0;
+      const candidates = getCandidates(item);
+      const exactQtyCandidates = candidates.filter(
+        part => expectedQty > 0 && (parseInt(part.quantity) || 0) === expectedQty
+      );
+
+      if (exactQtyCandidates.length === 1) {
+        const match = exactQtyCandidates[0];
+        newMatches[item.id] = [String(match.partId)];
+        pool = pool.filter(part => part.partId !== match.partId);
+        matchedExpectedCount += 1;
+        matchedActualCount += 1;
+      } else {
+        stillUnmatched.push(item);
+      }
+    });
+
+    // Pass 2: multi-row sum matches, least ambiguous items first
+    const pass2Order = [...stillUnmatched].sort(
+      (a, b) => getCandidates(a).length - getCandidates(b).length
+    );
+
+    pass2Order.forEach(item => {
+      const expectedQty = parseInt(item.partData?.quantity) || 0;
+      if (expectedQty <= 0) return;
+      const candidates = getCandidates(item);
+      if (candidates.length === 0) return;
+
+      const totalCandidateQty = candidates.reduce((sum, p) => sum + (parseInt(p.quantity) || 0), 0);
+
+      let subsetIds = null;
+      if (totalCandidateQty === expectedQty) {
+        subsetIds = candidates.map(p => p.partId);
+      } else if (candidates.length <= 15) {
+        subsetIds = findExactQuantitySubset(
+          candidates.map(p => ({ partId: p.partId, quantity: parseInt(p.quantity) || 0 })),
+          expectedQty
+        );
+      }
+
+      if (subsetIds && subsetIds.length > 0) {
+        newMatches[item.id] = subsetIds.map(id => String(id));
+        pool = pool.filter(part => !subsetIds.includes(part.partId));
+        matchedExpectedCount += 1;
+        matchedActualCount += subsetIds.length;
+      }
+    });
+
+    return { newMatches, matchedExpectedCount, matchedActualCount };
+  };
+
+  // Run auto-matching across all eligible expected items and save immediately
+  const handleAutoMatch = async () => {
+    setAutoMatchLoading(true);
+    try {
+      const { newMatches, matchedExpectedCount, matchedActualCount } = computeAutoMatches();
+
+      if (matchedExpectedCount === 0) {
+        setToastMessage('No new automatic matches found');
+        setShowToast(true);
+        return;
+      }
+
+      setMatchedItems(newMatches);
+      setHasUnsavedChanges(true);
+      setToastMessage(`Auto-matched ${matchedExpectedCount} expected item(s) using ${matchedActualCount} actual part(s). Saving...`);
+      setShowToast(true);
+
+      await handleSave(newMatches);
+    } finally {
+      setAutoMatchLoading(false);
+    }
+  };
+
+  // Get the IDs of unmatched actual parts suggested for the currently selected expected item
+  const getSuggestedActualPartIds = () => {
+    if (!selectedExpectedItem) return new Set();
+    const item = expectedLineItems.find(i => i.id === selectedExpectedItem);
+    if (!item) return new Set();
+
+    const matchedIds = getAllMatchedPartIds(matchedItems);
+    const suggested = actualParts.filter(
+      part => !matchedIds.has(part.partId) && doPartNumbersMatch(item, part)
+    );
+    return new Set(suggested.map(p => p.partId));
+  };
+
+  // Filter expected items based on the Expected panel's own search filter
+  const filterExpectedBySearch = (item) => {
+    if (!expectedSearchFilter) return true;
+    const normFilter = normalize(expectedSearchFilter);
+    return (
+      normalize(item.partData?.mpn).includes(normFilter) ||
+      normalize(item.partData?.secondarypartnumber).includes(normFilter)
+    );
+  };
+
+  // Filter actual parts based on the Actual panel's own search filter
+  const filterActualBySearch = (part) => {
+    if (!actualSearchFilter) return true;
+    const normFilter = normalize(actualSearchFilter);
     return (
       normalize(part.mpn).includes(normFilter) ||
       normalize(part.ipn).includes(normFilter) ||
@@ -343,22 +528,13 @@ function PartsComparisonTool() {
     );
   };
 
-  // Filter expected items based on part number filter
-  const filterExpectedByPartNumber = (item) => {
-    if (!partNumberFilter) return true;
-    const normFilter = normalize(partNumberFilter);
-    return (
-      normalize(item.partData?.mpn).includes(normFilter) ||
-      normalize(item.partData?.secondarypartnumber).includes(normFilter)
-    );
-  };
-
   // Get filtered expected items
   const getFilteredExpectedItems = () => {
-    return expectedLineItems.filter(filterExpectedByPartNumber);
+    return expectedLineItems.filter(filterExpectedBySearch);
   };
 
-  // Filter actual parts based on matched status and part number
+  // Filter actual parts based on matched status and search filter; bring suggested
+  // matches (for the selected expected item) to the top of the list
   const getFilteredActualParts = () => {
     let filtered = actualParts;
 
@@ -369,14 +545,31 @@ function PartsComparisonTool() {
       filtered = filtered.filter(part => !isPartMatched(part.partId));
     }
 
-    // Apply part number filter
-    filtered = filtered.filter(filterByPartNumber);
+    // Apply search filter
+    filtered = filtered.filter(filterActualBySearch);
+
+    // When an expected item is selected, surface suggested matches at the top
+    if (selectedExpectedItem) {
+      const suggestedIds = getSuggestedActualPartIds();
+      if (suggestedIds.size > 0) {
+        const suggested = [];
+        const rest = [];
+        filtered.forEach(part => {
+          (suggestedIds.has(part.partId) ? suggested : rest).push(part);
+        });
+        filtered = [...suggested, ...rest];
+      }
+    }
 
     return filtered;
   };
 
   const filteredExpectedItems = getFilteredExpectedItems();
   const filteredActualParts = getFilteredActualParts();
+  const suggestedPartIds = getSuggestedActualPartIds();
+  const selectedExpectedItemData = selectedExpectedItem
+    ? expectedLineItems.find(item => item.id === selectedExpectedItem)
+    : null;
   const stats = getMatchStats();
 
   if (loading) {
@@ -420,9 +613,9 @@ function PartsComparisonTool() {
         isPartComparisonPage={true}
       />
 
-      {/* Match Statistics and Filter */}
+      {/* Match Statistics */}
       <Row className="mb-3">
-        <Col md={4}>
+        <Col md={8}>
           <Card className="bg-light h-100">
             <Card.Body className="py-2">
               <div><strong>Expected:</strong> <Badge bg={stats.expectedMatched === stats.expectedTotal ? 'success' : 'warning'}>
@@ -434,19 +627,6 @@ function PartsComparisonTool() {
             </Card.Body>
           </Card>
         </Col>
-        <Col md={4}>
-          <InputGroup>
-            <InputGroup.Text>
-              <FontAwesomeIcon icon={faFilter} />
-            </InputGroup.Text>
-            <Form.Control
-              type="text"
-              placeholder="Filter by MPN, IPN, or Secondary PN..."
-              value={partNumberFilter}
-              onChange={(e) => setPartNumberFilter(e.target.value)}
-            />
-          </InputGroup>
-        </Col>
         <Col md={4} className="text-end">
           {hasUnsavedChanges && (
             <Badge bg="warning" className="me-2">Unsaved changes</Badge>
@@ -457,6 +637,25 @@ function PartsComparisonTool() {
       {/* Action Buttons - Centered */}
       <Row className="mb-3">
         <Col className="text-center">
+          <Button
+            variant="outline-primary"
+            className="me-2"
+            onClick={handleAutoMatch}
+            disabled={!userCanEdit || autoMatchLoading || saveLoading}
+            title="Automatically match expected items to actual parts using part numbers and quantities"
+          >
+            {autoMatchLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Auto-Matching...
+              </>
+            ) : (
+              <>
+                <FontAwesomeIcon icon={faMagic} className="me-2" />
+                Auto-Match
+              </>
+            )}
+          </Button>
           <Button
             variant="success"
             onClick={handleMatchAndSave}
@@ -487,12 +686,25 @@ function PartsComparisonTool() {
         <Col lg={6}>
           <Card className="shadow-sm mb-3">
             <Card.Header className="bg-primary text-white">
-              <h5 className="mb-0">Expected Line Items</h5>
+              <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 className="mb-0">Expected Line Items</h5>
+                <InputGroup size="sm" style={{ width: 'auto', minWidth: '220px' }}>
+                  <InputGroup.Text>
+                    <FontAwesomeIcon icon={faFilter} />
+                  </InputGroup.Text>
+                  <Form.Control
+                    type="text"
+                    placeholder="Search MPN or Secondary PN..."
+                    value={expectedSearchFilter}
+                    onChange={(e) => setExpectedSearchFilter(e.target.value)}
+                  />
+                </InputGroup>
+              </div>
             </Card.Header>
             <Card.Body style={{ padding: 0, maxHeight: '70vh', overflowY: 'auto' }}>
               {filteredExpectedItems.length === 0 ? (
                 <div className="text-center text-muted p-4">
-                  {partNumberFilter 
+                  {expectedSearchFilter 
                     ? 'No expected items match your filter'
                     : 'No expected line items available'}
                 </div>
@@ -619,26 +831,56 @@ function PartsComparisonTool() {
         <Col lg={6}>
           <Card className="shadow-sm mb-3">
             <Card.Header className="bg-info text-white">
-              <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h5 className="mb-0">Actual Parts</h5>
-                <Form.Select
-                  size="sm"
-                  value={actualPartsFilter}
-                  onChange={(e) => setActualPartsFilter(e.target.value)}
-                  style={{ width: 'auto' }}
-                  className="bg-white text-dark"
-                >
-                  <option value="all">All Parts ({actualParts.length})</option>
-                  <option value="matched">
-                    Matched ({actualParts.filter(p => isPartMatched(p.partId)).length})
-                  </option>
-                  <option value="unmatched">
-                    Unmatched ({actualParts.filter(p => !isPartMatched(p.partId)).length})
-                  </option>
-                </Form.Select>
+                <div className="d-flex align-items-center gap-2 flex-wrap">
+                  <InputGroup size="sm" style={{ width: 'auto', minWidth: '200px' }}>
+                    <InputGroup.Text>
+                      <FontAwesomeIcon icon={faFilter} />
+                    </InputGroup.Text>
+                    <Form.Control
+                      type="text"
+                      placeholder="Search MPN, IPN, or Secondary PN..."
+                      value={actualSearchFilter}
+                      onChange={(e) => setActualSearchFilter(e.target.value)}
+                    />
+                  </InputGroup>
+                  <Form.Select
+                    size="sm"
+                    value={actualPartsFilter}
+                    onChange={(e) => setActualPartsFilter(e.target.value)}
+                    style={{ width: 'auto' }}
+                    className="bg-white text-dark"
+                  >
+                    <option value="all">All Parts ({actualParts.length})</option>
+                    <option value="matched">
+                      Matched ({actualParts.filter(p => isPartMatched(p.partId)).length})
+                    </option>
+                    <option value="unmatched">
+                      Unmatched ({actualParts.filter(p => !isPartMatched(p.partId)).length})
+                    </option>
+                  </Form.Select>
+                </div>
               </div>
             </Card.Header>
             <Card.Body style={{ padding: 0, maxHeight: '70vh', overflowY: 'auto' }}>
+              {selectedExpectedItem && (
+                <div className="px-3 py-2 bg-light border-bottom small">
+                  {suggestedPartIds.size > 0 ? (
+                    <span className="text-success">
+                      <FontAwesomeIcon icon={faLightbulb} className="me-1" />
+                      Showing {suggestedPartIds.size} suggested match{suggestedPartIds.size !== 1 ? 'es' : ''} for{' '}
+                      <strong>{selectedExpectedItemData?.partData?.mpn || selectedExpectedItemData?.partData?.secondarypartnumber || 'the selected item'}</strong>
+                      {' '}at the top of the list below.
+                    </span>
+                  ) : (
+                    <span className="text-muted">
+                      <FontAwesomeIcon icon={faLightbulb} className="me-1" />
+                      No unmatched parts found with a matching part number for the selected expected item.
+                    </span>
+                  )}
+                </div>
+              )}
               {filteredActualParts.length === 0 ? (
                 <div className="text-center text-muted p-4">
                   {actualPartsFilter === 'all' 
@@ -668,11 +910,12 @@ function PartsComparisonTool() {
                     {filteredActualParts.map((part) => {
                       const isSelected = selectedActualParts.has(part.partId);
                       const isMatched = isPartMatched(part.partId);
+                      const isSuggested = !isMatched && suggestedPartIds.has(part.partId);
 
                       return (
                         <tr 
                           key={part.partId}
-                          className={`${isSelected ? 'table-primary' : ''} ${isMatched ? 'table-warning' : ''}`}
+                          className={`${isSelected ? 'table-primary' : ''} ${isMatched ? 'table-warning' : ''} ${isSuggested && !isSelected ? 'table-success' : ''}`}
                           style={{ cursor: isMatched ? 'not-allowed' : 'pointer' }}
                           onClick={() => !isMatched && handleActualPartSelection(part.partId)}
                         >
@@ -708,6 +951,11 @@ function PartsComparisonTool() {
                           <td>
                             {isMatched ? (
                               <Badge bg="warning" size="sm">Matched</Badge>
+                            ) : isSuggested ? (
+                              <Badge bg="success" size="sm">
+                                <FontAwesomeIcon icon={faLightbulb} className="me-1" />
+                                Suggested
+                              </Badge>
                             ) : (
                               <Badge bg="secondary" size="sm">Available</Badge>
                             )}

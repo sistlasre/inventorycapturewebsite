@@ -19,6 +19,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
   const [userCanEdit, setUserCanEdit] = useState(!isViewOnly);
   const [parts, setParts] = useState([]);
   const [filteredParts, setFilteredParts] = useState([]);
+  const [loadingParts, setLoadingParts] = useState(true);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [filterText, setFilterText] = useState('');
   const [filterField, setFilterField] = useState('all');
@@ -87,6 +88,8 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
 
   useEffect(() => {
     const fetchAllPartsForProject = async () => {
+      setLoadingParts(true);
+      try {
         const response = await apiService.getAllPartsForProject(projectId);
         const parts = response.data.parts || [];
         parts.forEach((part) => {
@@ -103,6 +106,9 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
         });
 
         setUserCanEdit(userCanEdit && !(response.data?.projectOwnerId !== user?.user_id));
+      } finally {
+        setLoadingParts(false);
+      }
     };
     if (projectId) {
         fetchAllPartsForProject();
@@ -473,6 +479,12 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
         <Col>
           <Card className="shadow-sm">
             <Card.Body style={{ padding: 0 }}>
+              {loadingParts ? (
+                <div className="text-center text-muted py-5">
+                  <Spinner animation="border" size="sm" className="me-2" />
+                  Loading parts...
+                </div>
+              ) : (
               <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
                 <Table className="mb-0" style={{ minWidth: '1200px' }} size="sm">
                   <thead 
@@ -579,6 +591,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                   </tbody>
                 </Table>
               </div>
+              )}
             </Card.Body>
           </Card>
         </Col>

@@ -576,9 +576,10 @@ function PartsComparisonTool() {
     return (
       <Container fluid className="py-5">
         <div className="text-center">
-          <div className="spinner-border" role="status">
+          <div className="spinner-border mb-3" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
+          <div className="text-muted">Loading parts...</div>
         </div>
       </Container>
     );

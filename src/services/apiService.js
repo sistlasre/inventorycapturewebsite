@@ -105,7 +105,44 @@ class ApiService {
   }
 
   async getAllPartsForProject(projectId) {
-    return this.api.get(`/project/${projectId}/allparts`);
+    // Fetch the non-parts project details (boxNames, locationTree, projectName, etc.)
+    // in parallel with the paginated parts fetch below.
+    const detailsPromise = this.api.get(`/project/${projectId}/details/v2`);
+
+    // Fetch all pages of parts, following lastEvaluatedKey until it is no longer returned.
+    let lastEvaluatedKey = null;
+    let allParts = [];
+    do {
+      const params = lastEvaluatedKey ? { lastEvaluatedKey: JSON.stringify(lastEvaluatedKey) } : {};
+      const partsResponse = await this.api.get(`/project/${projectId}/parts/v2`, { params });
+      allParts = allParts.concat(partsResponse.data.parts || []);
+      lastEvaluatedKey = partsResponse.data.lastEvaluatedKey || null;
+    } while (lastEvaluatedKey);
+
+    const detailsResponse = await detailsPromise;
+    const details = detailsResponse.data || {};
+    const boxNames = details.boxNames || {};
+
+    // Mirrors the previous server-side sort: only parts with a known box, sorted by
+    // (boxName, dateCreated) descending.
+    const sortedParts = allParts
+      .filter(part => part.boxId in boxNames)
+      .sort((a, b) => {
+        const boxNameA = boxNames[a.boxId];
+        const boxNameB = boxNames[b.boxId];
+        if (boxNameA < boxNameB) return 1;
+        if (boxNameA > boxNameB) return -1;
+        if (a.dateCreated < b.dateCreated) return 1;
+        if (a.dateCreated > b.dateCreated) return -1;
+        return 0;
+      });
+
+    return {
+      data: {
+        ...details,
+        parts: sortedParts,
+      }
+    };
   }
 
   async createProject(projectData) {

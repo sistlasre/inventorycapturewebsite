@@ -545,7 +545,7 @@ function AllPartsForProjectTableView({ isViewOnly = false }) {
                                 }}
                               >
                                 {column.key == 'boxName' && (
-                                    <>📦 {part.boxName}</>
+                                    <span className="custom-tooltip" data-tooltip={part.locationTree}>📦 {part.boxName}</span>
                                 )}
                                 {column.key == 'name' && (
                                   <div style={{ display: 'flex', alignItems: 'center' }}>
